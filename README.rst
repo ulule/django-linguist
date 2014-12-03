@@ -48,5 +48,6 @@ Tests
 
 .. code-block:: bash
 
+    $ vagrant up && vagrant ssh
     $ cd /vagrant
     $ make test
