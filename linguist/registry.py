@@ -21,26 +21,49 @@ class LinguistRegistry(object):
         return self._registry.keys()
 
     @property
-    def models(self):
+    def translations(self):
         """
-        Returns registered models (as list).
+        Returns registered translation classes (as list).
         """
         return self._registry.values()
 
-    @staticmethod
-    def validate_model(model):
+    def register(self, translations):
+        """
+        Registers the given ``translations`` classes which must be a subclass of
+        ``base.ModelTranslationBase``.
+        """
+        from .exceptions import AlreadyRegistered
+
+        if not isinstance(translations, (list, tuple)):
+            translations = [translations]
+
+        for translation in translations:
+            self.validate_translation(translation)
+            self._registry[translation.identifier] = translation
+
+    def unregister(self, identifier):
+        """
+        Unregisters the translation class with the given ``identifier``.
+        If ``identifier`` does not exist, raises ``exceptions.Unregistered``.
+        """
+        self.validate_identifier(identifier)
+        del self._registry[identifier]
+
+    def get_translation(self, identifier):
+        """
+        Returns the translation class with the given ``identifier``.
+        If ``identifier`` does not exist, raises ``exceptions.Unregistered``.
+        """
+        self.validate_identifier(identifier)
+        return self._registry[identifier]
+
+    def validate_model(self, model):
         """
         Validates the given model.
 
         This model must be a ``django.db.models.Model`` class.
         If this model is a valid class, just returns ``True``.
         Otherwise, raises ``exceptions.InvalidModel``.
-
-        Example::
-
-            registry.validate_model(FooModel) # True if django.db.models.Model
-            registry.validate_model(StupidClass) # Raises InvalidModel
-
         """
         import types
         from django.db import models
@@ -56,106 +79,41 @@ class LinguistRegistry(object):
 
         return True
 
-    def register(self, identifier, model):
+    def validate_identifier(self, identifier, in_registered=False):
         """
-        Registers the given ``identifier`` associated to the given ``model``.
-
-        * ``identifier`` must be a string (will be unique)
-        * ``model`` must be a ``django.db.models.Model`` class
-
-        Example::
-
-            registry.register('foo', FooModel)
-
+        Checks if the given ``identifier`` is either ``in_registered`` or not.
+        Otherwise, raises ``Unregistered`` or  ``AlreadyRegistered``
         """
-        from .exceptions import AlreadyRegistered
+        from .exceptions import AlreadyRegistered, Unregistered
 
-        if identifier in self.identifiers:
-            raise AlreadyRegistered(
-                'Model identifier "%s" is already registered' % identifier)
+        if in_registered:
+            if identifier in self.identifiers:
+                raise AlreadyRegistered(
+                    'Model identifier "%s" is already registered' % identifier)
+        else:
+            if identifier not in self.identifiers:
+                raise Unregistered(
+                    'Model identifier "%s" has not been registered' % identifier)
 
-        self.validate_model(model)
-        self._registry[identifier] = model
+        return True
 
-    def bulk_register(self, models):
+    def validate_translation(self, translation):
         """
-        Bulk registers the given list of (``identifier``, ``model``) in the
-        registry. Same as ``register`` but performs on a list instead of having
-        to register each one individually.
-
-        Example::
-
-            MODELS = [
-                ('foo', FooModel),
-                ('bar', BarModel),
-                ('baz', BazModel),
-            ]
-
-            registry.bulk_register(MODELS)
-
+        Checks if the given ``translation`` class is a valid one.
+        If it is valid one, returns ``True``.
+        Otherwise, raises ``InvalidModelTranslation``
         """
-        err_msg = 'bulk_register takes a list or tuple of (identifier, model)'
+        from .base import ModelTranslationBase
+        from .exceptions import InvalidModelTranslation
 
-        if not isinstance(models, (list, tuple)):
-            raise TypeError(err_msg)
+        err_msg = ('The model translation is not a subclass of '
+                  'linguist.base.ModelTranslationBase')
 
-        for model in models:
-            if len(model) != 2:
-                raise TypeError(err_msg)
-            self.register(model[0], model[1])
+        if not issubclass(translation, ModelTranslationBase):
+            raise InvalidModelTranslation
 
-    def unregister(self, identifier):
-        """
-        Unregisters the model associated to the given ``identifier``.
-
-        If ``identifier`` does not exist, raises ``exceptions.Unregistered``.
-
-        Example::
-
-            registry.register('foo', FooModel)
-            len(registry.models) # Returns 1
-            registry.unregister('foo')
-            len(registry.models) # Returns 0
-
-            registry.unregister('unknown') # Raises Unregistered
-
-        """
-        self.validate_identifier(identifier)
-        del self._registry[identifier]
-
-    def get_model(self, identifier):
-        """
-        Returns the model associated with the given ``identifier``.
-
-        If ``identifier`` does not exist, raises ``exceptions.Unregistered``.
-
-        Example::
-
-            registry.register('foo', FooModel)
-            registry.get_model('foo') # Returns FooModel
-            registry.get_model('unknown') # Raises Unregistered
-
-        """
-        self.validate_identifier(identifier)
-        return self._registry[identifier]
-
-    def validate_identifier(self, identifier):
-        """
-        Checks if the given ``identifier`` is registered. If it exists, returns
-        ``True``. Otherwise, raises ``exceptions.Unregistered``.
-
-        Example::
-
-            registry.register('foo', FooModel)
-            registry.validate_identifier('foo') # Returns True
-            registry.validate_identifier('unknown') # Raises Unregistered
-
-        """
-        from .exceptions import Unregistered
-
-        if identifier not in self.identifiers:
-            raise Unregistered(
-                'Model identifier "%s" has not been registered' % identifier)
+        self.validate_identifier(translation.identifier, in_registered=True)
+        self.validate_model(translation.model)
 
         return True
 

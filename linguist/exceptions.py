@@ -11,3 +11,7 @@ class Unregistered(Exception):
 
 class InvalidModel(Exception):
     pass
+
+
+class InvalidModelTranslation(Exception):
+    pass
