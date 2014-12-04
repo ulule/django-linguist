@@ -32,8 +32,6 @@ class LinguistRegistry(object):
         Registers the given ``translations`` classes which must be a subclass of
         ``base.ModelTranslationBase``.
         """
-        from .exceptions import AlreadyRegistered
-
         if not isinstance(translations, (list, tuple)):
             translations = [translations]
 
@@ -110,7 +108,7 @@ class LinguistRegistry(object):
                   'linguist.base.ModelTranslationBase')
 
         if not issubclass(translation, ModelTranslationBase):
-            raise InvalidModelTranslation
+            raise InvalidModelTranslation(err_msg)
 
         self.validate_identifier(translation.identifier, in_registered=True)
         self.validate_model(translation.model)

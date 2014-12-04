@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-from django.db import models
 from django.test import TestCase
 
-from ..base import ModelTranslationBase
 from ..exceptions import AlreadyRegistered, Unregistered, InvalidModel, InvalidModelTranslation
 from ..registry import LinguistRegistry as Registry
 
 from .translations import (
     FooModel,
-    BarModel,
     BadModel,
     FooTranslation,
     BarTranslation,
     BadTranslation,
 )
+
 
 class RegistryTest(TestCase):
     """
