@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
+from .. import settings
 from ..utils import get_model_string
 
 
@@ -19,6 +20,8 @@ class Translation(models.Model):
     locale = models.CharField(
         max_length=10,
         verbose_name=_('locale'),
+        choices=settings.SUPPORTED_LOCALES,
+        default=settings.DEFAULT_LOCALE,
         help_text=_('The locale'))
 
     column = models.CharField(
