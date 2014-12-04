@@ -84,6 +84,12 @@ class LinguistRegistry(object):
         """
         from .exceptions import AlreadyRegistered, Unregistered
 
+        if not isinstance(identifier, str):
+            raise TypeError('Identifier must be a string')
+
+        if len(identifier) > 100:
+            raise TypeError('Identifier cannot have more than 100 characters')
+
         if in_registered:
             if identifier in self.identifiers:
                 raise AlreadyRegistered(

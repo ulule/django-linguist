@@ -45,7 +45,7 @@ class RegistryTest(TestCase):
         registry = Registry()
         registry.register(FooTranslation)
         self.assertEqual(registry.get_translation('foo'), FooTranslation)
-        self.assertRaises(Unregistered, registry.get_translation, BarTranslation)
+        self.assertRaises(Unregistered, registry.get_translation, 'bar')
 
     def test_validate_model(self):
         registry = Registry()
@@ -61,3 +61,6 @@ class RegistryTest(TestCase):
         self.assertTrue(registry.validate_identifier('bar', in_registered=True))
         self.assertRaises(AlreadyRegistered, registry.validate_identifier, 'foo', True)
         self.assertRaises(Unregistered, registry.validate_identifier, 'bar', False)
+        self.assertRaises(TypeError, registry.validate_identifier, 10)
+        long_identifier = ['%s' % n for n in range(101)]
+        self.assertRaises(TypeError, registry.validate_identifier, long_identifier)
