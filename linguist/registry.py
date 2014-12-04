@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import six
-
 
 class LinguistRegistry(object):
     """
@@ -70,10 +68,7 @@ class LinguistRegistry(object):
             registry.register('foo', FooModel)
 
         """
-        from django.db import models
         from .exceptions import AlreadyRegistered
-
-        model_name = model.__class__.__name__
 
         if identifier in self.identifiers:
             raise AlreadyRegistered(

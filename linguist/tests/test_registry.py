@@ -17,6 +17,7 @@ class BarModel(models.Model):
 class BazModel(models.Model):
     title = models.CharField(max_length=255)
 
+
 class BadModel(object):
     pass
 

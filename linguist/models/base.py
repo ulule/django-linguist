@@ -4,7 +4,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
 from .. import settings
-from ..utils import get_model_string
 
 
 @python_2_unicode_compatible
