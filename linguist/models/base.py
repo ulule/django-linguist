@@ -32,8 +32,8 @@ class Translation(models.Model):
         verbose_name=_('field name'),
         help_text=_('The model field name for this translation.'))
 
-    content = models.TextField(
-        verbose_name=_('content'),
+    field_value = models.TextField(
+        verbose_name=_('field value'),
         null=True,
         help_text=_('The translated content for the field.'))
 
