@@ -20,12 +20,12 @@ class Translation(models.Model):
         verbose_name=_('The object ID'),
         help_text=_('The object ID of this translation'))
 
-    locale = models.CharField(
+    language = models.CharField(
         max_length=10,
         verbose_name=_('locale'),
-        choices=settings.SUPPORTED_LOCALES,
-        default=settings.DEFAULT_LOCALE,
-        help_text=_('The locale for this translation'))
+        choices=settings.SUPPORTED_LANGUAGES,
+        default=settings.DEFAULT_LANGUAGE,
+        help_text=_('The language for this translation'))
 
     field_name = models.CharField(
         max_length=100,
@@ -42,11 +42,11 @@ class Translation(models.Model):
         app_label = 'linguist'
         verbose_name = _('translation')
         verbose_name_plural = _('translations')
-        unique_together = (('identifier', 'object_id', 'locale', 'field_name'),)
+        unique_together = (('identifier', 'object_id', 'language', 'field_name'),)
 
     def __str__(self):
         return '%s:%d:%s:%s' % (
             self.identifier,
             self.object_id,
             self.field_name,
-            self.locale)
+            self.language)
