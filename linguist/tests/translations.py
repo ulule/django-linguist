@@ -11,7 +11,7 @@ class FooModel(models.Model):
 class FooTranslation(ModelTranslationBase):
     model = FooModel
     identifier = 'foo'
-    columns = ('title', )
+    fields = ('title', )
 
 
 class BarModel(models.Model):
@@ -21,7 +21,7 @@ class BarModel(models.Model):
 class BarTranslation(ModelTranslationBase):
     model = BarModel
     identifier = 'bar'
-    columns = ('title', )
+    fields = ('title', )
 
 
 class BadTranslation(object):
