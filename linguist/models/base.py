@@ -18,6 +18,7 @@ class Translation(models.Model):
 
     object_id = models.IntegerField(
         verbose_name=_('The object ID'),
+        null=True,
         help_text=_('The object ID of this translation'))
 
     language = models.CharField(

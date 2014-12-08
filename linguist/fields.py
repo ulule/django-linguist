@@ -18,22 +18,45 @@ class TranslationField(object):
     Translation Descriptor.
     """
 
-    def __init__(self, translated_field, language, *args, **kwargs):
-        self.translated_field = translated_field
+    def __init__(self, identifier, field, language, *args, **kwargs):
+        self.identifier = identifier
+        self.field = field
         self.language = language
-        self.attname = build_localized_field_name(self.translated_field.name, language)
+        self.attname = build_localized_field_name(self.field.name, language)
         self.name = self.attname
-        self.verbose_name = build_localized_verbose_name(translated_field.verbose_name, language)
+        self.verbose_name = build_localized_verbose_name(field.verbose_name, language)
         self.null = True
         self.blank = True
 
     def __get__(self, instance, instance_type=None):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
+        translation = self.get_translation(instance)
+        return translation.field_value if translation else getattr(instance, self.field.name)
 
     def __set__(self, instance, value):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
+        translation = self.get_translation(instance)
+        if translation is None:
+            translation = Translation(
+                identifier=self.identifier,
+                object_id=instance.pk,
+                language=self.language,
+                field_name=self.field.name)
+        translation.field_value = value
+        translation.save()
+
+    def get_translation(self, instance):
+        try:
+            translation = Translation.objects.get(
+                identifier=self.identifier,
+                object_id=instance.pk,
+                language=self.language,
+                field_name=self.field.name)
+        except Translation.DoesNotExist:
+            translation = None
+        return translation
 
 
 def build_localized_field_name(field_name, language):
@@ -52,7 +75,7 @@ def _build_localized_verbose_name(verbose_name, language):
 build_localized_verbose_name = lazy(_build_localized_verbose_name, six.text_type)
 
 
-def create_translation_field(model, field_name, language):
+def create_translation_field(identifier, model, field_name, language):
     """
     Returns a ``TranslationField`` based on a ``field_name`` and a ``language``.
     """
@@ -60,7 +83,10 @@ def create_translation_field(model, field_name, language):
     cls_name = field.__class__.__name__
     if not isinstance(field, SUPPORTED_FIELDS):
         raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
-    return TranslationField(translated_field=field, language=language)
+    return TranslationField(
+        identifier=identifier,
+        field=field,
+        language=language)
 
 
 def add_translation_fields(translation_class):
@@ -72,6 +98,7 @@ def add_translation_fields(translation_class):
     for field_name in fields:
         for language, name in settings.SUPPORTED_LANGUAGES:
             translation_field = create_translation_field(
+                identifier=translation_class.identifier,
                 model=model,
                 field_name=field_name,
                 language=language)
