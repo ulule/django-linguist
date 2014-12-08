@@ -10,12 +10,12 @@ TRANSLATION_MODEL = getattr(
     '%s_TRANSLATION_MODEL' % APP_NAMESPACE,
     'linguist.models.translation.Translation')
 
-SUPPORTED_LOCALES = getattr(
+SUPPORTED_LANGUAGES = getattr(
     settings,
-    '%s_SUPPORTED_LOCALES' % APP_NAMESPACE,
+    '%s_SUPPORTED_LANGUAGES' % APP_NAMESPACE,
     settings.LANGUAGES)
 
-DEFAULT_LOCALE = getattr(
+DEFAULT_LANGUAGE = getattr(
     settings,
-    '%s_DEFAULT_LOCALE' % APP_NAMESPACE,
+    '%s_DEFAULT_LANGUAGE' % APP_NAMESPACE,
     settings.LANGUAGE_CODE)
