@@ -32,11 +32,14 @@ class LinguistRegistry(object):
         Registers the given ``translations`` classes which must be a subclass of
         ``base.ModelTranslationBase``.
         """
+        from .fields import add_translation_fields
+
         if not isinstance(translations, (list, tuple)):
             translations = [translations]
 
         for translation in translations:
             self.validate_translation(translation)
+            add_translation_fields(translation)
             self._registry[translation.identifier] = translation
 
     def unregister(self, identifier):
