@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.core.cache import cache
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -21,20 +22,27 @@ class TranslationTest(TestCase):
     Tests the Linguist's Translation class.
     """
 
-    def test_add_fields_to_model(self):
+    def setUp(self):
+        cache.clear()
+
+    def test_fields(self):
         r = Registry()
         r.register(FooTranslation)
         for language in LANGUAGES:
             self.assertIn('title_%s' % language, dir(FooModel))
 
-    def test_field_values(self):
+    def test_getter_setter(self):
         r = Registry()
         r.register(FooTranslation)
         m = FooModel()
-        m.title = 'hello'
-        m.save()
-        m.title_fr = 'bonjour'
-        m.save()
+
+        with self.assertNumQueries(3):
+            # one query to save model object
+            m.title = 'hello'
+            m.save()
+            # get + create of translation object
+            m.title_fr = 'bonjour'
+
         o = FooModel.objects.all()[0]
         self.assertEqual(o.title, 'hello')
         self.assertEqual(o.title_fr, 'bonjour')
