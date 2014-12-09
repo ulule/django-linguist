@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
 from .. import settings
+from ..utils import build_cache_key
 
 
 class TranslationQuerySet(models.query.QuerySet):
@@ -20,12 +21,20 @@ class TranslationQuerySet(models.query.QuerySet):
                 if obj is not None:
                     return obj
         elif set(id_fields) <= set(kwargs.keys()):
-            values = tuple(kwargs[attr] for attr in id_fields)
-            cache_key = 'linguist_%s_%s_%s_%s' % values
+            cache_key = build_cache_key(**kwargs)
             obj = cache.get(cache_key)
             if obj is not None:
                 return obj
         return super(TranslationQuerySet, self).get(*args, **kwargs)
+
+    def iterator(self):
+        superiter = super(TranslationQuerySet, self).iterator()
+        while True:
+            obj = superiter.next()
+            # Use cache.add instead of cache.set to prevent race conditions
+            for key in obj.cache_keys:
+                cache.add(key, obj, settings.CACHE_DURATION)
+            yield obj
 
 
 class TranslationManager(models.Manager):
@@ -84,9 +93,9 @@ class TranslationManager(models.Manager):
 
     @staticmethod
     def _get_cache_keys(obj):
-        id_fields = ('identifier', 'object_id', 'language', 'field_name')
-        values = tuple(getattr(obj, attr) for attr in id_fields)
-        return ('linguist_%s_%s_%s_%s' % values, 'linguist_%s' % obj.id)
+        fields = ('identifier', 'object_id', 'language', 'field_name')
+        cache_key = build_cache_key(**dict((attr, getattr(obj, attr)) for attr in fields))
+        return (cache_key, 'linguist_%s' % obj.id)
 
 
 @python_2_unicode_compatible
