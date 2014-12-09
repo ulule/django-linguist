@@ -31,32 +31,24 @@ class TranslationField(object):
     def __get__(self, instance, instance_type=None):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
-        translation = self.get_translation(instance)
+        kwargs = dict(
+            identifier=self.identifier,
+            object_id=instance.pk,
+            language=self.language,
+            field_name=self.field.name)
+        translation = Translation.objects.get_translation(**kwargs)
         return translation.field_value if translation else getattr(instance, self.field.name)
 
     def __set__(self, instance, value):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
-        translation = self.get_translation(instance)
-        if translation is None:
-            translation = Translation(
-                identifier=self.identifier,
-                object_id=instance.pk,
-                language=self.language,
-                field_name=self.field.name)
-        translation.field_value = value
-        translation.save()
-
-    def get_translation(self, instance):
-        try:
-            translation = Translation.objects.get(
-                identifier=self.identifier,
-                object_id=instance.pk,
-                language=self.language,
-                field_name=self.field.name)
-        except Translation.DoesNotExist:
-            translation = None
-        return translation
+        kwargs = dict(
+            identifier=self.identifier,
+            object_id=instance.pk,
+            language=self.language,
+            field_name=self.field.name,
+            field_value=value)
+        Translation.objects.set_translation(**kwargs)
 
 
 def build_localized_field_name(field_name, language):
