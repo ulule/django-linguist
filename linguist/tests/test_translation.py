@@ -4,7 +4,6 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from ..registry import LinguistRegistry as Registry
-from ..models import Translation
 
 from . import settings
 
@@ -57,12 +56,12 @@ class TranslationTest(TestCase):
         m.title_fr = 'bonjour'
         m.title_en = 'Hello'
         with self.assertNumQueries(0):
-            string = '%s_%s' % (m.title_fr, m.title_en)
+            string = '%s_%s' % (m.title_fr, m.title_en)  # noqa
         cache.clear()
         with self.assertNumQueries(2):
-            string = '%s_%s' % (m.title_fr, m.title_en)
+            string = '%s_%s' % (m.title_fr, m.title_en)  # noqa
         cache.clear()
         self.assertTrue(hasattr(m, 'prefetch_translations'))
         m.prefetch_translations()
         with self.assertNumQueries(0):
-            string = '%s_%s' % (m.title_fr, m.title_en)
+            string = '%s_%s' % (m.title_fr, m.title_en)  # noqa

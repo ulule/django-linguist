@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-import copy
-
 from django.core.cache import cache
-from django.db.models import signals
 from django.test import TestCase
-from django.test.utils import override_settings
 
-from .. import settings
 from ..models import Translation
 
 
