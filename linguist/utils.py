@@ -87,3 +87,8 @@ def get_model_string(model_name):
             raise exceptions.ImproperlyConfigured(CLASS_PATH_ERROR % (
                 setting_name, setting_name))
     return '%s.%s' % (app_label, model_name)
+
+
+def build_cache_key(**kwargs):
+    keys = ('identifier', 'object_id', 'language', 'field_name')
+    return 'linguist_%s_%s_%s_%s' % tuple(kwargs[attr] for attr in keys)
