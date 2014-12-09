@@ -33,6 +33,7 @@ class LinguistRegistry(object):
         ``base.ModelTranslationBase``.
         """
         from .fields import add_translation_fields
+        from .methods import add_translation_methods
 
         if not isinstance(translations, (list, tuple)):
             translations = [translations]
@@ -40,6 +41,7 @@ class LinguistRegistry(object):
         for translation in translations:
             self.validate_translation(translation)
             add_translation_fields(translation)
+            add_translation_methods(translation)
             self._registry[translation.identifier] = translation
 
     def unregister(self, identifier):
