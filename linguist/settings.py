@@ -19,3 +19,8 @@ DEFAULT_LANGUAGE = getattr(
     settings,
     '%s_DEFAULT_LANGUAGE' % APP_NAMESPACE,
     settings.LANGUAGE_CODE)
+
+CACHE_DURATION = getattr(
+    settings,
+    '%s_CACHE_DURATION' % APP_NAMESPACE,
+    60 * 60)
