@@ -27,11 +27,11 @@ class TranslationManager(models.Manager):
             identifier=identifier,
             object_id=object_id,
             language=language,
-            field_name=field_name,
-            field_value=field_value)
+            field_name=field_name)
         try:
             obj = self.get(**attrs)
         except self.model.DoesNotExist:
+            attrs['field_value'] = field_value
             obj = self.create(**attrs)
             created = True
         if obj.field_value != field_value:

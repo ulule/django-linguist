@@ -39,9 +39,13 @@ class TranslationTest(TestCase):
             # get + create of translation object
             m.title_fr = 'bonjour'
 
+        m.title_fr = 'bonjour bonjour'
+
         o = FooModel.objects.all()[0]
         self.assertEqual(o.title, 'hello')
-        self.assertEqual(o.title_fr, 'bonjour')
+        self.assertEqual(o.title_fr, 'bonjour bonjour')
+
+
 
     def test_prefetch_translations(self):
         r = Registry()
