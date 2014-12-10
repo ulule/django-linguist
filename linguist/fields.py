@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import copy
+
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import fields
 from django.utils import six
@@ -9,6 +11,7 @@ from django.utils.functional import lazy
 
 from . import settings
 from .models import Translation
+from .utils import get_cache_key
 
 SUPPORTED_FIELDS = (fields.CharField, fields.TextField)
 
@@ -31,24 +34,48 @@ class TranslationField(object):
     def __get__(self, instance, instance_type=None):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
+
         kwargs = dict(
             identifier=self.identifier,
             object_id=instance.pk,
             language=self.language,
             field_name=self.field.name)
+
+        cache_key = get_cache_key(**kwargs)
+
+        if not hasattr(instance, '_linguist'):
+            instance._linguist = {}
+
+        if cache_key in instance._linguist:
+            return instance._linguist[cache_key].field_value
+
         translation = Translation.objects.get_translation(**kwargs)
-        return translation.field_value if translation else getattr(instance, self.field.name)
+        if translation:
+            instance._linguist[cache_key] = translation
+            return translation.field_value
+
+        return getattr(instance, self.field.name)
 
     def __set__(self, instance, value):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
+
         kwargs = dict(
             identifier=self.identifier,
             object_id=instance.pk,
             language=self.language,
             field_name=self.field.name,
             field_value=value)
-        Translation.objects.set_translation(**kwargs)
+
+        cache_kwargs = copy.copy(kwargs)
+        del cache_kwargs['field_value']
+        cache_key = get_cache_key(**cache_kwargs)
+
+        if not hasattr(instance, '_linguist'):
+            instance._linguist = {}
+
+        obj, created = Translation.objects.set_translation(**kwargs)
+        instance._linguist[cache_key] = obj
 
 
 def build_localized_field_name(field_name, language):

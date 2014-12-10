@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
-from django.core.cache import cache
-
-from . import settings
 from .models import Translation
-from .utils import build_cache_key
+from .utils import get_cache_key
 
 
 def prefetch_translations_for_model(translation_class):
     def prefetch_translations(self):
+        identifier = translation_class.identifier
+        if not hasattr(self, '_linguist'):
+            self._linguist = {}
         translations = Translation.objects.filter(
-            identifier=translation_class.identifier,
+            identifier=identifier,
             object_id=self.pk)
         for translation in translations:
-            cache_key = build_cache_key(**{
-                'identifier': translation.identifier,
+            cache_kwargs = {
+                'identifier': identifier,
                 'object_id': self.pk,
                 'language': translation.language,
                 'field_name': translation.field_name,
-            })
-            cache.add(cache_key, self, settings.CACHE_DURATION)
+            }
+            cache_key = get_cache_key(**cache_kwargs)
+            if cache_key not in self._linguist:
+                self._linguist[cache_key] = translation
     return prefetch_translations
 
 

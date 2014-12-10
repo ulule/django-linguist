@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.core.cache import cache
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -21,9 +20,6 @@ class TranslationTest(TestCase):
     """
     Tests the Linguist's Translation class.
     """
-
-    def setUp(self):
-        cache.clear()
 
     def test_fields(self):
         r = Registry()
@@ -51,17 +47,19 @@ class TranslationTest(TestCase):
         r = Registry()
         r.register(FooTranslation)
         m = FooModel()
+        self.assertTrue(hasattr(m, 'prefetch_translations'))
+
         m.title = 'hello'
         m.save()
         m.title_fr = 'bonjour'
         m.title_en = 'Hello'
-        with self.assertNumQueries(0):
-            string = '%s_%s' % (m.title_fr, m.title_en)  # noqa
-        cache.clear()
+
+        # reset cache
+        m._linguist = {}
+
         with self.assertNumQueries(2):
             string = '%s_%s' % (m.title_fr, m.title_en)  # noqa
-        cache.clear()
-        self.assertTrue(hasattr(m, 'prefetch_translations'))
+
         m.prefetch_translations()
         with self.assertNumQueries(0):
             string = '%s_%s' % (m.title_fr, m.title_en)  # noqa
