@@ -45,8 +45,6 @@ class TranslationTest(TestCase):
         self.assertEqual(o.title, 'hello')
         self.assertEqual(o.title_fr, 'bonjour bonjour')
 
-
-
     def test_prefetch_translations(self):
         r = Registry()
         r.register(FooTranslation)
