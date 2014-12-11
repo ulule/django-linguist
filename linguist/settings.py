@@ -4,7 +4,6 @@ from django.conf import settings
 
 APP_NAMESPACE = 'LINGUIST'
 
-
 TRANSLATION_MODEL = getattr(
     settings,
     '%s_TRANSLATION_MODEL' % APP_NAMESPACE,
@@ -19,8 +18,3 @@ DEFAULT_LANGUAGE = getattr(
     settings,
     '%s_DEFAULT_LANGUAGE' % APP_NAMESPACE,
     settings.LANGUAGE_CODE)
-
-CACHE_DURATION = getattr(
-    settings,
-    '%s_CACHE_DURATION' % APP_NAMESPACE,
-    60 * 60)
