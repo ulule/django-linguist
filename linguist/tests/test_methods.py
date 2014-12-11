@@ -3,13 +3,8 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from ..registry import LinguistRegistry as Registry
-
 from . import settings
-
-from .translations import (
-    FooModel,
-    FooTranslation
-)
+from .translations import FooModel, FooTranslation
 
 
 LANGUAGES = [l[0] for l in settings.LANGUAGES]
