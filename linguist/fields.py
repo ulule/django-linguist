@@ -5,20 +5,45 @@ import copy
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import fields
-from django.utils import six
-from django.utils.encoding import force_text
-from django.utils.functional import lazy
 
 from . import settings
 from .models import Translation
-from .utils import get_cache_key
+from .utils import (get_cache_key,
+                    get_language,
+                    build_localized_field_name,
+                    build_localized_verbose_name)
 
-SUPPORTED_FIELDS = (fields.CharField, fields.TextField)
+
+SUPPORTED_FIELDS = (
+    fields.CharField,
+    fields.TextField,
+)
+
+
+class TranslatedField(object):
+    """
+    Translated field.
+    """
+
+    def __init__(self, field):
+        self.field = field
+
+    def __set__(self, instance, value):
+        if instance is None:
+            raise AttributeError('Can only be accessed via instance')
+        field_name = build_localized_field_name(self.field.name, get_language())
+        setattr(instance, field_name, value)
+
+    def __get__(self, instance, instance_type=None):
+        if instance is None:
+            raise AttributeError('Can only be accessed via instance')
+        field_name = build_localized_field_name(self.field.name, get_language())
+        return getattr(instance, field_name, None)
 
 
 class TranslationField(object):
     """
-    Translation Descriptor.
+    Translation field.
     """
 
     def __init__(self, identifier, field, language, *args, **kwargs):
@@ -76,22 +101,6 @@ class TranslationField(object):
 
         obj, created = Translation.objects.set_translation(**kwargs)
         instance._linguist[cache_key] = obj
-
-
-def build_localized_field_name(field_name, language):
-    """
-    Build localized field name from ``field_name`` and ``language``.
-    """
-    return '%s_%s' % (field_name, language.replace('-', '_'))
-
-
-def _build_localized_verbose_name(verbose_name, language):
-    """
-    Build localized verbose name from ``verbose_name`` and ``language``.
-    """
-    return force_text('%s [%s]') % (force_text(verbose_name), language)
-
-build_localized_verbose_name = lazy(_build_localized_verbose_name, six.text_type)
 
 
 def create_translation_field(identifier, model, field_name, language):
