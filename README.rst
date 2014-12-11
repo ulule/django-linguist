@@ -21,7 +21,7 @@ In your ``settings.py``, add ``linguist`` to ``INSTALLED_APPS``:
         'linguist',
     )
 
-Synchronizes database:
+Then synchronize database:
 
 .. code-block:: bash
 
@@ -54,7 +54,6 @@ then register them like this :
         fields = ('title', 'body')
 
 
-    linguist.register(CategoryTranslation)
     linguist.register(PostTranslation)
 
 Translation classes are dead simple. You just have to define three class attributes:
@@ -89,10 +88,10 @@ default language is English (``en``), then ``Post.title`` will refer to ``post.t
 
 Linguist adds four new methods to your model instances:
 
-    * ``instance.get_current_language()``
-    * ``instance.set_current_language()``
-    * ``instance.linguist_clear_cache()``
-    * ``instance.prefetch_translations()``
+* ``instance.get_current_language()``
+* ``instance.set_current_language()``
+* ``instance.linguist_clear_cache()``
+* ``instance.prefetch_translations()``
 
 Let's play with ``get_current_language()`` and ``set_current_language()``:
 
@@ -124,11 +123,15 @@ Let's play with ``get_current_language()`` and ``set_current_language()``:
 
 To improve performances, you should prefetch translations:
 
+.. code-block:: python
+
     >>> post.prefetch_translations()
 
 Now, all translations are cached in the instance. Database won't be hit.
 
 You can clear the cache at anytime with:
+
+.. code-block:: python
 
     >>> post.linguist_clear_cache()
 
