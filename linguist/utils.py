@@ -4,6 +4,7 @@ from django.utils import six
 from django.utils.importlib import import_module
 from django.utils.encoding import force_text
 from django.utils.functional import lazy
+from django.utils.translation import get_language as _get_language
 
 from . import settings
 
@@ -102,7 +103,6 @@ def get_language():
     Returns an active language code that is guaranteed to be in
     settings.SUPPORTED_LANGUAGES.
     """
-    from django.utils.translation import get_language as _get_language
     lang = _get_language()
     if lang not in settings.AVAILABLE_LANGUAGES and '-' in lang:
         lang = lang.split('-')[0]
