@@ -104,9 +104,10 @@ def get_language():
     settings.SUPPORTED_LANGUAGES.
     """
     lang = _get_language()
-    if lang not in settings.AVAILABLE_LANGUAGES and '-' in lang:
+    langs = [l[0] for l in settings.SUPPORTED_LANGUAGES]
+    if lang not in langs and '-' in lang:
         lang = lang.split('-')[0]
-    if lang in settings.SUPPORTED_LANGUAGES:
+    if lang in langs:
         return lang
     return settings.DEFAULT_LANGUAGE
 
