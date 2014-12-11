@@ -21,47 +21,26 @@ class TranslationTest(TestCase):
     Tests the Linguist's Translation class.
     """
 
+    def setUp(self):
+        self.registry = Registry()
+        self.registry.register(FooTranslation)
+        self.instance = FooModel()
+
     def test_fields(self):
-        r = Registry()
-        r.register(FooTranslation)
         for language in LANGUAGES:
             self.assertIn('title_%s' % language, dir(FooModel))
 
     def test_getter_setter(self):
-        r = Registry()
-        r.register(FooTranslation)
-        m = FooModel()
-
         with self.assertNumQueries(3):
-            # one query to save model object
-            m.title = 'hello'
-            m.save()
-            # get + create of translation object
-            m.title_fr = 'bonjour'
+            # save = 1 query
+            self.instance.save()
+            # get / create "en" translation = 2 queries
+            self.instance.title = 'Hello'
 
-        m.title_fr = 'bonjour bonjour'
+        self.assertEqual(self.instance.title_en, 'Hello')
+        self.assertIsNone(self.instance.title_fr)
 
-        o = FooModel.objects.all()[0]
-        self.assertEqual(o.title, 'hello')
-        self.assertEqual(o.title_fr, 'bonjour bonjour')
-
-    def test_prefetch_translations(self):
-        r = Registry()
-        r.register(FooTranslation)
-        m = FooModel()
-        self.assertTrue(hasattr(m, 'prefetch_translations'))
-
-        m.title = 'hello'
-        m.save()
-        m.title_fr = 'bonjour'
-        m.title_en = 'Hello'
-
-        # reset cache
-        m._linguist = {}
-
-        with self.assertNumQueries(2):
-            string = '%s_%s' % (m.title_fr, m.title_en)  # noqa
-
-        m.prefetch_translations()
-        with self.assertNumQueries(0):
-            string = '%s_%s' % (m.title_fr, m.title_en)  # noqa
+        self.instance.set_current_language('fr')
+        self.instance.title = 'Bonjour'
+        self.assertEqual(self.instance.title_en, 'Hello')
+        self.assertEqual(self.instance.title_fr, 'Bonjour')
