@@ -1,10 +1,6 @@
 django-linguist
 ===============
 
-.. image:: https://secure.travis-ci.org/ulule/django-linguist.png?branch=master
-    :alt: Build Status
-    :target: http://travis-ci.org/ulule/django-linguist
-
 Installation
 ------------
 
