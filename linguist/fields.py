@@ -21,21 +21,26 @@ SUPPORTED_FIELDS = (
 
 
 class TranslationFieldMixin(object):
+    """
+    Common logic for translated and translation fields.
+    """
 
     def getter_cache(self, instance, field_name, language):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
+
         kwargs = dict(
-            identifier=self.identifier,
+            identifier=instance._linguist.identifier,
             object_id=instance.pk,
             language=language,
             field_name=field_name)
+
         cache_key = get_cache_key(**kwargs)
-        if not hasattr(instance, '_linguist'):
-            instance._linguist = {}
         if cache_key in instance._linguist:
             return instance._linguist[cache_key].field_value
+
         translation = Translation.objects.get_translation(**kwargs)
+
         if translation:
             instance._linguist[cache_key] = translation
             return translation.field_value
@@ -43,17 +48,18 @@ class TranslationFieldMixin(object):
     def setter_cache(self, instance, field_name, language, value):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
+
         kwargs = dict(
-            identifier=self.identifier,
+            identifier=instance._linguist.identifier,
             object_id=instance.pk,
             language=language,
             field_name=field_name,
             field_value=value)
+
         cache_kwargs = copy.copy(kwargs)
         del cache_kwargs['field_value']
         cache_key = get_cache_key(**cache_kwargs)
-        if not hasattr(instance, '_linguist'):
-            instance._linguist = {}
+
         obj, created = Translation.objects.set_translation(**kwargs)
         instance._linguist[cache_key] = obj
 
@@ -63,19 +69,16 @@ class TranslatedField(TranslationFieldMixin):
     Translated field.
     """
 
-    def __init__(self, identifier, field):
-        self.identifier = identifier
+    def __init__(self, field):
         self.field = field
 
     def __get__(self, instance, instance_type=None):
-        language = instance.get_current_language()
-        field_name = build_localized_field_name(self.field.name, language)
-        return self.getter_cache(instance, field_name, language)
+        field_name = build_localized_field_name(self.field.name, instance.language)
+        return self.getter_cache(instance, field_name, instance.language)
 
     def __set__(self, instance, value):
-        language = instance.get_current_language()
-        field_name = build_localized_field_name(self.field.name, language)
-        self.setter_cache(instance, field_name, language, value)
+        field_name = build_localized_field_name(self.field.name, instance.language)
+        self.setter_cache(instance, field_name, instance.language, value)
 
 
 class TranslationField(TranslationFieldMixin):
@@ -83,8 +86,7 @@ class TranslationField(TranslationFieldMixin):
     Translation field.
     """
 
-    def __init__(self, identifier, field, language, *args, **kwargs):
-        self.identifier = identifier
+    def __init__(self, field, language):
         self.field = field
         self.language = language
         self.attname = build_localized_field_name(self.field.name, language)
@@ -100,52 +102,75 @@ class TranslationField(TranslationFieldMixin):
         self.setter_cache(instance, self.name, self.language, value)
 
 
-def create_translation_field(identifier, model, field_name, language):
-    """
-    Returns a ``TranslationField`` based on a ``field_name`` and a ``language``.
-    """
-    field = model._meta.get_field(field_name)
-    cls_name = field.__class__.__name__
-    if not isinstance(field, SUPPORTED_FIELDS):
-        raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
-    return TranslationField(
-        identifier=identifier,
-        field=field,
-        language=language)
+class CacheDescriptor(dict):
+
+    def __init__(self, identifier):
+        self._identifier = identifier
+        self['identifier'] = self._identifier
+
+    @property
+    def language(self):
+        return self['language'] if 'language' in self else get_language()
+
+    @language.setter
+    def language(self, value):
+        self['language'] = value
+
+    @property
+    def identifier(self):
+        return self['identifier'] if 'identifier' in self else self._identifier
+
+    @identifier.setter
+    def identifier(self, value):
+        self['identifier'] = value
 
 
-def add_translated_field(model, identifier, field_name):
+def add_cache_property(model, identifier):
+    """
+    Adds cache property to model.
+    """
+    model.add_to_class('_linguist', CacheDescriptor(identifier))
+
+
+def add_translated_field(model, field_name):
     """
     Replaces translated field with `TranslatedField` descriptor.
     """
-    if field_name not in model._meta.get_all_field_names():
-        print('NOT FIELD NAME')
-        return
-    if not hasattr(model._meta, 'linguist_translated_fields'):
-        model._meta.linguist_translated_fields = {}
-    field = model._meta.get_field(field_name)
-    model._meta.linguist_translated_fields[field_name] = field
-    setattr(model, field_name, TranslatedField(identifier=identifier, field=field))
+    if field_name in model._meta.get_all_field_names():
+        field = model._meta.get_field(field_name)
+        setattr(model, field_name, TranslatedField(field))
 
 
-def add_translation_fields(translation_class):
+def add_translation_fields(model, field_name):
     """
-    Patches original model to provide fields for each language.
+    Adds translation fields to given model.
+    """
+    field = model._meta.get_field(field_name)
+    cls_name = field.__class__.__name__
+
+    if not isinstance(field, SUPPORTED_FIELDS):
+        raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
+
+    for language_code, language_name in settings.SUPPORTED_LANGUAGES:
+        translation_field = TranslationField(field, language_code)
+        localized_field_name = build_localized_field_name(field_name, language_code)
+        if hasattr(model, localized_field_name):
+            raise ValueError(
+                "Error adding translation field. Model '%s' already contains a field named"
+                "'%s'." % (model._meta.object_name, localized_field_name))
+        model.add_to_class(localized_field_name, translation_field)
+
+
+def contribute_to_model(translation_class):
+    """
+    Adds fields and properties to model.
     """
     identifier = translation_class.identifier
     model = translation_class.model
     fields = translation_class.fields
+
+    add_cache_property(model, identifier)
+
     for field_name in fields:
-        add_translated_field(model=model, identifier=identifier, field_name=field_name)
-        for language, name in settings.SUPPORTED_LANGUAGES:
-            translation_field = create_translation_field(
-                identifier=identifier,
-                model=model,
-                field_name=field_name,
-                language=language)
-            localized_field_name = build_localized_field_name(field_name, language)
-            if hasattr(model, localized_field_name):
-                raise ValueError(
-                    "Error adding translation field. Model '%s' already contains a field named"
-                    "'%s'." % (model._meta.object_name, localized_field_name))
-            model.add_to_class(localized_field_name, translation_field)
+        add_translated_field(model, field_name)
+        add_translation_fields(model, field_name)
