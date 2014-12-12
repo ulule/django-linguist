@@ -2,8 +2,10 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from linguist.mixins import LinguistMixin
 
-class Category(models.Model):
+
+class Category(models.Model, LinguistMixin):
     name = models.CharField(_('title'), max_length=255)
 
     class Meta:
@@ -11,7 +13,7 @@ class Category(models.Model):
         verbose_name_plural = _('categories')
 
 
-class Post(models.Model):
+class Post(models.Model, LinguistMixin):
     title = models.CharField(_('title'), max_length=255)
     body = models.TextField(blank=True)
 
