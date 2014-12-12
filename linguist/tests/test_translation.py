@@ -40,7 +40,7 @@ class TranslationTest(TestCase):
         self.assertEqual(self.instance.title_en, 'Hello')
         self.assertIsNone(self.instance.title_fr)
 
-        self.instance.set_current_language('fr')
+        self.instance.language = 'fr'
         self.instance.title = 'Bonjour'
         self.assertEqual(self.instance.title_en, 'Hello')
         self.assertEqual(self.instance.title_fr, 'Bonjour')
