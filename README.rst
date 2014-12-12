@@ -60,6 +60,18 @@ Translation classes are dead simple. You just have to define three class attribu
 
 And of course, you need to register them. Unregistered classes will be simply skipped.
 
+Finally, add ``LinguistMixin`` to your models:
+
+.. code-block:: python
+
+    from django.db import models
+    from linguist.mixins import LinguistMixin
+
+
+    class Post(models.Model, LinguistMixin):
+        title = models.CharField(max_length=255)
+
+
 How it works
 ------------
 
@@ -82,32 +94,30 @@ When you set/get ``post.title``, Linguist will use the current active language
 and will set/get the correct field for this language. For example, if your
 default language is English (``en``), then ``Post.title`` will refer to ``post.title_en``.
 
-Linguist adds four new methods to your model instances:
+The ``LinguistMixin`` adds one property and two methods to your model instances:
 
-* ``instance.get_current_language()``
-* ``instance.set_current_language()``
-* ``instance.linguist_clear_cache()``
+* ``instance.language``
+* ``instance.clear_translations_cache()``
 * ``instance.prefetch_translations()``
-
-Let's play with ``get_current_language()`` and ``set_current_language()``:
 
 .. code-block:: python
 
     >>> post = Post()
 
-    >>> post.get_current_language()
+    # Defaults to settings.DEFAULT_LANGUAGE_CODE
+    >>> post.language
     en
 
     >>> post.title = 'Hello'
     >>> post.title
     Hello
 
-    >>> post.set_current_language('fr')
+    >>> post.language = 'fr'
     >>> post.title = 'Bonjour'
     >>> post.title
     Bonjour
 
-    >>> post.set_current_language('en')
+    >>> post.language = 'en'
     >>> post.title
     Hello
 
@@ -129,7 +139,7 @@ You can clear the cache at anytime with:
 
 .. code-block:: python
 
-    >>> post.linguist_clear_cache()
+    >>> post.clear_translations_cache()
 
 Development
 -----------
