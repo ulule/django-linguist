@@ -2,9 +2,9 @@
 from django.db import models
 
 from ..base import ModelTranslationBase
+from ..mixins import LinguistMixin
 
-
-class FooModel(models.Model):
+class FooModel(models.Model, LinguistMixin):
     title = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -15,7 +15,7 @@ class FooTranslation(ModelTranslationBase):
     fields = ('title', )
 
 
-class BarModel(models.Model):
+class BarModel(models.Model, LinguistMixin):
     title = models.CharField(max_length=255)
 
 
