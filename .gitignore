@@ -36,3 +36,4 @@ example/static
 example/media
 .venv
 .env
+*.sqlite3
