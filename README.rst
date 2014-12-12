@@ -168,3 +168,15 @@ Tests
     $ vagrant up && vagrant ssh
     $ cd /vagrant
     $ make test
+
+Example Project
+---------------
+
+.. code-block:: bash
+
+    $ vagrant up && vagrant ssh
+    $ cd /vagrant
+    $ ENV=example python manage.py syncdb
+    $ ENV=example python manage.py runserver [::]:8000
+
+Go to http://127.0.0.1:1337.
