@@ -74,12 +74,7 @@ class TranslationFieldMixin(object):
 
     def contribute_to_class(self, cls, name):
         self.model = cls
-        self.name = name
-        self.attname = name
-        self.column = None
-        setattr(cls, name, self)
-        #cls._meta.add_field(self)
-        cls._meta.virtual_fields.append(self)
+        setattr(cls, self.name, self)
 
 
 class TranslatedField(TranslationFieldMixin):
@@ -89,6 +84,10 @@ class TranslatedField(TranslationFieldMixin):
 
     def __init__(self, field):
         self.field = field
+        self.attname = self.field.name
+        self.name = self.attname
+        self.column = None
+        self.editable = True
 
     def __get__(self, instance, instance_type=None):
         field_name = build_localized_field_name(self.field.name, instance.language)
@@ -112,6 +111,8 @@ class TranslationField(TranslationFieldMixin):
         self.verbose_name = build_localized_verbose_name(field.verbose_name, language)
         self.null = True
         self.blank = True
+        self.column = None
+        self.editable = True
 
     def __get__(self, instance, instance_type=None):
         return self.getter_cache(instance, self.name, self.language)
