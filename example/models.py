@@ -6,6 +6,7 @@ from linguist.mixins import LinguistMixin
 
 
 class Category(models.Model, LinguistMixin):
+    created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(_('title'), max_length=255)
 
     class Meta:
@@ -14,13 +15,10 @@ class Category(models.Model, LinguistMixin):
 
 
 class Post(models.Model, LinguistMixin):
+    created_at = models.DateTimeField(auto_now_add=True)
     title = models.CharField(_('title'), max_length=255)
     body = models.TextField(blank=True)
-
-    category = models.ForeignKey(
-        Category,
-        verbose_name=_('category'),
-        null=True)
+    category = models.ForeignKey(Category, blank=True, null=True)
 
     class Meta:
         verbose_name = _('post')
