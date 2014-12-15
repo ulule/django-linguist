@@ -72,10 +72,6 @@ class TranslationFieldMixin(object):
         """
         return None
 
-    def contribute_to_class(self, cls, name):
-        self.model = cls
-        setattr(cls, self.name, self)
-
 
 class TranslatedField(TranslationFieldMixin):
     """
@@ -165,6 +161,7 @@ def add_translation_fields(model, field_name):
     Adds translation fields to given model.
     """
     field = model._meta.get_field(field_name)
+    field_names = [f.name for f in model._meta.fields]
     cls_name = field.__class__.__name__
 
     if not isinstance(field, SUPPORTED_FIELDS):
@@ -177,10 +174,8 @@ def add_translation_fields(model, field_name):
             raise ValueError(
                 "Error adding translation field. Model '%s' already contains a field named"
                 "'%s'." % (model._meta.object_name, localized_field_name))
-
-        model.add_to_class(localized_field_name, translation_field)
-
-        if translation_field not in model._meta.fields:
+        if localized_field_name not in field_names:
+            model.add_to_class(localized_field_name, translation_field)
             model._meta.fields.append(translation_field)
 
 
