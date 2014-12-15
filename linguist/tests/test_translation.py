@@ -28,7 +28,8 @@ class TranslationTest(TestCase):
 
     def test_fields(self):
         for language in LANGUAGES:
-            self.assertIn('title_%s' % language, dir(FooModel))
+            field_name = 'title_%s' % language
+            self.assertIn(field_name, dir(FooModel))
 
     def test_getter_setter(self):
         with self.assertNumQueries(3):
