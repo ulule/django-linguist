@@ -16,6 +16,14 @@ class LinguistMixin(object):
     def language(self, value):
         self._linguist.language = value
 
+    def get_available_languages(self):
+        identifier = self._linguist.identifier
+        return (Translation.objects
+                           .filter(identifier=identifier, object_id=self.pk)
+                           .values_list('language', flat=True)
+                           .distinct()
+                           .order_by('language'))
+
     def prefetch_translations(self):
         identifier = self._linguist.identifier
         translations = Translation.objects.filter(identifier=identifier, object_id=self.pk)
