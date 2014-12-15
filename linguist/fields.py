@@ -5,6 +5,7 @@ import copy
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import fields
+from django.forms.forms import pretty_name
 
 from . import settings
 from .models import Translation
@@ -62,6 +63,23 @@ class TranslationFieldMixin(object):
 
         obj, created = Translation.objects.set_translation(**kwargs)
         instance._linguist[cache_key] = obj
+
+    def db_type(self, connection):
+        """
+        Returning None will cause Django to exclude this field from the concrete
+        field list (``_meta.concrete_fields``) resulting in the fact that syncdb
+        will skip this field when creating tables in PostgreSQL.
+        """
+        return None
+
+    def contribute_to_class(self, cls, name):
+        self.model = cls
+        self.name = name
+        self.attname = name
+        self.column = None
+        setattr(cls, name, self)
+        #cls._meta.add_field(self)
+        cls._meta.virtual_fields.append(self)
 
 
 class TranslatedField(TranslationFieldMixin):
@@ -158,7 +176,11 @@ def add_translation_fields(model, field_name):
             raise ValueError(
                 "Error adding translation field. Model '%s' already contains a field named"
                 "'%s'." % (model._meta.object_name, localized_field_name))
+
         model.add_to_class(localized_field_name, translation_field)
+
+        if translation_field not in model._meta.fields:
+            model._meta.fields.append(translation_field)
 
 
 def contribute_to_model(translation_class):
