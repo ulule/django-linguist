@@ -7,11 +7,11 @@ from .models import Post, Category
 
 
 class PostAdmin(admin.ModelAdmin, ModelTranslationAdminMixin):
-    pass
+    list_display = ('title', 'body', 'created_at')
 
 
 class CategoryAdmin(admin.ModelAdmin, ModelTranslationAdminMixin):
-    pass
+    list_display = ('name', 'created_at')
 
 
 admin.site.register(Post, PostAdmin)
