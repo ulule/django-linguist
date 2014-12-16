@@ -5,7 +5,6 @@ import copy
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import fields
-from django.forms.forms import pretty_name
 
 from . import settings
 from .models import Translation
