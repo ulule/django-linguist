@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-
 from .. import settings as settings
 
 
-class TabsList(list):
-
-    def __init__(self, seq=(), css_class=None):
-        self.css_class = css_class
-        self.current_is_translated = False
-        self.allow_deletion = False
-        super(TabsList, self).__init__(seq)
+def get_language_parameter(request, query_language_key='language', object=None, default=None):
+    """
+    Returns the language parameter from the current request.
+    """
+    code = request.GET.get(query_language_key)
+    if not code:
+        code = default or settings.DEFAULT_LANGUAGE
+    return code.lower().replace('_', '-')
 
 
 def get_language_tabs(request, current_language, available_languages, css_class=None):
@@ -39,3 +39,12 @@ def get_language_tabs(request, current_language, available_languages, css_class=
     tabs.allow_deletion = len(available_languages) > 1
 
     return tabs
+
+
+class TabsList(list):
+
+    def __init__(self, seq=(), css_class=None):
+        self.css_class = css_class
+        self.current_is_translated = False
+        self.allow_deletion = False
+        super(TabsList, self).__init__(seq)
