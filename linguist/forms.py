@@ -5,18 +5,18 @@ from django.forms.models import BaseInlineFormSet
 from .utils.i18n import get_language
 
 __all__ = [
-    'TranslationModelFormMixin',
-    'TranslationModelForm',
+    'ModelTranslationFormMixin',
+    'ModelTranslationForm',
 ]
 
 
-class TranslationModelFormMixin(object):
+class ModelTranslationFormMixin(object):
 
     language = None
 
     def __init__(self, *args, **kwargs):
         current_language = kwargs.pop('_current_language', None)
-        super(TranslationModelFormMixin, self).__init__(*args, **kwargs)
+        super(ModelTranslationFormMixin, self).__init__(*args, **kwargs)
         instance = kwargs.get('instance', None)
         if self.language is None:
             if instance:
@@ -26,22 +26,22 @@ class TranslationModelFormMixin(object):
 
     def _post_clean(self):
         self.instance.language = self.language
-        super(TranslationModelFormMixin, self)._post_clean()
+        super(ModelTranslationFormMixin, self)._post_clean()
 
 
-class TranslationModelForm(TranslationModelFormMixin, forms.ModelForm):
+class ModelTranslationForm(ModelTranslationFormMixin, forms.ModelForm):
     pass
 
 
-class TranslationBaseInlineFormSet(BaseInlineFormSet):
+class ModelTranslationInlineFormSet(BaseInlineFormSet):
 
     language = None
 
     def _construct_form(self, i, **kwargs):
-        form = super(TranslationBaseInlineFormSet, self)._construct_form(i, **kwargs)
+        form = super(ModelTranslationInlineFormSet, self)._construct_form(i, **kwargs)
         form.language = self.language
         return form
 
     def save_new(self, form, commit=True):
-        obj = super(TranslationBaseInlineFormSet, self).save_new(form, commit)
+        obj = super(ModelTranslationInlineFormSet, self).save_new(form, commit)
         return obj
