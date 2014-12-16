@@ -19,6 +19,9 @@ class LinguistMixinTest(TestCase):
         self.registry = Registry()
         self.registry.register(FooTranslation)
         self.instance = FooModel()
+        self.instance.save()
+        self.instance.language = 'en'
+        self.instance.title = 'Hello'
 
     def test_identifier(self):
         self.assertTrue(hasattr(self.instance, 'identifier'))
@@ -33,9 +36,17 @@ class LinguistMixinTest(TestCase):
     def test_get_translations(self):
         self.assertTrue(hasattr(self.instance, 'get_translations'))
         self.assertEqual(len(self.instance.get_translations()), 1)
+
+    def test_delete_translations(self):
+        self.assertTrue(hasattr(self.instance, 'delete_translations'))
+        self.assertEqual(len(self.instance._linguist.keys()), 4)
         self.instance.language = 'fr'
         self.instance.title = 'Bonjour'
         self.assertEqual(len(self.instance.get_translations()), 2)
+        self.instance.delete_translations(language='fr')
+        self.assertEqual(len(self.instance.get_translations()), 1)
+        self.instance.delete_translations()
+        self.assertEqual(len(self.instance.get_translations()), 0)
 
     def test_clear_translations_cache(self):
         self.assertTrue(hasattr(self.instance, 'clear_translations_cache'))
@@ -48,8 +59,7 @@ class LinguistMixinTest(TestCase):
     def test_prefetch_translations(self):
         self.assertTrue(hasattr(self.instance, 'prefetch_translations'))
 
-        with self.assertNumQueries(5):
-            self.instance.save()
+        with self.assertNumQueries(3):
             self.instance.title_en = 'Hello'
             self.instance.title_fr = 'Bonjour'
 
