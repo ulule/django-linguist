@@ -29,6 +29,19 @@ class LinguistMixin(object):
     def get_translations(self, language=None):
         return self._translations_qs(language=language)
 
+    def delete_translations(self, language=None):
+        translations = self._translations_qs
+        for translation in translations:
+            cache_key = get_cache_key(**{
+                'identifier': self.identifier,
+                'object_id': self.pk,
+                'language': translation.language,
+                'field_name': translation.field_name,
+            })
+            if cache_key in self._linguist:
+                del self._linguist[cache_key]
+        self._translations_qs(language=language).delete()
+
     def get_available_languages(self):
         identifier = self._linguist.identifier
         return (Translation.objects
