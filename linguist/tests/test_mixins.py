@@ -30,6 +30,13 @@ class LinguistMixinTest(TestCase):
         self.instance.language = 'fr'
         self.assertEqual(self.instance.language, 'fr')
 
+    def test_get_translations(self):
+        self.assertTrue(hasattr(self.instance, 'get_translations'))
+        self.assertEqual(len(self.instance.get_translations()), 1)
+        self.instance.language = 'fr'
+        self.instance.title = 'Bonjour'
+        self.assertEqual(len(self.instance.get_translations()), 2)
+
     def test_clear_translations_cache(self):
         self.assertTrue(hasattr(self.instance, 'clear_translations_cache'))
         self.instance.language = 'fr'
