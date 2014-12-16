@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from linguist.admin import ModelTranslationAdminMixin
+from linguist.admin import ModelTranslationAdmin
 
 from .models import Post, Category
 
 
-class PostAdmin(admin.ModelAdmin, ModelTranslationAdminMixin):
+class PostAdmin(ModelTranslationAdmin):
     list_display = ('title', 'body', 'created_at')
 
 
-class CategoryAdmin(admin.ModelAdmin, ModelTranslationAdminMixin):
+class CategoryAdmin(ModelTranslationAdmin):
     list_display = ('name', 'created_at')
 
 
