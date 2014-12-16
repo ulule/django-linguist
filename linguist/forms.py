@@ -22,7 +22,7 @@ class TranslationModelFormMixin(object):
             if instance:
                 self.language = instance.language
                 return
-            self.language_code = current_language or get_language()
+            self.language = current_language or get_language()
 
     def _post_clean(self):
         self.instance.language = self.language
