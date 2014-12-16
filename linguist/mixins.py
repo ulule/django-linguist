@@ -20,6 +20,15 @@ class LinguistMixin(object):
     def language(self, value):
         self._linguist.language = value
 
+    def _translations_qs(self, language=None):
+        kwargs = dict(identifier=self.identifier, object_id=self.pk)
+        if language:
+            kwargs['language'] = language
+        return Translation.objects.filter(**kwargs)
+
+    def get_translations(self, language=None):
+        return self._translations_qs(language=language)
+
     def get_available_languages(self):
         identifier = self._linguist.identifier
         return (Translation.objects
