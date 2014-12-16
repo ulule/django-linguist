@@ -9,10 +9,10 @@ from django.forms.forms import pretty_name
 
 from . import settings
 from .models import Translation
-from .utils import (get_cache_key,
-                    get_language,
-                    build_localized_field_name,
-                    build_localized_verbose_name)
+from .utils.i18n import (get_cache_key,
+                         get_language,
+                         build_localized_field_name,
+                         build_localized_verbose_name)
 
 
 SUPPORTED_FIELDS = (
