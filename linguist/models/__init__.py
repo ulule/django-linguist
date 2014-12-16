@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import django
 
-from ..utils import load_class
+from ..utils.models import load_class
 from .. import settings
 
 
