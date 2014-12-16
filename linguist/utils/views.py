@@ -28,12 +28,12 @@ def get_language_tabs(request, current_language, available_languages, css_class=
         get['language'] = lang_code
         url = '{0}?{1}'.format(base_url, get.urlencode())
         status = 'empty'
-        if code == current_language:
+        if lang_code == current_language:
             status = 'current'
-        if code in available_languages:
+        if lang_code in available_languages:
             status = 'available'
         tabs.append((url, lang_name, lang_code, status))
-        tab_languages.append(code)
+        tab_languages.append(lang_code)
 
     tabs.current_is_translated = current_language in available_languages
     tabs.allow_deletion = len(available_languages) > 1
