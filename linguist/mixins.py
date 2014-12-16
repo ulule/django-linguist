@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 from .models import Translation
-from .utils import get_cache_key
+from .utils.i18n import get_cache_key
 
 
 class LinguistMixin(object):
 
     def clear_translations_cache(self):
         self._linguist.clear()
+
+    @property
+    def identifier(self):
+        return self._linguist.identifier
 
     @property
     def language(self):
