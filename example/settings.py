@@ -85,3 +85,14 @@ LOGGING = {
         },
     },
 }
+
+ugettext = lambda s: s
+
+LANGUAGES = (
+    ('en', ugettext(u'English')),
+    ('de', ugettext(u'German')),
+    ('fr', ugettext(u'French')),
+    ('es', ugettext(u'Spanish')),
+    ('it', ugettext(u'Italian')),
+    ('pt', ugettext(u'Portuguese')),
+)
