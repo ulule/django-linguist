@@ -20,6 +20,10 @@ class LinguistMixinTest(TestCase):
         self.registry.register(FooTranslation)
         self.instance = FooModel()
 
+    def test_identifier(self):
+        self.assertTrue(hasattr(self.instance, 'identifier'))
+        self.assertEqual(self.instance.identifier, 'foo')
+
     def test_language(self):
         self.assertTrue(hasattr(self.instance, 'language'))
         self.assertEqual(self.instance.language, 'en')
