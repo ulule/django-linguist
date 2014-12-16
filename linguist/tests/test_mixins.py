@@ -9,6 +9,7 @@ from .translations import FooModel, FooTranslation
 
 LANGUAGES = [l[0] for l in settings.LANGUAGES]
 
+
 @override_settings(DEBUG=True)
 class LinguistMixinTest(TestCase):
     """
@@ -64,13 +65,13 @@ class LinguistMixinTest(TestCase):
             self.instance.title_fr = 'Bonjour'
 
         with self.assertNumQueries(0):
-            string = '%s %s' % (self.instance.title_fr, self.instance.title_en)
+            string = '%s %s' % (self.instance.title_fr, self.instance.title_en)  # noqa
 
         self.instance.clear_translations_cache()
         with self.assertNumQueries(2):
-             string = '%s %s' % (self.instance.title_fr, self.instance.title_en)
+            string = '%s %s' % (self.instance.title_fr, self.instance.title_en)  # noqa
 
         self.instance.clear_translations_cache()
         self.instance.prefetch_translations()
         with self.assertNumQueries(0):
-             string = '%s %s' % (self.instance.title_fr, self.instance.title_en)
+            string = '%s %s' % (self.instance.title_fr, self.instance.title_en)  # noqa
