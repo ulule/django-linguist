@@ -44,9 +44,6 @@ class BaseModelTranslationAdmin(BaseModelAdmin):
         base_media = super(BaseModelTranslationAdmin, self).media
         return base_media + _language_media
 
-    def _has_translatable_model(self):
-        return issubclass(self.model, LinguistMixin)
-
     def _language(self, request):
         return get_language_parameter(request, self.query_language_key)
 
@@ -65,9 +62,7 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
 
     @property
     def change_form_template(self):
-        if self._has_translatable_model():
-            return 'admin/linguist/change_form.html'
-        return None
+        return 'admin/linguist/change_form.html'
 
     def language_column(self, obj):
         languages = self.get_available_languages(obj)
@@ -82,14 +77,12 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
 
     def get_object(self, request, object_id):
         obj = super(ModelTranslationAdmin, self).get_object(request, object_id)
-        if obj is not None and self._has_translatable_model():
+        if obj is not None:
             obj.language = self._language(request)
         return obj
 
     def get_urls(self):
         urlpatterns = super(ModelTranslationAdmin, self).get_urls()
-        if not self._has_translatable_model():
-            return urlpatterns
         opts = self.model._meta
         info = opts.app_label, opts.model_name if django.VERSION >= (1, 7) else opts.module_name
         return patterns('',
@@ -100,19 +93,18 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
         ) + urlpatterns
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if self._has_translatable_model():
-            language = self.get_form_language(request, obj)
-            available_languages = self.get_available_languages(obj)
-            language_tabs = self.get_language_tabs(request, obj, available_languages)
-            context['language_tabs'] = language_tabs
-            if language_tabs:
-                context['title'] = '%s (%s)' % (context['title'], language)
-            if not language_tabs.current_is_translated:
-                add = True
-            form_url = add_preserved_filters({
-                'preserved_filters': urlencode({'language': language}),
-                'opts': self.model._meta
-            }, form_url)
+        language = self.get_form_language(request, obj)
+        available_languages = self.get_available_languages(obj)
+        language_tabs = self.get_language_tabs(request, obj, available_languages)
+        context['language_tabs'] = language_tabs
+        if language_tabs:
+            context['title'] = '%s (%s)' % (context['title'], language)
+        if not language_tabs.current_is_translated:
+            add = True
+        form_url = add_preserved_filters({
+            'preserved_filters': urlencode({'language': language}),
+            'opts': self.model._meta
+        }, form_url)
         if 'default_change_form_template' not in context:
             context['default_change_form_template'] = self.get_change_form_base_template()
         return super(ModelTranslationAdmin, self).render_change_form(request, context, add, change, form_url, obj)
