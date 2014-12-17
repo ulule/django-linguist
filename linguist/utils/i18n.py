@@ -15,6 +15,11 @@ def get_cache_key(**kwargs):
     return 'linguist_%s_%s_%s_%s' % tuple(kwargs[attr] for attr in keys)
 
 
+def get_language_name(code):
+    languages = dict((lang_code, lang_name) for lang_code, lang_name in settings.SUPPORTED_LANGUAGES)
+    return languages.get(code)
+
+
 def get_language():
     """
     Returns an active language code that is guaranteed to be in
