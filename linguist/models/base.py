@@ -57,7 +57,7 @@ class Translation(models.Model):
 
     language = models.CharField(
         max_length=10,
-        verbose_name=_('locale'),
+        verbose_name=_('language'),
         choices=settings.SUPPORTED_LANGUAGES,
         default=settings.DEFAULT_LANGUAGE,
         help_text=_('The language for this translation'))
