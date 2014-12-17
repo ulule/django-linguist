@@ -44,17 +44,11 @@ class BaseModelTranslationAdmin(BaseModelAdmin):
         base_media = super(BaseModelTranslationAdmin, self).media
         return base_media + _language_media
 
-    def _language(self, request):
+    def get_language(self, request):
         return get_language_parameter(request, self.query_language_key)
 
-    def get_form_language(self, request, obj=None):
-        language = self._language(request)
-        if obj and obj.language:
-            language = obj.language
-        return language
-
     def get_language_tabs(self, request, obj, available_languages, css_class=None):
-        current_language = self.get_form_language(request, obj)
+        current_language = self.get_language(request)
         return get_language_tabs(request, current_language, available_languages, css_class=css_class)
 
 
@@ -77,8 +71,8 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
 
     def get_object(self, request, object_id):
         obj = super(ModelTranslationAdmin, self).get_object(request, object_id)
-        if obj is not None:
-            obj.language = self._language(request)
+        if obj:
+            obj.language = self.get_language(request)
         return obj
 
     def get_urls(self):
@@ -93,20 +87,25 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
         ) + urlpatterns
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        language = self.get_form_language(request, obj)
+        language = self.get_language(request)
         available_languages = self.get_available_languages(obj)
         language_tabs = self.get_language_tabs(request, obj, available_languages)
         context['language_tabs'] = language_tabs
+
         if language_tabs:
             context['title'] = '%s (%s)' % (context['title'], language)
+
         if not language_tabs.current_is_translated:
             add = True
+
         form_url = add_preserved_filters({
             'preserved_filters': urlencode({'language': language}),
             'opts': self.model._meta
         }, form_url)
+
         if 'default_change_form_template' not in context:
             context['default_change_form_template'] = self.get_change_form_base_template()
+
         return super(ModelTranslationAdmin, self).render_change_form(request, context, add, change, form_url, obj)
 
     def response_add(self, request, obj, post_url_continue=None):
