@@ -11,12 +11,11 @@ __all__ = [
 
 class ModelTranslationFormMixin(object):
 
-    language = None
-
     def __init__(self, *args, **kwargs):
         super(ModelTranslationFormMixin, self).__init__(*args, **kwargs)
+        self.language = None
         instance = kwargs.get('instance', None)
-        if not self.language:
+        if self.language is None:
             self.language = instance.language if instance else get_language()
 
 
