@@ -82,7 +82,7 @@ class Translation(models.Model):
         unique_together = (('identifier', 'object_id', 'language', 'field_name'),)
 
     def __str__(self):
-        return '%s:%d:%s:%s' % (
+        return '%s:%s:%s:%s' % (
             self.identifier,
             self.object_id,
             self.field_name,
