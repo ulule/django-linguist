@@ -71,9 +71,6 @@ class BaseModelTranslationAdmin(BaseModelAdmin):
 
 class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
 
-    deletion_not_allowed_template = 'admin/linguist/deletion_not_allowed.html'
-    delete_inline_translations = True
-
     @property
     def change_form_template(self):
         if self._has_translatable_model():
@@ -219,7 +216,7 @@ _lazy_select_template_name = lazy(select_template_name, six.text_type)
 
 
 class LinguistTranslationModelAdmin(admin.ModelAdmin):
-    list_display = ('identifier', 'object_id', 'language', 'field_name')
+    list_display = ('identifier', 'object_id', 'language', 'field_name', 'field_value')
 
 
 admin.site.register(LinguistTranslationModel, LinguistTranslationModelAdmin)
