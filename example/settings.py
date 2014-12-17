@@ -103,11 +103,3 @@ DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
     'SHOW_TOOLBAR_CALLBACK': show_toolbar,
 }
-
-INTERNAL_IPS = (
-    '33.33.33.10',
-    '33.33.33.20',
-    '127.0.0.1',
-    '0.0.0.0',
-    '::1',
-)
