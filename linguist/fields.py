@@ -85,12 +85,10 @@ class TranslatedField(TranslationFieldMixin):
         self.editable = True
 
     def __get__(self, instance, instance_type=None):
-        field_name = build_localized_field_name(self.field.name, instance.language)
-        return self.getter_cache(instance, field_name, instance.language)
+        return self.getter_cache(instance, self.field.name, instance.language)
 
     def __set__(self, instance, value):
-        field_name = build_localized_field_name(self.field.name, instance.language)
-        self.setter_cache(instance, field_name, instance.language, value)
+        self.setter_cache(instance, self.field.name, instance.language, value)
 
 
 class TranslationField(TranslationFieldMixin):
