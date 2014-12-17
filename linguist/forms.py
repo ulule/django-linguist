@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*_
 from django import forms
-from django.forms.models import BaseInlineFormSet
 
 from .utils.i18n import get_language
 
@@ -31,17 +30,3 @@ class ModelTranslationFormMixin(object):
 
 class ModelTranslationForm(ModelTranslationFormMixin, forms.ModelForm):
     pass
-
-
-class ModelTranslationInlineFormSet(BaseInlineFormSet):
-
-    language = None
-
-    def _construct_form(self, i, **kwargs):
-        form = super(ModelTranslationInlineFormSet, self)._construct_form(i, **kwargs)
-        form.language = self.language
-        return form
-
-    def save_new(self, form, commit=True):
-        obj = super(ModelTranslationInlineFormSet, self).save_new(form, commit)
-        return obj

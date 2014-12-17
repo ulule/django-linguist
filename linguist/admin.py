@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import django
 from django.conf.urls import patterns, url
 from django.contrib import admin
-from django.contrib.admin.options import csrf_protect_m, BaseModelAdmin, InlineModelAdmin
+from django.contrib.admin.options import csrf_protect_m, BaseModelAdmin
 from django.contrib.admin.util import get_deleted_objects, unquote
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.core.exceptions import PermissionDenied
