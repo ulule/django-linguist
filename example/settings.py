@@ -8,8 +8,6 @@ SECRET_KEY = 'secret'
 DEBUG = True
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
-
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
@@ -17,13 +15,13 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    'debug_toolbar',
     'linguist',
-
     'example',
 )
 
 MIDDLEWARE_CLASSES = (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -95,4 +93,21 @@ LANGUAGES = (
     ('es', ugettext(u'Spanish')),
     ('it', ugettext(u'Italian')),
     ('pt', ugettext(u'Portuguese')),
+)
+
+def show_toolbar(request):
+    return True
+
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+DEBUG_TOOLBAR_CONFIG = {
+    'INTERCEPT_REDIRECTS': False,
+    'SHOW_TOOLBAR_CALLBACK': show_toolbar,
+}
+
+INTERNAL_IPS = (
+    '33.33.33.10',
+    '33.33.33.20',
+    '127.0.0.1',
+    '0.0.0.0',
+    '::1',
 )

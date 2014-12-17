@@ -4,3 +4,4 @@ Django >= 1.7
 Sphinx
 coverage==3.6
 flake8
+django-debug-toolbar

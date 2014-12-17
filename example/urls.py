@@ -8,5 +8,11 @@ from  django.views.generic import TemplateView
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^$', TemplateView.as_view(template_name='home.html'), name='home')
+    url(r'', TemplateView.as_view(template_name='home.html'), name='home')
 ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += patterns('',
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    )
