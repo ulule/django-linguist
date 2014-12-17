@@ -25,7 +25,7 @@ class TranslationFieldMixin(object):
     Common logic for translated and translation fields.
     """
 
-    def getter_cache(self, instance, field_name, language):
+    def getter_cache(self, instance, field_name, original_field_name, language):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
 
@@ -33,7 +33,7 @@ class TranslationFieldMixin(object):
             identifier=instance._linguist.identifier,
             object_id=instance.pk,
             language=language,
-            field_name=field_name)
+            field_name=original_field_name)
 
         cache_key = get_cache_key(**kwargs)
         if cache_key in instance._linguist:
@@ -45,7 +45,7 @@ class TranslationFieldMixin(object):
             instance._linguist[cache_key] = translation
             return translation.field_value
 
-    def setter_cache(self, instance, field_name, language, value):
+    def setter_cache(self, instance, field_name, original_field_name, language, value):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
 
@@ -53,7 +53,7 @@ class TranslationFieldMixin(object):
             identifier=instance._linguist.identifier,
             object_id=instance.pk,
             language=language,
-            field_name=field_name,
+            field_name=original_field_name,
             field_value=value)
 
         cache_kwargs = copy.copy(kwargs)
@@ -85,10 +85,17 @@ class TranslatedField(TranslationFieldMixin):
         self.editable = True
 
     def __get__(self, instance, instance_type=None):
-        return self.getter_cache(instance, self.field.name, instance.language)
+        return self.getter_cache(instance=instance,
+                                 field_name=self.field.name,
+                                 original_field_name=self.field.name,
+                                 language=instance.language)
 
     def __set__(self, instance, value):
-        self.setter_cache(instance, self.field.name, instance.language, value)
+        self.setter_cache(instance=instance,
+                          field_name=self.field.name,
+                          original_field_name=self.field.name,
+                          language=instance.language,
+                          value=value)
 
 
 class TranslationField(TranslationFieldMixin):
@@ -108,10 +115,17 @@ class TranslationField(TranslationFieldMixin):
         self.editable = True
 
     def __get__(self, instance, instance_type=None):
-        return self.getter_cache(instance, self.name, self.language)
+        return self.getter_cache(instance=instance,
+                                 field_name=self.name,
+                                 original_field_name=self.field.name,
+                                 language=self.language)
 
     def __set__(self, instance, value):
-        self.setter_cache(instance, self.name, self.language, value)
+        self.setter_cache(instance=instance,
+                          field_name=self.name,
+                          original_field_name=self.field.name,
+                          language=self.language,
+                          value=value)
 
 
 class CacheDescriptor(dict):
