@@ -18,10 +18,11 @@ from django.utils.http import urlencode
 from django.utils.translation import ugettext_lazy as _
 from django.utils import six
 
-from .forms import ModelTranslationForm, ModelTranslationInlineFormSet
+from .forms import ModelTranslationForm
 from .mixins import LinguistMixin
 from .models import Translation as LinguistTranslationModel
 from .utils.views import get_language_parameter, get_language_tabs
+from .utils.i18n import get_language_name
 from .utils.template import select_template_name
 
 __all__ = (
@@ -102,18 +103,18 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
             form_class.language = self.get_form_language(request, obj)
         return form_class
 
-    # def get_urls(self):
-    #     urlpatterns = super(TranslationAdmin, self).get_urls()
-    #     if not self._has_translatable_model():
-    #         return urlpatterns
-    #     opts = self.model._meta
-    #     info = opts.app_label, opts.model_name if django.VERSION >= (1, 7) else opts.module_name
-    #     return patterns('',
-    #         url(r'^(.+)/delete-translation/(.+)/$',
-    #             self.admin_site.admin_view(self.delete_translation),
-    #             name='{0}_{1}_delete_translation'.format(*info)
-    #         ),
-    #     ) + urlpatterns
+    def get_urls(self):
+        urlpatterns = super(ModelTranslationAdmin, self).get_urls()
+        if not self._has_translatable_model():
+            return urlpatterns
+        opts = self.model._meta
+        info = opts.app_label, opts.model_name if django.VERSION >= (1, 7) else opts.module_name
+        return patterns('',
+            url(r'^(.+)/delete-translation/(.+)/$',
+                self.admin_site.admin_view(self.delete_translations),
+                name='{0}_{1}_delete_translation'.format(*info)
+            ),
+        ) + urlpatterns
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         if self._has_translatable_model():
@@ -154,122 +155,57 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
                 redirect['Location'] += "?{0}={1}".format(self.query_language_key, language)
         return redirect
 
-    # @csrf_protect_m
-    # def delete_translation(self, request, object_id, language):
-    #     opts = self.model._meta
-    #     obj = self.get_object(request, unquote(object_id))
+    @csrf_protect_m
+    def delete_translations(self, request, object_id, language):
+        opts = self.model._meta
+        obj = self.get_object(request, unquote(object_id))
+        language_name = get_language_name(language)
 
-    #     if obj is None:
-    #         raise Http404
+        if obj is None:
+            raise Http404
 
-    #     deleted_objects = []
-    #     perms_needed = False
-    #     protected = []
+        deleted_objects = [
+            '%(name)s - %(language)s - %(field_name)s' % dict(
+                name=force_text(opts.verbose_name),
+                language=language_name,
+                field_name=trans.field_name)
+            for trans in obj.get_translations(language=language)]
 
-    #     for obj in
-    #     for qs in self.get_translation_objects(request, translation.language_code, obj=shared_obj, inlines=self.delete_inline_translations):
-    #         if isinstance(qs, (list, tuple)):
-    #             qs_opts = qs[0]._meta
-    #         else:
-    #             qs_opts = qs.model._meta
+        object_name = _('%(language)s translations of %(name)s') % dict(
+                        language=language_name,
+                        name=force_text(opts.verbose_name))
 
-    #         (del2, perms2, protected2) = get_deleted_objects(qs, qs_opts, request.user, self.admin_site)
-    #         deleted_objects += del2
-    #         perms_needed = perms_needed or perms2
-    #         protected += protected2
+        if request.POST:
+            obj.delete_translations(language=language)
+            self.message_user(
+                request,
+                _('%(language)s translations of %(name)s was deleted successfully.') % dict(
+                    language=language_name,
+                    name=force_text(opts.verbose_name)))
 
-    #     if request.POST:  # The user has already confirmed the deletion.
-    #         if perms_needed:
-    #             raise PermissionDenied
-    #         obj_display = _('{0} translation of {1}').format(lang, force_text(translation))  # in hvad: (translation.master)
+            if self.has_change_permission(request, None):
+                return HttpResponseRedirect(reverse('admin:{0}_{1}_changelist'.format(
+                    opts.app_label,
+                    opts.model_name if django.VERSION >= (1, 7) else opts.module_name)))
+            else:
+                return HttpResponseRedirect(reverse('admin:index'))
 
-    #         self.log_deletion(request, translation, obj_display)
-    #         self.delete_model_translation(request, translation)
-    #         self.message_user(request, _('The %(name)s "%(obj)s" was deleted successfully.') % dict(
-    #             name=force_text(opts.verbose_name), obj=force_text(obj_display)
-    #         ))
+        context = {
+            "title": _("Are you sure?"),
+            "object_name": object_name,
+            "object": obj,
+            "deleted_objects": deleted_objects,
+            "perms_lacking": False,
+            "protected": False,
+            "opts": opts,
+            "app_label": opts.app_label,
+        }
 
-    #         if self.has_change_permission(request, None):
-    #             return HttpResponseRedirect(reverse('admin:{0}_{1}_changelist'.format(opts.app_label, opts.model_name if django.VERSION >= (1, 7) else opts.module_name)))
-    #         else:
-    #             return HttpResponseRedirect(reverse('admin:index'))
-
-    #     object_name = _('{0} Translation').format(force_text(opts.verbose_name))
-    #     if perms_needed or protected:
-    #         title = _("Cannot delete %(name)s") % {"name": object_name}
-    #     else:
-    #         title = _("Are you sure?")
-
-    #     context = {
-    #         "title": title,
-    #         "object_name": object_name,
-    #         "object": translation,
-    #         "deleted_objects": deleted_objects,
-    #         "perms_lacking": perms_needed,
-    #         "protected": protected,
-    #         "opts": opts,
-    #         "app_label": opts.app_label,
-    #     }
-
-    #     return render(request, self.delete_confirmation_template or [
-    #         "admin/%s/%s/delete_confirmation.html" % (opts.app_label, opts.object_name.lower()),
-    #         "admin/%s/delete_confirmation.html" % opts.app_label,
-    #         "admin/delete_confirmation.html"
-    #     ], context)
-
-    # def deletion_not_allowed(self, request, obj, language):
-    #     opts = self.model._meta
-    #     context = {
-    #         'object': obj,
-    #         'language': language,
-    #         'opts': opts,
-    #         'app_label': opts.app_label,
-    #         'language_name': language,
-    #         'object_name': force_text(opts.verbose_name),
-    #     }
-    #     return render(request, self.deletion_not_allowed_template, context)
-
-    # def delete_model_translation(self, request, translation):
-    #     master = translation.master
-    #     for qs in self.get_translation_objects(request, translation.language_code, obj=master, inlines=self.delete_inline_translations):
-    #         if isinstance(qs, (tuple, list)):
-    #             # The objects are deleted one by one.
-    #             # This triggers the post_delete signals and such.
-    #             for obj in qs:
-    #                 obj.delete()
-    #         else:
-    #             # Also delete translations of inlines which the user has access to.
-    #             # This doesn't trigger signals, just like the regular
-    #             qs.delete()
-
-    # def get_translation_objects(self, request, language_code, obj=None, inlines=True):
-    #     if obj is not None:
-    #         for translations_model in obj._parler_meta.get_all_models():
-    #             try:
-    #                 translation = translations_model.objects.get(master=obj, language_code=language_code)
-    #             except translations_model.DoesNotExist:
-    #                 continue
-    #             yield [translation]
-
-    #     if inlines:
-    #         for inline, qs in self._get_inline_translations(request, language, obj=obj):
-    #             yield qs
-
-    # def _get_inline_translations(self, request, language, obj=None):
-    #     inline_instances = self.get_inline_instances(request, obj=obj)
-    #     for inline in inline_instances:
-    #         if issubclass(inline.model, LinguistMixin):
-    #             fk = inline.get_formset(request, obj).fk
-    #             rel_name = 'master__{0}'.format(fk.name)
-    #             filters = {
-    #                 'language': language,
-    #                 rel_name: obj
-    #             }
-    #             for translations_model in inline.model._parler_meta.get_all_models():
-    #                 qs = translations_model.objects.filter(**filters)
-    #                 if obj is not None:
-    #                     qs = qs.using(obj._state.db)
-    #                 yield inline, qs
+        return render(request, self.delete_confirmation_template or [
+            "admin/%s/%s/delete_confirmation.html" % (opts.app_label, opts.object_name.lower()),
+            "admin/%s/delete_confirmation.html" % opts.app_label,
+            "admin/delete_confirmation.html"
+        ], context)
 
     def get_change_form_base_template(self):
         opts = self.model._meta
