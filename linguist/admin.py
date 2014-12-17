@@ -47,11 +47,14 @@ class BaseModelTranslationAdmin(BaseModelAdmin):
     def _has_translatable_model(self):
         return issubclass(self.model, LinguistMixin)
 
-    def _language(self, request, obj=None):
-        return get_language_parameter(request, self.query_language_key, object=obj)
+    def _language(self, request):
+        return get_language_parameter(request, self.query_language_key)
 
     def get_form_language(self, request, obj=None):
-        return obj.language if obj is not None else self._language(request)
+        language = self._language(request)
+        if obj and obj.language:
+            language = obj.language
+        return language
 
     def get_language_tabs(self, request, obj, available_languages, css_class=None):
         current_language = self.get_form_language(request, obj)
@@ -66,13 +69,13 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
             return 'admin/linguist/change_form.html'
         return None
 
-    def language_column(self, object):
-        languages = self.get_available_languages(object)
+    def language_column(self, obj):
+        languages = self.get_available_languages(obj)
         languages = [code for code in languages]
         return '<span class="available-languages">{0}</span>'.format(' '.join(languages))
 
     language_column.allow_tags = True
-    language_column.short_description = _("Languages")
+    language_column.short_description = _('Languages')
 
     def get_available_languages(self, obj):
         return obj.get_available_languages() if obj else self.model.objects.none()
@@ -80,14 +83,8 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
     def get_object(self, request, object_id):
         obj = super(ModelTranslationAdmin, self).get_object(request, object_id)
         if obj is not None and self._has_translatable_model():
-            obj.language = self._language(request, obj)
+            obj.language = self._language(request)
         return obj
-
-    def get_form(self, request, obj=None, **kwargs):
-        form_class = super(ModelTranslationAdmin, self).get_form(request, obj, **kwargs)
-        if self._has_translatable_model():
-            form_class.language = self.get_form_language(request, obj)
-        return form_class
 
     def get_urls(self):
         urlpatterns = super(ModelTranslationAdmin, self).get_urls()
