@@ -5,12 +5,11 @@ import django
 from django.conf.urls import patterns, url
 from django.contrib import admin
 from django.contrib.admin.options import csrf_protect_m, BaseModelAdmin
-from django.contrib.admin.util import get_deleted_objects, unquote
+from django.contrib.admin.util import unquote
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
-from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.forms import Media
-from django.http import HttpResponseRedirect, Http404, HttpRequest
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.utils.encoding import iri_to_uri, force_text
 from django.utils.functional import lazy
@@ -34,13 +33,6 @@ _language_media = Media(css={
     'all': ('linguist/admin/language_tabs.css',)
 })
 
-_language_prepopulated_media = _language_media + Media(js=(
-    'admin/js/urlify.js',
-    'admin/js/prepopulate.min.js'
-))
-
-_fakeRequest = HttpRequest()
-
 
 class BaseModelTranslationAdmin(BaseModelAdmin):
 
@@ -49,10 +41,7 @@ class BaseModelTranslationAdmin(BaseModelAdmin):
 
     @property
     def media(self):
-        has_prepopulated = len(self.get_prepopulated_fields(_fakeRequest))
         base_media = super(BaseModelTranslationAdmin, self).media
-        if has_prepopulated:
-            return base_media + _language_prepopulated_media
         return base_media + _language_media
 
     def _has_translatable_model(self):
@@ -169,8 +158,8 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
             for trans in obj.get_translations(language=language)]
 
         object_name = _('%(language)s translations of %(name)s') % dict(
-                        language=language_name,
-                        name=force_text(opts.verbose_name))
+            language=language_name,
+            name=force_text(opts.verbose_name))
 
         if request.POST:
             obj.delete_translations(language=language)
