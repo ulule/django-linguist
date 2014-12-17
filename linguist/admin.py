@@ -27,9 +27,6 @@ from .utils.template import select_template_name
 __all__ = (
     'BaseModelTranslationAdmin',
     'ModelTranslationAdmin',
-    'ModelTranslationInlineAdmin',
-    'ModelTranslationStackedInline',
-    'ModelTranslationTabularInline',
 )
 
 _language_media = Media(css={
@@ -283,69 +280,6 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
             "admin/change_form.html"))
 
 _lazy_select_template_name = lazy(select_template_name, six.text_type)
-
-
-class ModelTranslationInlineAdmin(BaseModelTranslationAdmin, InlineModelAdmin):
-    """
-    Base class for inline models.
-    """
-    form = ModelTranslationForm
-    formset = ModelTranslationInlineFormSet
-
-    @property
-    def inline_tabs(self):
-        return not self._has_translatable_parent_model()
-
-    def _has_translatable_parent_model(self):
-        return issubclass(self.parent_model, LinguistMixin)
-
-    def get_queryset_language(self, request):
-        return self._language(request)
-
-    def get_formset(self, request, obj=None, **kwargs):
-        FormSet = super(ModelTranslationInlineAdmin, self).get_formset(request, obj, **kwargs)
-        FormSet.language = self.get_form_language(request, obj)
-        if self.inline_tabs:
-            available_languages = self.get_available_languages(obj, FormSet)
-            FormSet.language_tabs = self.get_language_tabs(
-                request,
-                obj,
-                available_languages,
-                css_class='linguist-inline-language-tabs')
-            FormSet.language_tabs.allow_deletion = self._has_translatable_parent_model()
-        return FormSet
-
-    def get_form_language(self, request, obj=None):
-        if self._has_translatable_parent_model():
-            return super(ModelTranslationInlineAdmin, self).get_form_language(request, obj=obj)
-        return self._language(request)
-
-    def get_available_languages(self, obj, formset):
-        return obj.get_available_languages() if obj else self.model.objects.none()
-
-
-class ModelTranslationStackedInline(ModelTranslationInlineAdmin):
-    """
-    The inline class for stacked layout.
-    """
-
-    @property
-    def template(self):
-        if self.inline_tabs:
-            return 'admin/linguist/edit_inline/stacked_tabs.html'
-        return 'admin/edit_inline/stacked.html'
-
-
-class ModelTranslationTabularInline(ModelTranslationInlineAdmin):
-    """
-    The inline class for tabular layout.
-    """
-
-    @property
-    def template(self):
-        if self.inline_tabs:
-            return 'admin/linguist/edit_inline/tabular_tabs.html'
-        return 'admin/edit_inline/tabular.html'
 
 
 class LinguistTranslationModelAdmin(admin.ModelAdmin):
