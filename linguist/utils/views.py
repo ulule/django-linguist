@@ -2,13 +2,11 @@
 from .. import settings as settings
 
 
-def get_language_parameter(request, query_language_key='language', object=None, default=None):
+def get_language_parameter(request, query_language_key='language'):
     """
     Returns the language parameter from the current request.
     """
-    code = request.GET.get(query_language_key)
-    if not code:
-        code = default or settings.DEFAULT_LANGUAGE
+    code = request.GET.get(query_language_key) or settings.DEFAULT_LANGUAGE
     return code.lower().replace('_', '-')
 
 
