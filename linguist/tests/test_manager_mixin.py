@@ -22,7 +22,7 @@ class ManagerMixinTest(BaseTestCase):
         set_instance_cache(self.instance, translations)
 
         self.assertEqual(
-            self.instance.cached_translations_count,
+            len(self.instance._linguist.keys()) - 2,
             Translation.objects.count())
 
     def test_get_translation_lookups(self):
