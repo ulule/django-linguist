@@ -2,12 +2,21 @@
 from django.db import models
 
 from ..base import ModelTranslationBase
-from ..mixins import LinguistMixin
+from ..mixins import ModelMixin, ManagerMixin
 
 
-class FooModel(models.Model, LinguistMixin):
+class FooManager(ManagerMixin, models.Manager):
+    pass
+
+
+class BarManager(ManagerMixin, models.Manager):
+    pass
+
+
+class FooModel(ModelMixin, models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    objects = FooManager()
 
 
 class FooTranslation(ModelTranslationBase):
@@ -16,8 +25,9 @@ class FooTranslation(ModelTranslationBase):
     fields = ('title', )
 
 
-class BarModel(models.Model, LinguistMixin):
+class BarModel(ModelMixin, models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
+    objects = BarManager()
 
 
 class BarTranslation(ModelTranslationBase):
