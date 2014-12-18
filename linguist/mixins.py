@@ -34,16 +34,15 @@ class ManagerMixin(object):
     Linguist Manager Mixin.
     """
 
-    def with_translations(self, instances, fields=None, languages=None):
-        """
-        Prefetches translations for the given model instances.
-        """
-        if not isinstance(instances, (list, tuple)):
-            instances = [instances]
+    def save_translations(self):
+        instances = self.get_queryset()
 
+    def with_translations(self, fields=None, languages=None):
+        """
+        Prefetches translations.
+        """
+        instances = self.get_queryset()
         for instance in instances:
-            if not isinstance(instance, LinguistMixin):
-                raise Exception('%s must be an instance of LinguistMixin' % instance)
             lookups = get_translation_lookups(instance, fields, languages)
             translations = Translation.objects.filter(**lookups)
             set_instance_cache(instance, translations)

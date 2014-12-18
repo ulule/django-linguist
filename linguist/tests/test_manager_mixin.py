@@ -6,6 +6,8 @@ from .base import BaseTestCase
 from ..models import Translation
 from ..utils.i18n import get_cache_key
 
+from .translations import FooModel
+
 
 class ManagerMixinTest(BaseTestCase):
     """
@@ -48,3 +50,12 @@ class ManagerMixinTest(BaseTestCase):
             'field_name__in': ['title'],
             'language__in': ['en', 'fr'],
         })
+
+    def test_with_translations(self):
+        self.assertTrue(hasattr(FooModel.objects, 'with_translations'))
+        FooModel.objects.with_translations()
+        for obj in FooModel.objects.all():
+            self.assertTrue(len(obj._linguist.keys()) > 2)
+
+    def test_save_translations(self):
+        self.assertTrue(hasattr(FooModel.objects, 'save_translations'))
