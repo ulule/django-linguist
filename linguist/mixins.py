@@ -49,16 +49,3 @@ class LinguistMixin(object):
                            .values_list('language', flat=True)
                            .distinct()
                            .order_by('language'))
-
-    def prefetch_translations(self):
-        identifier = self._linguist.identifier
-        translations = Translation.objects.filter(identifier=identifier, object_id=self.pk)
-        for translation in translations:
-            cache_key = get_cache_key(**{
-                'identifier': identifier,
-                'object_id': self.pk,
-                'language': translation.language,
-                'field_name': translation.field_name,
-            })
-            if cache_key not in self._linguist:
-                self._linguist[cache_key] = translation
