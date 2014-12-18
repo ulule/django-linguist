@@ -67,32 +67,7 @@ class ModelMixin(object):
         self._linguist.language = value
 
     @property
-    def cached_translations_count(self):
-        return len(self._linguist.keys()) - 2
-
-    def _get_translations_qs(self, language=None):
-        kwargs = dict(identifier=self.identifier, object_id=self.pk)
-        if language:
-            kwargs['language'] = language
-        return Translation.objects.filter(**kwargs)
-
-    def get_translations(self, language=None):
-        return self._get_translations_qs(language=language)
-
-    def delete_translations(self, language=None):
-        translations = self._get_translations_qs(language=language)
-        for translation in translations:
-            cache_key = get_cache_key(**{
-                'identifier': self.identifier,
-                'object_id': self.pk,
-                'language': translation.language,
-                'field_name': translation.field_name,
-            })
-            if cache_key in self._linguist:
-                del self._linguist[cache_key]
-        translations.delete()
-
-    def get_available_languages(self):
+    def available_languages(self):
         identifier = self._linguist.identifier
         return (Translation.objects
                            .filter(identifier=identifier, object_id=self.pk)
