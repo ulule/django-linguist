@@ -20,9 +20,9 @@ SUPPORTED_FIELDS = (
 )
 
 
-class TranslationField(object):
+class TranslationDescriptor(object):
     """
-    Translation field.
+    Translation Field Descriptor.
     """
 
     def __init__(self, field, language):
@@ -84,6 +84,9 @@ class TranslationField(object):
 
 
 class CacheDescriptor(dict):
+    """
+    Linguist Cache Descriptor.
+    """
 
     def __init__(self, identifier):
         self._identifier = identifier
