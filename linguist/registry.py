@@ -39,7 +39,7 @@ class LinguistRegistry(object):
 
         for translation in translations:
             self.validate_translation(translation)
-            contribute_to_model(translation)
+            translation.model.add_to_class('linguist_translation_class', translation)
             self._registry[translation.identifier] = translation
 
     def unregister(self, identifier):
