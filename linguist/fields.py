@@ -49,6 +49,9 @@ class TranslationFieldMixin(object):
         if instance is None:
             raise AttributeError('Can only be accessed via instance')
 
+        if not instance.pk:
+            return
+
         kwargs = dict(
             identifier=instance._linguist.identifier,
             object_id=instance.pk,
@@ -70,32 +73,6 @@ class TranslationFieldMixin(object):
         will skip this field when creating tables in PostgreSQL.
         """
         return None
-
-
-class TranslatedField(TranslationFieldMixin):
-    """
-    Translated field.
-    """
-
-    def __init__(self, field):
-        self.field = field
-        self.attname = self.field.name
-        self.name = self.attname
-        self.column = None
-        self.editable = True
-
-    def __get__(self, instance, instance_type=None):
-        return self.getter_cache(instance=instance,
-                                 field_name=self.field.name,
-                                 original_field_name=self.field.name,
-                                 language=instance.language)
-
-    def __set__(self, instance, value):
-        self.setter_cache(instance=instance,
-                          field_name=self.field.name,
-                          original_field_name=self.field.name,
-                          language=instance.language,
-                          value=value)
 
 
 class TranslationField(TranslationFieldMixin):
@@ -133,10 +110,11 @@ class CacheDescriptor(dict):
     def __init__(self, identifier):
         self._identifier = identifier
         self['identifier'] = self._identifier
+        self['language'] = get_language()
 
     @property
     def language(self):
-        return self['language'] if 'language' in self else get_language()
+        return self['language']
 
     @language.setter
     def language(self, value):
@@ -144,62 +122,15 @@ class CacheDescriptor(dict):
 
     @property
     def identifier(self):
-        return self['identifier'] if 'identifier' in self else self._identifier
+        return self['identifier']
 
     @identifier.setter
     def identifier(self, value):
         self['identifier'] = value
 
 
-def add_cache_property(model, identifier):
-    """
-    Adds cache property to model.
-    """
-    model.add_to_class('_linguist', CacheDescriptor(identifier))
-
-
-def add_translated_field(model, field_name):
-    """
-    Replaces translated field with `TranslatedField` descriptor.
-    """
-    if field_name in model._meta.get_all_field_names():
-        field = model._meta.get_field(field_name)
-        setattr(model, field_name, TranslatedField(field))
-
-
-def add_translation_fields(model, field_name):
-    """
-    Adds translation fields to given model.
-    """
-    field = model._meta.get_field(field_name)
-    field_names = [f.name for f in model._meta.fields]
-    cls_name = field.__class__.__name__
-
-    if not isinstance(field, SUPPORTED_FIELDS):
-        raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
-
-    for language_code, language_name in settings.SUPPORTED_LANGUAGES:
-        translation_field = TranslationField(field, language_code)
-        localized_field_name = build_localized_field_name(field_name, language_code)
-        if hasattr(model, localized_field_name):
-            raise ValueError(
-                "Error adding translation field. Model '%s' already contains a field named"
-                "'%s'." % (model._meta.object_name, localized_field_name))
-        if localized_field_name not in field_names:
-            model.add_to_class(localized_field_name, translation_field)
-            model._meta.fields.append(translation_field)
-
-
 def contribute_to_model(translation_class):
     """
-    Adds fields and properties to model.
+    Temporarly adds translation class to model to pass it to metaclass.
     """
-    identifier = translation_class.identifier
-    model = translation_class.model
-    fields = translation_class.fields
-
-    add_cache_property(model, identifier)
-
-    for field_name in fields:
-        add_translated_field(model, field_name)
-        add_translation_fields(model, field_name)
+    model.add_to_class('linguist_translation_class', translation_class)
