@@ -34,10 +34,19 @@ def get_language():
     return settings.DEFAULT_LANGUAGE
 
 
-def build_localized_field_name(field_name, language):
+def get_fallback_language():
+    """
+    Returns the fallback language.
+    """
+    return settings.DEFAULT_LANGUAGE
+
+
+def build_localized_field_name(field_name, language=None):
     """
     Build localized field name from ``field_name`` and ``language``.
     """
+    if language is None:
+        language = get_language()
     return '%s_%s' % (field_name, language.replace('-', '_'))
 
 
