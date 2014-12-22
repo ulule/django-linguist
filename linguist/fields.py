@@ -20,7 +20,7 @@ SUPPORTED_FIELDS = (
 )
 
 
-class TranslationField(TranslationFieldMixin):
+class TranslationField(object):
     """
     Translation field.
     """
