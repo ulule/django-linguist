@@ -145,7 +145,7 @@ class CacheDescriptor(dict):
             obj = None
             try:
                 obj = Translation.objects.get(**attrs)
-            except instance._meta.model.DoesNotExist:
+            except Translation.DoesNotExist:
                 pass
             # Object exists? Assign pk!
             # Object doesn't exist? Set pk to None, we'll create object later at save
@@ -160,7 +160,7 @@ class CacheDescriptor(dict):
         and cached it.
         """
         attrs = dict(
-            identifier=instance._linguist_identifier,
+            identifier=instance.linguist_identifier,
             object_id=instance.pk,
             language=language,
             field_name=field_name)
@@ -169,13 +169,13 @@ class CacheDescriptor(dict):
 
         # First, try the fetch the value from the cache
         if cache_key in self:
-            return self[cache_key].field_value
+            return self[cache_key]['field_value']
 
         # Value is not cached? Try to fetch it from database
         obj = None
         try:
             obj = Translation.objects.get(**attrs)
-        except instance._meta.model.DoesNotExist:
+        except Translation.DoesNotExist:
             pass
 
         # A translation object exists! Let's return its value
