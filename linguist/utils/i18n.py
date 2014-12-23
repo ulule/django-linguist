@@ -12,7 +12,7 @@ def get_cache_key(**kwargs):
     Returns cache key.
     """
     keys = ('identifier', 'object_id', 'language', 'field_name')
-    return 'linguist_%s_%s_%s_%s' % tuple(kwargs[attr] for attr in keys)
+    return '%s_%s_%s_%s' % tuple(kwargs[attr] for attr in keys)
 
 
 def get_language_name(code):
