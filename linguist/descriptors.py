@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy
-
-from django.core.exceptions import ImproperlyConfigured
-from django.db.models import fields
-
 from . import settings
 from .models import Translation
 from .utils.i18n import (get_cache_key,
@@ -267,9 +262,9 @@ def add_translatable_fields(translation_class):
     model = translation_class.model
     fields = translation_class.fields
     for field_name in fields:
-        field = model._meta.get_field(field_name)
         setattr(model, field_name, property(default_value_getter(field_name),
                                             default_value_setter(field_name)))
+
 
 def add_language_fields(translation_class):
     """
