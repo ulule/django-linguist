@@ -8,36 +8,34 @@ from .. import settings
 
 class TranslationManager(models.Manager):
 
-    def get_translation(self, identifier, object_id, language, field_name):
-        attrs = dict(
-            identifier=identifier,
-            object_id=object_id,
-            language=language,
-            field_name=field_name)
-        obj = None
-        try:
-            obj = self.get(**attrs)
-        except self.model.DoesNotExist:
-            pass
-        return obj
+    def save_cached(self, dicts):
+        """
+        Saves cached translations (cached in model instances as dictionaries).
+        """
+        to_create = []
+        to_update = []
+        bulk_create_objects = []
 
-    def set_translation(self, identifier, object_id, language, field_name, field_value):
-        created = False
-        attrs = dict(
-            identifier=identifier,
-            object_id=object_id,
-            language=language,
-            field_name=field_name)
-        try:
-            obj = self.get(**attrs)
-        except self.model.DoesNotExist:
-            attrs['field_value'] = field_value
-            obj = self.create(**attrs)
-            created = True
-        if obj.field_value != field_value:
-            obj.field_value = field_value
-            obj.save()
-        return (obj, created)
+        # pk is None ? create object.
+        # Otherwise, just update it
+        for dct in dicts:
+            pk = dct.get('pk', None)
+            if pk is None:
+                to_create.append(dct)
+            else:
+                to_update.append(dct)
+
+        for dct in to_create:
+            pk = dct.pop('pk', None)
+            bulk_create_objects.append(Translation(**dct))
+
+        if bulk_create_objects:
+            self.bulk_create(bulk_create_objects)
+
+        for dct in to_update:
+            # Remove pk from fields to update
+            pk = dct.pop('pk')
+            self.filter(pk=pk).update(**dct)
 
 
 @python_2_unicode_compatible
