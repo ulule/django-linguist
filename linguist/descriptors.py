@@ -20,6 +20,14 @@ SUPPORTED_FIELDS = (
 )
 
 
+def instance_only(instance):
+    """
+    Ensures instance is not None for ``__get__`` and ``__set__`` methods.
+    """
+    if instance is None:
+        raise AttributeError('Can only be accessed via instance')
+
+
 class TranslationDescriptor(object):
     """
     Translation Field Descriptor.
@@ -37,42 +45,15 @@ class TranslationDescriptor(object):
         self.editable = True
 
     def __get__(self, instance, instance_type=None):
-        if instance is None:
-            raise AttributeError('Can only be accessed via instance')
-
-        kwargs = dict(
-            identifier=instance._linguist.identifier,
-            object_id=instance.pk,
-            language=self.language,
-            field_name=self.field.name)
-
-        cache_key = get_cache_key(**kwargs)
-        if cache_key in instance._linguist:
-            return instance._linguist[cache_key].field_value
-
-        translation = Translation.objects.get_translation(**kwargs)
-
-        if translation:
-            instance._linguist[cache_key] = translation
-            return translation.field_value
+        instance_only(instance)
+        return instance._linguist.get_or_create_cached_translation(
+            instance,
+            self.language,
+            self.field.name)
 
     def __set__(self, instance, value):
-        if instance is None:
-            raise AttributeError('Can only be accessed via instance')
-
-        kwargs = dict(
-            identifier=instance._linguist.identifier,
-            object_id=instance.pk,
-            language=self.language,
-            field_name=self.field.name,
-            field_value=value)
-
-        cache_kwargs = copy.copy(kwargs)
-        del cache_kwargs['field_value']
-        cache_key = get_cache_key(**cache_kwargs)
-
-        obj, created = Translation.objects.set_translation(**kwargs)
-        instance._linguist[cache_key] = obj
+        instance_only(instance)
+        setattr(instance, self.name, value)
 
     def db_type(self, connection):
         """
@@ -96,28 +77,79 @@ class CacheDescriptor(dict):
         self['language'] = get_language()
 
     @property
+    def identifier(self):
+        """
+        Returns model identifier (from related translation class).
+        Read-only.
+        """
+        return self['identifier']
+
+    @property
     def language(self):
+        """
+        Returns current language.
+        """
         return self['language']
 
     @language.setter
     def language(self, value):
+        """
+        Sets current language.
+        """
         self['language'] = value
 
     @property
-    def identifier(self):
-        return self['identifier']
+    def default_language(self):
+        """
+        Returns default language.
+        """
+        return self['default_language']
 
-    @identifier.setter
-    def identifier(self, value):
-        self['identifier'] = value
+    @default_language.setter
+    def default_language(self, value):
+        """
+        Sets default language.
+        """
+        self['default_language'] = value
 
     @property
     def fields(self):
+        """
+        Returns translatable fields (from related translation class).
+        Read-only.
+        """
         return self['fields']
 
     @property
-    def default_language(self):
-        return self['default_language']
+    def translation_class(self):
+        """
+        Returns related translation class.
+        Read-only.
+        """
+        return self._translation_class
+
+    def get_or_create_cached_translation(self, instance, language, field_name):
+        """
+        Takes an instance, a language and a field name and returns the cached
+        Translation instance if found, otherwise retrieves it from the database
+        and cached it.
+        """
+        kwargs = dict(
+            identifier=instance._linguist.identifier,
+            object_id=instance.pk,
+            language=language,
+            field_name=field_name)
+
+        cache_key = get_cache_key(**kwargs)
+
+        if cache_key in self:
+            return self[cache_key].field_value
+
+        translation = Translation.objects.get_translation(**kwargs)
+
+        if translation:
+            self[cache_key] = translation
+            return self[cache_key].field_value
 
 
 def default_value_getter(field):
@@ -186,9 +218,9 @@ def add_cache_property(translation_class):
     translation_class.model.add_to_class('_linguist', CacheDescriptor(translation_class))
 
 
-def overwrite_translatable_fields(translation_class):
+def add_translatable_fields(translation_class):
     """
-    Overwrites translatable fields of translation class model.
+    Adds translatable fields of translation class model.
     """
     model = translation_class.model
     fields = translation_class.fields
@@ -223,5 +255,5 @@ def contribute_to_model(translation_class):
     Add linguist fields and properties to translation class model.
     """
     add_cache_property(translation_class)
-    overwrite_translatable_fields(translation_class)
+    add_translatable_fields(translation_class)
     add_language_fields(translation_class)
