@@ -1,15 +1,7 @@
 # -*- coding: utf-8 -*-
-import copy
-
-from django.db import models
-from django.db.models.fields import NOT_PROVIDED
-
 from . import settings
 from .models import Translation
-from .utils.i18n import (get_cache_key,
-                         build_localized_field_name,
-                         get_language,
-                         get_fallback_language)
+from .utils.i18n import get_cache_key
 
 
 def set_instance_cache(instance, translations):
@@ -26,12 +18,12 @@ def set_instance_cache(instance, translations):
 
         if cache_key not in instance._linguist:
             instance._linguist[cache_key] = dict(
-                    pk=translation.pk,
-                    object_id=instance.pk,
-                    identifier=instance.linguist_identifier,
-                    language=translation.language,
-                    field_name=translation.field_name,
-                    field_value=translation.field_value)
+                pk=translation.pk,
+                object_id=instance.pk,
+                identifier=instance.linguist_identifier,
+                language=translation.language,
+                field_name=translation.field_name,
+                field_value=translation.field_value)
 
     return instance
 
