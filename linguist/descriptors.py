@@ -41,14 +41,18 @@ class TranslationDescriptor(object):
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
-        return instance._linguist.get_or_create_cached_translation(
+        return instance._linguist.get_translated_value(
             instance,
             self.language,
             self.field.name)
 
     def __set__(self, instance, value):
         instance_only(instance)
-        setattr(instance, self.field.name, value)
+        instance._linguist.cache_translation(
+            instance,
+            self.language,
+            self.field.name,
+            value)
 
     def db_type(self, connection):
         """
@@ -123,28 +127,71 @@ class CacheDescriptor(dict):
         """
         return self._translation_class
 
-    def get_or_create_cached_translation(self, instance, language, field_name):
+    def cache_translation(self, instance, language, field_name, value):
+        """
+        Caches the translation.
+        """
+        attrs = dict(
+            identifier=instance.linguist_identifier,
+            object_id=instance.pk,
+            language=language,
+            field_name=field_name)
+
+        cache_key = get_cache_key(**attrs)
+
+        # First, try to fetch from the cache
+        cached = self[cache_key] if cache_key in self else None
+
+        # Cache exists? Update the value!
+        if cached is not None:
+            self[cache_key]['field_value'] = value
+        else:
+            # No cache? Try to fetch it from database
+            obj = None
+            try:
+                obj = Translation.objects.get(**attrs)
+            except instance._meta.model.DoesNotExist:
+                pass
+            # Object exists? Assign pk!
+            # Object doesn't exist? Set pk to None, we'll create object later at save
+            attrs['pk'] = obj.pk if obj is not None else None
+            attrs['field_value'] = value
+            self[cache_key] = attrs
+
+    def get_translated_value(self, instance, language, field_name):
         """
         Takes an instance, a language and a field name and returns the cached
         Translation instance if found, otherwise retrieves it from the database
         and cached it.
         """
-        kwargs = dict(
-            identifier=instance._linguist.identifier,
+        attrs = dict(
+            identifier=instance._linguist_identifier,
             object_id=instance.pk,
             language=language,
             field_name=field_name)
 
-        cache_key = get_cache_key(**kwargs)
+        cache_key = get_cache_key(**attrs)
 
+        # First, try the fetch the value from the cache
         if cache_key in self:
             return self[cache_key].field_value
 
-        translation = Translation.objects.get_translation(**kwargs)
+        # Value is not cached? Try to fetch it from database
+        obj = None
+        try:
+            obj = Translation.objects.get(**attrs)
+        except instance._meta.model.DoesNotExist:
+            pass
 
-        if translation:
-            self[cache_key] = translation
-            return self[cache_key].field_value
+        # A translation object exists! Let's return its value
+        if obj is not None:
+            attrs['pk'] = obj.pk if obj is not None else None
+            attrs['field_value'] = obj.field_value
+            self[cache_key] = attrs
+            return obj.field_value
+
+        # No cache, no object in database... so return None
+        return None
 
 
 def default_value_getter(field):
