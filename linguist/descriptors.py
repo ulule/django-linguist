@@ -14,12 +14,6 @@ from .utils.i18n import (get_cache_key,
                          build_localized_verbose_name)
 
 
-SUPPORTED_FIELDS = (
-    fields.CharField,
-    fields.TextField,
-)
-
-
 def instance_only(instance):
     """
     Ensures instance is not None for ``__get__`` and ``__set__`` methods.
