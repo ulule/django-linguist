@@ -10,6 +10,7 @@ from . import settings
 from .models import Translation
 from .utils.i18n import (get_cache_key,
                          get_language,
+                         get_fallback_language,
                          build_localized_field_name,
                          build_localized_verbose_name)
 
@@ -47,7 +48,7 @@ class TranslationDescriptor(object):
 
     def __set__(self, instance, value):
         instance_only(instance)
-        setattr(instance, self.name, value)
+        setattr(instance, self.field.name, value)
 
     def db_type(self, connection):
         """
@@ -220,9 +221,8 @@ def add_translatable_fields(translation_class):
     fields = translation_class.fields
     for field_name in fields:
         field = model._meta.get_field(field_name)
-        setattr(model, field_name, property(default_value_getter(field),
-                                            default_value_setter(field)))
-
+        setattr(model, field_name, property(default_value_getter(field_name),
+                                            default_value_setter(field_name)))
 
 def add_language_fields(translation_class):
     """
@@ -239,9 +239,8 @@ def add_language_fields(translation_class):
                 raise ValueError(
                     "Error adding translation field. Model '%s' already contains a field named"
                     "'%s'." % (model._meta.object_name, localized_field_name))
-            if localized_field_name not in field_names:
-                model.add_to_class(localized_field_name, translation_field)
-                model._meta.fields.append(translation_field)
+            model.add_to_class(localized_field_name, translation_field)
+            model._meta.fields.append(translation_field)
 
 
 def contribute_to_model(translation_class):
@@ -249,5 +248,5 @@ def contribute_to_model(translation_class):
     Add linguist fields and properties to translation class model.
     """
     add_cache_property(translation_class)
-    add_translatable_fields(translation_class)
     add_language_fields(translation_class)
+    add_translatable_fields(translation_class)
