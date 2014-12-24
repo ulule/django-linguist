@@ -27,7 +27,7 @@ class TranslationManager(models.Manager):
 
         for dct in to_create:
             pk = dct.pop('pk', None)
-            bulk_create_objects.append(Translation(**dct))
+            bulk_create_objects.append(self.model(**dct))
 
         if bulk_create_objects:
             self.bulk_create(bulk_create_objects)
