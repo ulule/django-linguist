@@ -67,7 +67,7 @@ class CacheDescriptor(dict):
         self._translation_class = translation_class
         self['identifier'] = self._translation_class.identifier
         self['fields'] = self._translation_class.fields
-        self['default_language'] = self._translation_class.default_language
+        self['default_language'] = self._translation_class.default_language or settings.DEFAULT_LANGUAGE
         self['language'] = get_language()
 
     @property
@@ -127,7 +127,7 @@ class CacheDescriptor(dict):
         Caches the translation.
         """
         attrs = dict(
-            identifier=instance.linguist_identifier,
+            identifier=instance._linguist.identifier,
             object_id=instance.pk,
             language=language,
             field_name=field_name)
@@ -160,7 +160,7 @@ class CacheDescriptor(dict):
         and cached it.
         """
         attrs = dict(
-            identifier=instance.linguist_identifier,
+            identifier=instance._linguist.identifier,
             object_id=instance.pk,
             language=language,
             field_name=field_name)
