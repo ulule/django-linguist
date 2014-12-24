@@ -134,15 +134,15 @@ The ``ModelMixin`` enhance your model with the following properties and methods:
     Translatable fields defined in the related translation class.
     Shorcut pointing on ``instance._linguist.fields``.
 
-* ``instance.available_languages`` (*read-only* property)
+``instance.available_languages`` (*read-only* property)
     Available languages for this instance (content translated in these languages).
 
-* ``instance.cached_translations_count`` (*read-only* property)
+``instance.cached_translations_count`` (*read-only* property)
     Returns the number of cached translations. Each time you set a new language
     and set content on translatable fields, a cache is created for each language
     and field. It will be used to create ``Translation`` objets at instance saving.
 
-* ``instance.clear_translations_cache()``
+``instance.clear_translations_cache()``
     Remove all cached translations. Be aware, any content you set will be dropped.
     So no translation will be created/updated at saving.
 
