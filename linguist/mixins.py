@@ -129,7 +129,7 @@ class ModelMixin(object):
         for k in translations:
             del self._linguist[k]
 
-    def cache_translation(self, language, field_name, value):
+    def _cache_translation(self, language, field_name, value):
         """
         Caches a translation.
         """
@@ -170,7 +170,7 @@ class ModelMixin(object):
 
         self._linguist[cache_key] = attrs
 
-    def get_translated_value(self, language, field_name):
+    def _get_translated_value(self, language, field_name):
         """
         Takes a language and a field name and returns the cached
         Translation instance if found, otherwise retrieves it from the database
@@ -254,7 +254,7 @@ class ModelMixin(object):
         self._sanitize_cached_translations()
         return [self._linguist[k] for k in self._linguist if k.startswith('translation_')]
 
-    def save_translations(self):
+    def _save_translations(self):
         """
         Saves translations in the database.
         """
@@ -269,4 +269,4 @@ class ModelMixin(object):
         model).
         """
         super(ModelMixin, self).save(*args, **kwargs)
-        self.save_translations()
+        self._save_translations()

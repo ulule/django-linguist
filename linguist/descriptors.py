@@ -36,11 +36,11 @@ class TranslationDescriptor(object):
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
-        return instance.get_translated_value(self.language, self.field.name)
+        return instance._get_translated_value(self.language, self.field.name)
 
     def __set__(self, instance, value):
         instance_only(instance)
-        instance.cache_translation(self.language, self.field.name, value)
+        instance._cache_translation(self.language, self.field.name, value)
 
     def db_type(self, connection):
         """
