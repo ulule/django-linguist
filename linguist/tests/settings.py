@@ -68,6 +68,8 @@ LOGGING = {
 
 ugettext = lambda s: s
 
+LANGUAGE_CODE = 'en'
+
 LANGUAGES = (
     ('en', ugettext(u'English')),
     ('de', ugettext(u'German')),
