@@ -36,7 +36,7 @@ Create a module named ``linguist_registry.py`` in your app :
     $ touch linguist_registry.py
 
 Create a ``ModelTranslationBase`` class for each model you want to translate
-then register them like this :
+then register them like this:
 
 .. code-block:: python
 
@@ -48,29 +48,51 @@ then register them like this :
         model = Post
         identifier = 'post_or_anything_else'
         fields = ('title', 'body')
-
+        default_language = 'en'
 
     linguist.register(PostTranslation)
 
-Translation classes are dead simple. You just have to define three class attributes:
+Translation classes are dead simple. You just have to define four class attributes:
 
 * ``model``: the model to translate
 * ``identifier``: a unique identifier for your model (can be anything you want)
 * ``fields``: list or tuple of model fields to translate
+* ``default_language``: the default language to use
 
 And of course, you need to register them. Unregistered classes will be simply skipped.
 
-Finally, add ``LinguistMixin`` to your models:
+Finally, add ``linguist.mixins.ModelMixin`` to your models:
 
 .. code-block:: python
 
     from django.db import models
-    from linguist.mixins import LinguistMixin
+    from linguist.mixins import ModelMixin as LinguistModelMixin
 
 
-    class Post(models.Model, LinguistMixin):
+    class Post(LinguistModelMixin, models.Model):
         title = models.CharField(max_length=255)
+        body = models.TextField()
 
+
+Then add ``linguist.mixins.ManagerMixin`` to your managers:
+
+.. code-block:: python
+
+    from django.db import models
+    from linguist.mixins import ModelMixin as LinguistModelMixin
+    from linguist.mixins import ManagerMixin as LinguistManagerMixin
+
+
+    class PostManager(LinguistManagerMixin, models.Manager):
+        pass
+
+
+    class Post(LinguistModelMixin, models.Model):
+        title = models.CharField(max_length=255)
+        body = models.TextField()
+
+
+Nothing more. You're ready.
 
 How it works
 ------------
@@ -94,52 +116,69 @@ When you set/get ``post.title``, Linguist will use the current active language
 and will set/get the correct field for this language. For example, if your
 default language is English (``en``), then ``Post.title`` will refer to ``post.title_en``.
 
-The ``LinguistMixin`` adds one property and two methods to your model instances:
+The ``ModelMixin`` enhance your model with the following properties and methods:
 
-* ``instance.language``
+``instance.linguist_identifier`` (*read-only* property)
+    Your model identifier defined in the related translation class.
+    Shortcut pointing on ``instance._linguist.identifier``.
+
+``instance.language`` (*read-write* property)
+    The current active language.
+    Shortcut pointing on ``instance._linguist.language``.
+
+``instance.default_language`` (*read-write* property)
+    The default language to use.
+    Shortcut pointing on ``instance._linguist.default_language``.
+
+``instance.translatable_fields`` (*read-only* property)
+    Translatable fields defined in the related translation class.
+    Shorcut pointing on ``instance._linguist.fields``.
+
+* ``instance.available_languages`` (*read-only* property)
+    Available languages for this instance (content translated in these languages).
+
+* ``instance.cached_translations_count`` (*read-only* property)
+    Returns the number of cached translations. Each time you set a new language
+    and set content on translatable fields, a cache is created for each language
+    and field. It will be used to create ``Translation`` objets at instance saving.
+
 * ``instance.clear_translations_cache()``
-* ``instance.prefetch_translations()``
+    Remove all cached translations. Be aware, any content you set will be dropped.
+    So no translation will be created/updated at saving.
 
 .. code-block:: python
 
+    # Let's create a new Post
     >>> post = Post()
 
-    # Defaults to settings.DEFAULT_LANGUAGE_CODE
-    >>> post.language
-    en
-
+    # Set English content
+    >>> post.language = 'en'
     >>> post.title = 'Hello'
-    >>> post.title
-    Hello
 
+    # Now set French content
     >>> post.language = 'fr'
     >>> post.title = 'Bonjour'
-    >>> post.title
-    Bonjour
 
+    # Be sure everything works as expected for English
     >>> post.language = 'en'
     >>> post.title
     Hello
 
-    >>> post.title_en
-    Hello
-
-    >>> post.title_fr
+    # And now for French
+    >>> post.language = 'fr'
+    >>> post.title
     Bonjour
+
+    # Sweet! Save translations!
+    >>> post.save()
 
 To improve performances, you should prefetch translations:
 
 .. code-block:: python
 
-    >>> post.prefetch_translations()
+    >>> Post.objects.with_translations()
 
-Now, all translations are cached in the instance. Database won't be hit.
-
-You can clear the cache at anytime with:
-
-.. code-block:: python
-
-    >>> post.clear_translations_cache()
+All translations will be cached in instances. Database won't be hit anymore.
 
 Development
 -----------
