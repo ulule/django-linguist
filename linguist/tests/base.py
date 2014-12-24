@@ -41,4 +41,3 @@ class BaseTestCase(TestCase):
         self.registry = Registry()
         self.registry.register(FooTranslation)
         self.instance = FooModel()
-        self.instance.save()
