@@ -45,44 +45,6 @@ def get_translation_lookups(instance, fields=None, languages=None):
     return lookups
 
 
-def sanitize_instance_cache(instance):
-    """
-    Sanitizes cache by replacing None by object_id instance pk.
-    """
-    none_keys = []
-
-    # Find None keys
-    for key in instance._linguist:
-        if key.startswith('translation_'):
-            object_id = key.split('_')[2]
-            if object_id == 'None':
-                none_keys.append(key)
-
-    # Replace None keys by object_id instance pk
-    for key in none_keys:
-
-        parts = key.split('_')
-        parts[2] = '%s' % instance.pk
-        new_key = '_'.join(parts)
-
-        attrs = instance._linguist.get(key)
-        attrs['object_id'] = instance.pk
-
-        instance._linguist[new_key] = attrs
-        del instance._linguist[key]
-
-    # Remove key if field_value is None or empty string
-    keys_to_remove = []
-    for key, value in instance._linguist.iteritems():
-        if key.startswith('translation_'):
-            if not value['field_value']:
-                keys_to_remove.append(key)
-    for key in keys_to_remove:
-        del instance._linguist[key]
-
-    return instance
-
-
 class ManagerMixin(object):
     """
     Linguist Manager Mixin.
@@ -145,30 +107,134 @@ class ModelMixin(object):
         """
         self._linguist.clear()
 
+    def cache_translation(self, language, field_name, value):
+        """
+        Caches a translation.
+        """
+        # Determines if object already exists in db or not
+        new = True if self.pk is None else False
+
+        # Assign temp pk for new objects.
+        # To avoid overwriting cache keys set to None
+        instance_pk = self.pk if not new else 'new-%s' % id(self)
+
+        attrs = dict(
+            identifier=self._linguist.identifier,
+            object_id=instance_pk,
+            language=language,
+            field_name=field_name)
+
+        cache_key = get_cache_key(**attrs)
+
+        # First, try to fetch from the cache
+        cached = self._linguist[cache_key] if cache_key in self._linguist else None
+
+        # Cache exists? Just update the value.
+        if cached is not None:
+            self._linguist[cache_key]['field_value'] = value
+            return
+
+        # Not cached? If it's not a new object, let's fetch it from db.
+        obj = None
+        if not new:
+            try:
+                obj = Translation.objects.get(**attrs)
+            except Translation.DoesNotExist:
+                pass
+
+        # Object doesn't exist? Set pk to None, we'll create object later at save
+        attrs['pk'] = obj.pk if obj is not None else None
+        attrs['field_value'] = value
+
+        self._linguist[cache_key] = attrs
+
+    def get_translated_value(self, language, field_name):
+        """
+        Takes a language and a field name and returns the cached
+        Translation instance if found, otherwise retrieves it from the database
+        and cached it.
+        """
+        # Determines if object already exists in db or not
+        new = True if self.pk is None else False
+
+        # Assign temp pk for new objects.
+        # To avoid overwriting cache keys set to None
+        instance_pk = self.pk if not new else 'new-%s' % id(self)
+
+        attrs = dict(
+            identifier=self._linguist.identifier,
+            object_id=instance_pk,
+            language=language,
+            field_name=field_name)
+
+        cache_key = get_cache_key(**attrs)
+
+        # First, try the fetch the value from the cache
+        if cache_key in self._linguist:
+            return self._linguist[cache_key]['field_value']
+
+        # Not cached? If it's not a new object, let's fetch it from db.
+        obj = None
+        if not new:
+            try:
+                obj = Translation.objects.get(**attrs)
+            except Translation.DoesNotExist:
+                pass
+
+        # Object exists: let's return the field value.
+        # Otherwise, still return None
+        if obj is not None:
+            return obj.field_value
+
+        return None
+
+    def _sanitize_cached_translations(self):
+        """
+        Sanitizes cache by assigning instance pk in object_id field.
+        """
+        new_objects_keys = []
+
+        # Find None keys
+        for key in self._linguist:
+            if key.startswith('translation_'):
+                object_id = key.split('_')[2]  # translation_identifier_objectid_language_fieldname
+                if object_id == 'new-%s' % id(self):
+                    new_objects_keys.append(key)
+
+        # Replace temp id of new objects keys by instance pk
+        for key in new_objects_keys:
+
+            parts = key.split('_')
+            parts[2] = '%s' % self.pk
+            new_key = '_'.join(parts)
+
+            attrs = self._linguist.get(key)
+            attrs['object_id'] = '%s' % self.pk
+
+            self._linguist[new_key] = attrs
+            del self._linguist[key]
+
+        # Remove key if field_value is None or empty string
+        keys_to_remove = []
+        for key, value in self._linguist.iteritems():
+            if key.startswith('translation_'):
+                if not value['field_value']:
+                    keys_to_remove.append(key)
+        for key in keys_to_remove:
+            del self._linguist[key]
+
     def get_translations_for_save(self):
         """
         Returns translation instances to save for the given model instance.
         """
-        cache_keys = []
-
-        for translatable_field in self.translatable_fields:
-            for language_code, language_name in settings.SUPPORTED_LANGUAGES:
-                cache_key_kwargs = dict(
-                    identifier=self._linguist.identifier,
-                    object_id=self.pk,
-                    language=language_code,
-                    field_name=translatable_field)
-                cache_key = get_cache_key(**cache_key_kwargs)
-                cache_keys.append(cache_key)
-
-        return [self._linguist[k] for k in cache_keys if k in self._linguist]
+        self._sanitize_cached_translations()
+        return [self._linguist[k] for k in self._linguist if k.startswith('translation_')]
 
     def save_translations(self):
         """
         Saves translations in the database.
         """
         translations = self.get_translations_for_save()
-        sanitize_instance_cache(self)
         if translations:
             Translation.objects.save_cached(translations)
 
