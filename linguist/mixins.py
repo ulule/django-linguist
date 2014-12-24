@@ -18,7 +18,6 @@ def set_instance_cache(instance, translations):
 
         if cache_key not in instance._linguist:
             instance._linguist[cache_key] = dict(
-                pk=translation.pk,
                 object_id=instance.pk,
                 identifier=instance.linguist_identifier,
                 language=translation.language,
@@ -115,22 +114,31 @@ class ModelMixin(object):
                            .distinct()
                            .order_by('language'))
 
+    @property
+    def cached_translations_count(self):
+        """
+        Returns cached translations count.
+        """
+        return len([k for k in self._linguist if k.startswith('translation_')])
+
     def clear_translations_cache(self):
         """
         Clears Linguist cache.
         """
-        self._linguist.clear()
+        translations = [k for k in self._linguist if k.startswith('translation_')]
+        for k in translations:
+            del self._linguist[k]
 
     def cache_translation(self, language, field_name, value):
         """
         Caches a translation.
         """
         # Determines if object already exists in db or not
-        new = True if self.pk is None else False
+        is_new = True if self.pk is None else False
 
         # Assign temp pk for new objects.
         # To avoid overwriting cache keys set to None
-        instance_pk = self.pk if not new else 'new-%s' % id(self)
+        instance_pk = self.pk if not is_new else 'new-%s' % id(self)
 
         attrs = dict(
             identifier=self._linguist.identifier,
@@ -150,14 +158,14 @@ class ModelMixin(object):
 
         # Not cached? If it's not a new object, let's fetch it from db.
         obj = None
-        if not new:
+        if not is_new:
             try:
                 obj = Translation.objects.get(**attrs)
             except Translation.DoesNotExist:
                 pass
 
         # Object doesn't exist? Set pk to None, we'll create object later at save
-        attrs['pk'] = obj.pk if obj is not None else None
+        attrs['is_new'] = True if obj is None else False
         attrs['field_value'] = value
 
         self._linguist[cache_key] = attrs
@@ -169,11 +177,11 @@ class ModelMixin(object):
         and cached it.
         """
         # Determines if object already exists in db or not
-        new = True if self.pk is None else False
+        is_new = True if self.pk is None else False
 
         # Assign temp pk for new objects.
         # To avoid overwriting cache keys set to None
-        instance_pk = self.pk if not new else 'new-%s' % id(self)
+        instance_pk = self.pk if not is_new else 'new-%s' % id(self)
 
         attrs = dict(
             identifier=self._linguist.identifier,
@@ -189,15 +197,17 @@ class ModelMixin(object):
 
         # Not cached? If it's not a new object, let's fetch it from db.
         obj = None
-        if not new:
+        if not is_new:
             try:
                 obj = Translation.objects.get(**attrs)
             except Translation.DoesNotExist:
                 pass
 
-        # Object exists: let's return the field value.
-        # Otherwise, still return None
+        # Object exists: let's populate the cache and return the field value.
         if obj is not None:
+            self._linguist[cache_key] = attrs
+            self._linguist[cache_key]['is_new'] = False
+            self._linguist[cache_key]['field_value'] = obj.field_value
             return obj.field_value
 
         return None
