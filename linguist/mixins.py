@@ -223,7 +223,7 @@ class ModelMixin(object):
         for key in keys_to_remove:
             del self._linguist[key]
 
-    def get_translations_for_save(self):
+    def _get_translations_for_save(self):
         """
         Returns translation instances to save for the given model instance.
         """
@@ -234,7 +234,7 @@ class ModelMixin(object):
         """
         Saves translations in the database.
         """
-        translations = self.get_translations_for_save()
+        translations = self._get_translations_for_save()
         if translations:
             Translation.objects.save_cached(translations)
 

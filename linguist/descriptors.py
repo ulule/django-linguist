@@ -123,26 +123,9 @@ def default_value_getter(field):
     the value in the default language will be returned.
     """
     def default_value_func_getter(self):
-        attname = lambda x: build_localized_field_name(field, x)
-        language = None
-        current_language = get_language()
-        if getattr(self, attname(current_language), None):
-            language = current_language
-        elif getattr(self, attname(current_language[:2]), None):
-            language = current_language[:2]
-        else:
-            try:
-                default_language = getattr(self, getattr(self._meta, 'default_language_field'))
-                if not default_language:
-                    raise
-            except:
-                default_language = get_fallback_language()
-            if getattr(self, attname(default_language), None):
-                language = default_language
-            else:
-                language = default_language[:2]
-        if language:
-            return getattr(self, attname(language))
+        language = self.language or get_language()
+        localized_field = build_localized_field_name(field, language)
+        return getattr(self, localized_field)
     return default_value_func_getter
 
 
@@ -152,26 +135,9 @@ def default_value_setter(field):
     in the current language will be set.
     """
     def default_value_func_setter(self, value):
-        attname = lambda x: build_localized_field_name(field, x)
-        language = None
-        current_language = get_language()
-        if hasattr(self, attname(current_language)):
-            language = current_language
-        elif hasattr(self, attname(current_language[:2])):
-            language = current_language[:2]
-        else:
-            try:
-                default_language = getattr(self, getattr(self._meta, 'default_language_field'))
-                if not default_language:
-                    raise
-            except:
-                default_language = current_language
-            if hasattr(self, attname(default_language)):
-                language = default_language
-            elif hasattr(self, attname(default_language[:2])):
-                language = default_language[:2]
-        if language:
-            setattr(self, attname(language), value)
+        language = self.language or get_language()
+        localized_field = build_localized_field_name(field, language)
+        setattr(self, localized_field, value)
     return default_value_func_setter
 
 
