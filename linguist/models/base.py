@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from django.db import models
+import copy
+
+from django.db import models, IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -16,26 +18,35 @@ class TranslationManager(models.Manager):
         to_update = []
         bulk_create_objects = []
 
-        # pk is None ? create object.
+        # is_new is True? create object.
         # Otherwise, just update it
         for dct in dicts:
-            pk = dct.get('pk', None)
-            if pk is None:
+            is_new = dct.get('is_new', False)
+            if is_new:
                 to_create.append(dct)
             else:
                 to_update.append(dct)
 
         for dct in to_create:
-            pk = dct.pop('pk', None)
-            bulk_create_objects.append(self.model(**dct))
+            new_dct = copy.copy(dct)
+            del new_dct['is_new']
+            bulk_create_objects.append(self.model(**new_dct))
 
+        created = True
         if bulk_create_objects:
-            self.bulk_create(bulk_create_objects)
+            try:
+                self.bulk_create(bulk_create_objects)
+            except IntegrityError:
+                created = False
+
+        if created:
+            for dct in to_create:
+                dct['is_new'] = False
 
         for dct in to_update:
-            # Remove pk from fields to update
-            pk = dct.pop('pk')
-            self.filter(pk=pk).update(**dct)
+            new_dct = copy.copy(dct)
+            del new_dct['is_new']
+            self.filter(pk=pk).update(**new_dct)
 
 
 @python_2_unicode_compatible
