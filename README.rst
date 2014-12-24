@@ -91,6 +91,8 @@ Then add ``linguist.mixins.ManagerMixin`` to your managers:
         title = models.CharField(max_length=255)
         body = models.TextField()
 
+        objects = PostManager()
+
 
 Nothing more. You're ready.
 
