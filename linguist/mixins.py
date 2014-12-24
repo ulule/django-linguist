@@ -45,6 +45,44 @@ def get_translation_lookups(instance, fields=None, languages=None):
     return lookups
 
 
+def sanitize_instance_cache(instance):
+    """
+    Sanitizes cache by replacing None by object_id instance pk.
+    """
+    none_keys = []
+
+    # Find None keys
+    for key in instance._linguist:
+        if key.startswith('translation_'):
+            object_id = key.split('_')[2]
+            if object_id == 'None':
+                none_keys.append(key)
+
+    # Replace None keys by object_id instance pk
+    for key in none_keys:
+
+        parts = key.split('_')
+        parts[2] = '%s' % instance.pk
+        new_key = '_'.join(parts)
+
+        attrs = instance._linguist.get(key)
+        attrs['object_id'] = instance.pk
+
+        instance._linguist[new_key] = attrs
+        del instance._linguist[key]
+
+    # Remove key if field_value is None or empty string
+    keys_to_remove = []
+    for key, value in instance._linguist.iteritems():
+        if key.startswith('translation_'):
+            if not value['field_value']:
+                keys_to_remove.append(key)
+    for key in keys_to_remove:
+        del instance._linguist[key]
+
+    return instance
+
+
 class ManagerMixin(object):
     """
     Linguist Manager Mixin.
@@ -116,7 +154,7 @@ class ModelMixin(object):
         for translatable_field in self.translatable_fields:
             for language_code, language_name in settings.SUPPORTED_LANGUAGES:
                 cache_key_kwargs = dict(
-                    identifier=self.linguist_identifier,
+                    identifier=self._linguist.identifier,
                     object_id=self.pk,
                     language=language_code,
                     field_name=translatable_field)
@@ -129,7 +167,10 @@ class ModelMixin(object):
         """
         Saves translations in the database.
         """
-        Translation.objects.save_cached(self.get_translations_for_save())
+        translations = self.get_translations_for_save()
+        sanitize_instance_cache(self)
+        if translations:
+            Translation.objects.save_cached(translations)
 
     def save(self, *args, **kwargs):
         """
