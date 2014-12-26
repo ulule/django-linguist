@@ -94,6 +94,7 @@ class ModelMixin(object):
         """
         Sets model default language.
         """
+        self.language = value
         self._linguist.default_language = value
 
     @property

@@ -61,7 +61,7 @@ class CacheDescriptor(dict):
         self['identifier'] = self._translation_class.identifier
         self['fields'] = self._translation_class.fields
         self['default_language'] = self._translation_class.default_language or settings.DEFAULT_LANGUAGE
-        self['language'] = get_language()
+        self['language'] = self['default_language']
 
     @property
     def identifier(self):
@@ -123,7 +123,7 @@ def default_value_getter(field):
     the value in the default language will be returned.
     """
     def default_value_func_getter(self):
-        language = self.language or get_language()
+        language = self.language or self.default_language
         localized_field = build_localized_field_name(field, language)
         return getattr(self, localized_field)
     return default_value_func_getter
@@ -135,7 +135,7 @@ def default_value_setter(field):
     in the current language will be set.
     """
     def default_value_func_setter(self, value):
-        language = self.language or get_language()
+        language = self.language or self.default_language
         localized_field = build_localized_field_name(field, language)
         setattr(self, localized_field, value)
     return default_value_func_setter

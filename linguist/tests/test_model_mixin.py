@@ -3,6 +3,10 @@ from __future__ import unicode_literals
 
 from .base import BaseTestCase
 
+from ..base import ModelTranslationBase
+from ..models import Translation
+from ..registry import LinguistRegistry as Registry
+
 from .translations import FooModel, FooTranslation
 
 
@@ -113,3 +117,60 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(attrs['is_new'], False)
         self.assertEqual(attrs['identifier'], 'foo')
         self.assertEqual(attrs['field_name'], 'title')
+
+    def test_default_language_scenario(self):
+        #
+        # Let's define a default language in translation class.
+        #
+        class FooTranslationDefaultLanguage(ModelTranslationBase):
+            model = FooModel
+            identifier = 'foo'
+            fields = ('title', )
+            default_language = 'fr'
+
+        #
+        # Re-register translation class and re-create new model instance.
+        #
+        self.registry.unregister('foo')
+        self.registry.register(FooTranslationDefaultLanguage)
+        self.instance = FooModel()
+
+        #
+        # The default language must be the one defined in translation class.
+        #
+        self.assertEqual(self.instance.default_language, 'fr')
+        self.instance.title = 'Bonjour'
+        self.instance.save()
+        self.assertEqual(Translation.objects.first().language, 'fr')
+
+        #
+        # Now, switch to English and it should work.
+        #
+        self.instance.language = 'en'
+        self.instance.title = 'Hello'
+        self.instance.save()
+        self.assertEqual(Translation.objects.count(), 2)
+        self.assertEqual(list(Translation.objects.get_languages()), ['en', 'fr'])
+
+        #
+        # Let's change the default language for the instance.
+        #
+        self.instance.default_language = 'de'
+        self.instance.title = 'Hello'
+        self.instance.save()
+
+        #
+        # Instance language should have been changed too.
+        #
+        self.assertEqual(self.instance.language, 'de')
+        self.assertEqual(Translation.objects.count(), 3)
+        self.assertEqual(list(Translation.objects.get_languages()), ['de', 'en', 'fr'])
+
+        #
+        # Let's change instance language again.
+        #
+        self.instance.language = 'it'
+        self.instance.title = 'Pronto'
+        self.instance.save()
+        self.assertEqual(Translation.objects.count(), 4)
+        self.assertEqual(list(Translation.objects.get_languages()), ['de', 'en', 'fr', 'it'])
