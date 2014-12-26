@@ -27,8 +27,10 @@ class CachedTranslation(object):
         translation = kwargs.get('translation', None)
 
         if instance is not None:
+            is_new = bool(instance.pk is None)
+            instance_pk = instance.pk if not is_new else 'new-%s' % id(instance)
             self.identifier = instance.linguist_identifier
-            self.object_id = '%s' % instance.pk
+            self.object_id = '%s' % instance_pk
 
         if translation is not None:
             self.language = translation.language
