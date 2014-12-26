@@ -10,6 +10,15 @@ from .. import settings
 
 class TranslationManager(models.Manager):
 
+    def get_languages(self):
+        """
+        Returns all available languages.
+        """
+        return (self.get_queryset()
+                    .values_list('language', flat=True)
+                    .distinct()
+                    .order_by('language'))
+
     def save_cached(self, dicts):
         """
         Saves cached translations (cached in model instances as dictionaries).
@@ -46,7 +55,11 @@ class TranslationManager(models.Manager):
         for dct in to_update:
             new_dct = copy.copy(dct)
             del new_dct['is_new']
-            self.filter(pk=pk).update(**new_dct)
+            lookup = {}
+            lookup['identifier'] = new_dct['identifier']
+            lookup['object_id'] = new_dct['object_id']
+            lookup['language'] = new_dct['language']
+            self.filter(**lookup).update(**new_dct)
 
 
 @python_2_unicode_compatible
