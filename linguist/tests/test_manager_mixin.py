@@ -17,35 +17,25 @@ class ManagerMixinTest(BaseTestCase):
     def setUp(self):
         self.create_registry()
 
-    def test_set_instance_cache(self):
-        from ..mixins import set_instance_cache
-
-        translations = [self.translation_en, self.translation_fr]
-        set_instance_cache(self.instance, translations)
-
-        self.assertEqual(
-            len(self.instance._linguist.keys()) - 2,
-            Translation.objects.count())
-
     def test_get_translation_lookups(self):
         from ..mixins import get_translation_lookups
 
         lookups = get_translation_lookups(self.instance)
         self.assertEqual(lookups, {
-            'identifier': self.instance.identifier,
+            'identifier': self.instance.linguist_identifier,
             'object_id': self.instance.pk,
         })
 
         lookups = get_translation_lookups(self.instance, fields=['title', 'body'])
         self.assertEqual(lookups, {
-            'identifier': self.instance.identifier,
+            'identifier': self.instance.linguist_identifier,
             'object_id': self.instance.pk,
             'field_name__in': ['title', 'body'],
         })
 
         lookups = get_translation_lookups(self.instance, fields=['title'], languages=['en', 'fr'])
         self.assertEqual(lookups, {
-            'identifier': self.instance.identifier,
+            'identifier': self.instance.linguist_identifier,
             'object_id': self.instance.pk,
             'field_name__in': ['title'],
             'language__in': ['en', 'fr'],
@@ -56,6 +46,3 @@ class ManagerMixinTest(BaseTestCase):
         FooModel.objects.with_translations()
         for obj in FooModel.objects.all():
             self.assertTrue(len(obj._linguist.keys()) > 2)
-
-    def test_save_translations(self):
-        self.assertTrue(hasattr(FooModel.objects, 'save_translations'))

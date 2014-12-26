@@ -32,7 +32,7 @@ class TranslationTest(TestCase):
             self.assertIn(field_name, dir(FooModel))
 
     def test_getter_setter(self):
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(2):
             # save = 1 query
             self.instance.save()
             # get / create "en" translation = 2 queries
