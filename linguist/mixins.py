@@ -119,15 +119,13 @@ class ModelMixin(object):
         """
         Returns cached translations count.
         """
-        return len([k for k in self._linguist if k.startswith('translation_')])
+        return len(self._linguist.translations)
 
     def clear_translations_cache(self):
         """
         Clears Linguist cache.
         """
-        translations = [k for k in self._linguist if k.startswith('translation_')]
-        for k in translations:
-            del self._linguist[k]
+        self._linguist.translations.clear()
 
     def get_translations(self, language=None):
         """
@@ -170,11 +168,11 @@ class ModelMixin(object):
         cache_key = get_cache_key(**attrs)
 
         # First, try to fetch from the cache
-        cached = self._linguist.get(cache_key, None)
+        cached = self._linguist.translations.get(cache_key, None)
 
         # Cache exists? Just update the value.
         if cached is not None:
-            self._linguist[cache_key]['field_value'] = value
+            self._linguist.translations[cache_key]['field_value'] = value
             return
 
         # Not cached? If it's not a new object, let's fetch it from db.
@@ -189,7 +187,7 @@ class ModelMixin(object):
         attrs['is_new'] = bool(obj is None)
         attrs['field_value'] = value
 
-        self._linguist[cache_key] = attrs
+        self._linguist.translations[cache_key] = attrs
 
     def _get_translated_value(self, language, field_name):
         """
@@ -213,8 +211,8 @@ class ModelMixin(object):
         cache_key = get_cache_key(**attrs)
 
         # First, try the fetch the value from the cache
-        if cache_key in self._linguist:
-            return self._linguist[cache_key]['field_value']
+        if cache_key in self._linguist.translations:
+            return self._linguist.translations[cache_key]['field_value']
 
         # Not cached? If it's not a new object, let's fetch it from db.
         obj = None
@@ -226,62 +224,12 @@ class ModelMixin(object):
 
         # Object exists: let's populate the cache and return the field value.
         if obj is not None:
-            self._linguist[cache_key] = attrs
-            self._linguist[cache_key]['is_new'] = False
-            self._linguist[cache_key]['field_value'] = obj.field_value
+            self._linguist.translations[cache_key] = attrs
+            self._linguist.translations[cache_key]['is_new'] = False
+            self._linguist.translations[cache_key]['field_value'] = obj.field_value
             return obj.field_value
 
         return None
-
-    def _sanitize_cached_translations(self):
-        """
-        Sanitizes cache by assigning instance pk in object_id field.
-        """
-        new_objects_keys = []
-
-        # Find None keys
-        for key in self._linguist:
-            if key.startswith('translation_'):
-                object_id = key.split('_')[2]  # translation_identifier_objectid_language_fieldname
-                if object_id == 'new-%s' % id(self):
-                    new_objects_keys.append(key)
-
-        # Replace temp id of new objects keys by instance pk
-        for key in new_objects_keys:
-
-            parts = key.split('_')
-            parts[2] = '%s' % self.pk
-            new_key = '_'.join(parts)
-
-            attrs = self._linguist.get(key)
-            attrs['object_id'] = '%s' % self.pk
-
-            self._linguist[new_key] = attrs
-            del self._linguist[key]
-
-        # Remove key if field_value is None or empty string
-        keys_to_remove = []
-        for key, value in self._linguist.iteritems():
-            if key.startswith('translation_'):
-                if not value['field_value']:
-                    keys_to_remove.append(key)
-        for key in keys_to_remove:
-            del self._linguist[key]
-
-    def _get_translations_for_save(self):
-        """
-        Returns translation instances to save for the given model instance.
-        """
-        self._sanitize_cached_translations()
-        return [self._linguist[k] for k in self._linguist if k.startswith('translation_')]
-
-    def _save_translations(self):
-        """
-        Saves translations in the database.
-        """
-        translations = self._get_translations_for_save()
-        if translations:
-            Translation.objects.save_cached(translations)
 
     def save(self, *args, **kwargs):
         """
@@ -290,4 +238,4 @@ class ModelMixin(object):
         model).
         """
         super(ModelMixin, self).save(*args, **kwargs)
-        self._save_translations()
+        Translation.objects.save_translation(self)
