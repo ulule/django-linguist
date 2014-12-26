@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-import copy
-
 from django.db import models, IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
 from .. import settings
-from ..cache import make_cache_key
 
 
 class TranslationManager(models.Manager):

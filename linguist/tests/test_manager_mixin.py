@@ -3,9 +3,6 @@ from __future__ import unicode_literals
 
 from .base import BaseTestCase
 
-from ..models import Translation
-from ..utils.i18n import get_cache_key
-
 from .translations import FooModel
 
 

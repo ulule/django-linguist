@@ -18,7 +18,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import six
 
 from .forms import ModelTranslationForm
-from .mixins import ModelMixin, ManagerMixin
 from .models import Translation as LinguistTranslationModel
 from .utils.views import get_language_parameter, get_language_tabs
 from .utils.i18n import get_language_name

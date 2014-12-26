@@ -2,12 +2,7 @@
 from __future__ import unicode_literals
 
 from . import settings
-from .models import Translation
-from .utils.i18n import (get_cache_key,
-                         get_language,
-                         get_fallback_language,
-                         build_localized_field_name,
-                         build_localized_verbose_name)
+from .utils.i18n import build_localized_field_name, build_localized_verbose_name
 
 
 def instance_only(instance):

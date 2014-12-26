@@ -5,9 +5,8 @@ from .base import BaseTestCase
 
 from ..base import ModelTranslationBase
 from ..models import Translation
-from ..registry import LinguistRegistry as Registry
 
-from .translations import FooModel, FooTranslation
+from .translations import FooModel
 
 
 class ModelMixinTest(BaseTestCase):

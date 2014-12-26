@@ -63,6 +63,14 @@ class CachedTranslation(object):
 
         return lookup
 
+    def update_from_object(self, obj):
+        """
+        Updates values from the given object.
+        """
+        fields = ('identifier', 'object_id', 'language', 'field_name', 'field_value')
+        for field in fields:
+            setattr(self, field, getattr(obj, field))
+
 
 def make_cache_key(instance, **kwargs):
     """
