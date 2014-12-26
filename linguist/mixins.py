@@ -3,48 +3,48 @@ from .cache import make_cache_key, CachedTranslation
 from .models import Translation
 
 
+def get_translation_lookups(instance, fields=None, languages=None):
+    """
+    Returns a dict to pass to Translation.objects.filter().
+    """
+    lookups = dict(
+        identifier=instance.linguist_identifier,
+        object_id=instance.pk)
+
+    if fields is not None:
+        lookups['field_name__in'] = fields
+
+    if languages is not None:
+        lookups['language__in'] = languages
+
+    return lookups
+
+
+def set_instance_cache(instance, translations):
+    """
+    Sets Linguist cache for the given instance.
+    """
+    for translation in translations:
+        cache_key = make_cache_key(instance, translation)
+        if cache_key not in instance._linguist.translations:
+            cached_obj = CachedTranslation(**{'instance': instance, 'translation': translation})
+            instance._linguist.translation[cache_key] = cached_obj
+    return instance
+
+
 class ManagerMixin(object):
     """
     Linguist Manager Mixin.
     """
-
-    @staticmethod
-    def _get_translation_lookups(instance, fields=None, languages=None):
-        """
-        Returns a dict to pass to Translation.objects.filter().
-        """
-        lookups = dict(
-            identifier=instance.linguist_identifier,
-            object_id=instance.pk)
-
-        if fields is not None:
-            lookups['field_name__in'] = fields
-
-        if languages is not None:
-            lookups['language__in'] = languages
-
-        return lookups
-
-    @staticmethod
-    def _set_instance_cache(instance, translations):
-        """
-        Sets Linguist cache for the given instance.
-        """
-        for translation in translations:
-            cache_key = make_cache_key(instance, translation)
-            if cache_key not in instance._linguist.translations:
-                cached_obj = CachedTranslation(**{'instance': instance, 'translation': translation})
-                instance._linguist.translation[cache_key] = cached_obj
-        return instance
 
     def with_translations(self, fields=None, languages=None):
         """
         Prefetches translations.
         """
         for instance in self.get_queryset():
-            lookups = self._get_translation_lookups(instance, fields, languages)
+            lookups = get_translation_lookups(instance, fields, languages)
             translations = Translation.objects.filter(**lookups)
-            self._set_instance_cache(instance, translations)
+            set_instance_cache(instance, translations)
 
 
 class ModelMixin(object):
@@ -210,4 +210,4 @@ class ModelMixin(object):
         model).
         """
         super(ModelMixin, self).save(*args, **kwargs)
-        Translation.objects.save_translations(self)
+        Translation.objects.save_translations([self])
