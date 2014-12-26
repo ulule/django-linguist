@@ -3,7 +3,8 @@ VAGRANTFILE_API_VERSION = '2'
 VBOXES_PATH = ENV['VBOXES_PATH'] || Pathname.new(ENV['HOME']).join('vboxes')
 
 $script = <<SCRIPT
-sudo apt-get install sqlite3
+apt-get update -y
+apt-get install -y sqlite3
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
