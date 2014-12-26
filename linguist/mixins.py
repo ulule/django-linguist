@@ -221,4 +221,4 @@ class ModelMixin(object):
         model).
         """
         super(ModelMixin, self).save(*args, **kwargs)
-        Translation.objects.save_translation(self)
+        Translation.objects.save_translations(self)

@@ -71,6 +71,8 @@ class TranslationManager(models.Manager):
                 for key in keys_to_remove:
                     del instance._linguist.translations[key]
 
+        return instances
+
     @staticmethod
     def _filter_translations_to_save(instances):
         """
@@ -80,14 +82,12 @@ class TranslationManager(models.Manager):
         to_create, to_update = [], []
 
         for instance in instances:
-
             translations = instance._linguist.translations
-
-            for translation in translations:
-                if translation.is_new:
-                    to_create.append(translation)
+            for key, cached_obj in instance._linguist.translations.iteritems():
+                if cached_obj.is_new:
+                    to_create.append((key, cached_obj))
                 else:
-                    to_update.append(translation)
+                    to_update.append((key, cached_obj))
 
         return (to_create, to_update)
 
@@ -98,12 +98,12 @@ class TranslationManager(models.Manager):
         create, update = [], []
 
         if to_create:
-            for translation in to_create:
-                create.append((translation.lookup, self.model(**translation.attrs)))
+            for key, cached_obj in to_create:
+                create.append((cached_obj.lookup, self.model(**cached_obj.attrs)))
 
         if to_update:
-            for translation in to_update:
-                update.append((translation.lookup, translation.attrs))
+            for key, cached_obj in to_update:
+                update.append((cached_obj.lookup, cached_obj.attrs))
 
         return create, update
 
