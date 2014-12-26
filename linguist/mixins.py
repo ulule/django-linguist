@@ -32,12 +32,9 @@ class ManagerMixin(object):
         """
         for translation in translations:
             cache_key = make_cache_key(instance, translation)
-            if cache_key not in instance._linguist:
-                obj = CachedTranslation(**{
-                    'instance': instance,
-                    'translation': Translation,
-                })
-                instance._linguist.translation[cache_key] = obj
+            if cache_key not in instance._linguist.translations:
+                cached_obj = CachedTranslation(**{'instance': instance, 'translation': translation})
+                instance._linguist.translation[cache_key] = cached_obj
         return instance
 
     def with_translations(self, fields=None, languages=None):
