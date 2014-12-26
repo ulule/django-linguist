@@ -85,9 +85,10 @@ class LinguistRegistry(object):
         Checks if the given ``identifier`` is either ``in_registered`` or not.
         Otherwise, raises ``Unregistered`` or  ``AlreadyRegistered``
         """
+        from django.utils.six import string_types
         from .exceptions import AlreadyRegistered, Unregistered
 
-        if not isinstance(identifier, str):
+        if not isinstance(identifier, string_types):
             raise TypeError('Identifier must be a string')
 
         if len(identifier) > 100:
