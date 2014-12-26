@@ -18,7 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import six
 
 from .forms import ModelTranslationForm
-from .mixins import LinguistMixin
+from .mixins import ModelMixin, ManagerMixin
 from .models import Translation as LinguistTranslationModel
 from .utils.views import get_language_parameter, get_language_tabs
 from .utils.i18n import get_language_name
@@ -67,7 +67,7 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
     language_column.short_description = _('Languages')
 
     def get_available_languages(self, obj):
-        return obj.get_available_languages() if obj else self.model.objects.none()
+        return obj.available_languages if obj else self.model.objects.none()
 
     def get_object(self, request, object_id):
         obj = super(ModelTranslationAdmin, self).get_object(request, object_id)
