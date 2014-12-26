@@ -130,6 +130,27 @@ class ModelMixin(object):
         for k in translations:
             del self._linguist[k]
 
+    def get_translations(self, language=None):
+        """
+        Returns available (saved) translations for this instance.
+        """
+        if not self.pk:
+            return Translations.objects.none()
+
+        return Translation.objects.get_object_translations(**{
+            'obj': self,
+            'language': language,
+        })
+
+    def delete_translations(self, language=None):
+        """
+        Deletes related translations.
+        """
+        return Translation.objects.delete_object_translations(**{
+            'obj': self,
+            'language': language,
+        })
+
     def _cache_translation(self, language, field_name, value):
         """
         Caches a translation.

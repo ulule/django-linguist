@@ -10,6 +10,34 @@ from .. import settings
 
 class TranslationManager(models.Manager):
 
+    @staticmethod
+    def _get_object_lookup(obj, language=None):
+        """
+        Returns object's lookup (for filter() method).
+        """
+        lookup = {
+            'identifier': obj.linguist_identifier,
+            'object_id': obj.pk,
+        }
+
+        if language is not None:
+            lookup['language'] = language
+
+        return lookup
+
+    def get_object_translations(self, obj, language=None):
+        """
+        Shorcut method to retrieve translations for a given object.
+        """
+        lookup = self._get_object_lookup(obj, language)
+        return self.get_queryset().filter(**lookup)
+
+    def delete_object_translations(self, obj, language=None):
+        """
+        Shortcut method to delete translations for a given object.
+        """
+        self.get_object_translations(obj, language).delete()
+
     def get_languages(self):
         """
         Returns all available languages.
