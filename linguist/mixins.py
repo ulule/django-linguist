@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from . import settings
 from .models import Translation
 from .utils.i18n import get_cache_key
 
@@ -156,7 +155,7 @@ class ModelMixin(object):
         Caches a translation.
         """
         # Determines if object already exists in db or not
-        is_new = True if self.pk is None else False
+        is_new = bool(self.pk is None)
 
         # Assign temp pk for new objects.
         # To avoid overwriting cache keys set to None
@@ -171,7 +170,7 @@ class ModelMixin(object):
         cache_key = get_cache_key(**attrs)
 
         # First, try to fetch from the cache
-        cached = self._linguist[cache_key] if cache_key in self._linguist else None
+        cached = self._linguist.get(cache_key, None)
 
         # Cache exists? Just update the value.
         if cached is not None:
@@ -187,7 +186,7 @@ class ModelMixin(object):
                 pass
 
         # Object doesn't exist? Set pk to None, we'll create object later at save
-        attrs['is_new'] = True if obj is None else False
+        attrs['is_new'] = bool(obj is None)
         attrs['field_value'] = value
 
         self._linguist[cache_key] = attrs
