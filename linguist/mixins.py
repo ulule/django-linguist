@@ -1,46 +1,6 @@
 # -*- coding: utf-8 -*-
+from .cache import make_cache_key, CachedTranslation
 from .models import Translation
-from .utils.i18n import get_cache_key
-
-
-def set_instance_cache(instance, translations):
-    """
-    Sets Linguist cache for the given instance.
-    """
-    for translation in translations:
-
-        cache_key = get_cache_key(**dict(
-            identifier=instance.linguist_identifier,
-            object_id=instance.pk,
-            language=translation.language,
-            field_name=translation.field_name))
-
-        if cache_key not in instance._linguist:
-            instance._linguist[cache_key] = dict(
-                object_id=instance.pk,
-                identifier=instance.linguist_identifier,
-                language=translation.language,
-                field_name=translation.field_name,
-                field_value=translation.field_value)
-
-    return instance
-
-
-def get_translation_lookups(instance, fields=None, languages=None):
-    """
-    Returns a dict to pass to Translation.objects.filter().
-    """
-    lookups = dict(
-        identifier=instance.linguist_identifier,
-        object_id=instance.pk)
-
-    if fields is not None:
-        lookups['field_name__in'] = fields
-
-    if languages is not None:
-        lookups['language__in'] = languages
-
-    return lookups
 
 
 class ManagerMixin(object):
@@ -48,14 +8,46 @@ class ManagerMixin(object):
     Linguist Manager Mixin.
     """
 
+    @staticmethod
+    def _get_translation_lookups(instance, fields=None, languages=None):
+        """
+        Returns a dict to pass to Translation.objects.filter().
+        """
+        lookups = dict(
+            identifier=instance.linguist_identifier,
+            object_id=instance.pk)
+
+        if fields is not None:
+            lookups['field_name__in'] = fields
+
+        if languages is not None:
+            lookups['language__in'] = languages
+
+        return lookups
+
+    @staticmethod
+    def _set_instance_cache(instance, translations):
+        """
+        Sets Linguist cache for the given instance.
+        """
+        for translation in translations:
+            cache_key = make_cache_key(instance, translation)
+            if cache_key not in instance._linguist:
+                obj = CachedTranslation(**{
+                    'instance': instance,
+                    'translation': Translation,
+                })
+                instance._linguist.translation[cache_key] = obj
+        return instance
+
     def with_translations(self, fields=None, languages=None):
         """
         Prefetches translations.
         """
         for instance in self.get_queryset():
-            lookups = get_translation_lookups(instance, fields, languages)
+            lookups = self._get_translation_lookups(instance, fields, languages)
             translations = Translation.objects.filter(**lookups)
-            set_instance_cache(instance, translations)
+            self._set_instance_cache(instance, translations)
 
 
 class ModelMixin(object):
@@ -133,20 +125,13 @@ class ModelMixin(object):
         """
         if not self.pk:
             return Translations.objects.none()
-
-        return Translation.objects.get_object_translations(**{
-            'obj': self,
-            'language': language,
-        })
+        return Translation.objects.get_object_translations(**{'obj': self, 'language': language})
 
     def delete_translations(self, language=None):
         """
         Deletes related translations.
         """
-        return Translation.objects.delete_object_translations(**{
-            'obj': self,
-            'language': language,
-        })
+        return Translation.objects.delete_object_translations(**{'obj': self, 'language': language})
 
     def _cache_translation(self, language, field_name, value):
         """
@@ -155,24 +140,18 @@ class ModelMixin(object):
         # Determines if object already exists in db or not
         is_new = bool(self.pk is None)
 
-        # Assign temp pk for new objects.
-        # To avoid overwriting cache keys set to None
-        instance_pk = self.pk if not is_new else 'new-%s' % id(self)
-
-        attrs = dict(
-            identifier=self._linguist.identifier,
-            object_id=instance_pk,
-            language=language,
-            field_name=field_name)
-
-        cache_key = get_cache_key(**attrs)
+        cache_key = make_cache_key(**{
+            'instance': self,
+            'language': language,
+            'field_name': field_name
+        })
 
         # First, try to fetch from the cache
         cached = self._linguist.translations.get(cache_key, None)
 
         # Cache exists? Just update the value.
         if cached is not None:
-            self._linguist.translations[cache_key]['field_value'] = value
+            self._linguist.translations[cache_key].field_value = value
             return
 
         # Not cached? If it's not a new object, let's fetch it from db.
@@ -183,11 +162,9 @@ class ModelMixin(object):
             except Translation.DoesNotExist:
                 pass
 
-        # Object doesn't exist? Set pk to None, we'll create object later at save
-        attrs['is_new'] = bool(obj is None)
-        attrs['field_value'] = value
-
-        self._linguist.translations[cache_key] = attrs
+        cached_obj = CachedTranslation(**{'instance': self, 'translation': obj})
+        cached_obj.field_value = value
+        self._linguist.translations[cache_key] = cached_obj
 
     def _get_translated_value(self, language, field_name):
         """
@@ -196,23 +173,16 @@ class ModelMixin(object):
         and cached it.
         """
         # Determines if object already exists in db or not
-        is_new = True if self.pk is None else False
+        is_new = bool(self.pk is None)
 
-        # Assign temp pk for new objects.
-        # To avoid overwriting cache keys set to None
-        instance_pk = self.pk if not is_new else 'new-%s' % id(self)
-
-        attrs = dict(
-            identifier=self._linguist.identifier,
-            object_id=instance_pk,
-            language=language,
-            field_name=field_name)
-
-        cache_key = get_cache_key(**attrs)
+        cache_key = get_cache_key(**{
+            'instance': self,
+            'language': language,
+            'field_name': field_name})
 
         # First, try the fetch the value from the cache
         if cache_key in self._linguist.translations:
-            return self._linguist.translations[cache_key]['field_value']
+            return self._linguist.translations[cache_key].field_value
 
         # Not cached? If it's not a new object, let's fetch it from db.
         obj = None
@@ -224,9 +194,11 @@ class ModelMixin(object):
 
         # Object exists: let's populate the cache and return the field value.
         if obj is not None:
-            self._linguist.translations[cache_key] = attrs
-            self._linguist.translations[cache_key]['is_new'] = False
-            self._linguist.translations[cache_key]['field_value'] = obj.field_value
+            cached_translation =
+            self._linguist.translations[cache_key] = CachedTranslation(**{
+                'instance': self,
+                'translation': obj
+            })
             return obj.field_value
 
         return None
