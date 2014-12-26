@@ -8,6 +8,7 @@ class CategoryTranslation(linguist.ModelTranslationBase):
     model = Category
     identifier = 'category'
     fields = ('name', )
+    default_language = 'fr'
 
 
 class PostTranslation(linguist.ModelTranslationBase):
