@@ -62,6 +62,7 @@ class CacheDescriptor(dict):
         self['fields'] = self._translation_class.fields
         self['default_language'] = self._translation_class.default_language or settings.DEFAULT_LANGUAGE
         self['language'] = self['default_language']
+        self['translations'] = {}
 
     @property
     def identifier(self):
@@ -114,6 +115,10 @@ class CacheDescriptor(dict):
         Read-only.
         """
         return self._translation_class
+
+    @property
+    def translations(self):
+        return self['translations']
 
 
 def default_value_getter(field):
