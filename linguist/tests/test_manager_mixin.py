@@ -42,4 +42,4 @@ class ManagerMixinTest(BaseTestCase):
         self.assertTrue(hasattr(FooModel.objects, 'with_translations'))
         FooModel.objects.with_translations()
         for obj in FooModel.objects.all():
-            self.assertTrue(len(obj._linguist.keys()) > 2)
+            self.assertTrue(obj.cached_translation_count > 0)
