@@ -47,14 +47,14 @@ class TranslationManager(models.Manager):
             new_objects_keys = []
 
             for key in instance._linguist.translations:
-                object_id = key.split('_')[2]  # translation_identifier_objectid_language_fieldname
+                object_id = key.split('_')[1]  # identifier_objectid_language_fieldname
                 if object_id == 'new-%s' % id(instance):
                     new_objects_keys.append(key)
 
             for key in new_objects_keys:
 
                 parts = key.split('_')
-                parts[2] = '%s' % instance.pk
+                parts[1] = '%s' % instance.pk
                 new_key = '_'.join(parts)
 
                 cached_obj = instance._linguist.translations.get(key)
@@ -98,7 +98,7 @@ class TranslationManager(models.Manager):
 
         if to_create:
             for key, cached_obj in to_create:
-                create.append((cached_obj.lookup, self.model(**cached_obj.attrs)))
+                create.append(self.model(**cached_obj.attrs))
 
         if to_update:
             for key, cached_obj in to_update:
@@ -125,12 +125,12 @@ class TranslationManager(models.Manager):
                 created = False
 
         if update_objects:
-            for lookup, attrs in to_update:
-                self.filter(**lookup).update(**attrs)
+            for key, cached_obj in to_update:
+                self.filter(**cached_obj.lookup).update(**cached_obj.attrs)
 
         if created:
-            for obj in to_create:
-                obj.is_new = False
+            for key, cached_obj in to_create:
+                cached_obj.is_new = False
 
 
 @python_2_unicode_compatible
