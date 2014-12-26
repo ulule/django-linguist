@@ -134,24 +134,18 @@ class ModelMixin(object):
         """
         Caches a translation.
         """
-        # Determines if object already exists in db or not
         is_new = bool(self.pk is None)
 
         cache_key = make_cache_key(**{
             'instance': self,
             'language': language,
-            'field_name': field_name
+            'field_name': field_name,
         })
 
-        # First, try to fetch from the cache
-        cached = self._linguist.translations.get(cache_key, None)
-
-        # Cache exists? Just update the value.
-        if cached is not None:
+        if cache_key in self._linguist.translations:
             self._linguist.translations[cache_key].field_value = value
             return
 
-        # Not cached? If it's not a new object, let's fetch it from db.
         cached_obj = CachedTranslation(**{
             'instance': self,
             'language': language,
@@ -160,6 +154,7 @@ class ModelMixin(object):
         })
 
         obj = None
+
         if not is_new:
             try:
                 obj = Translation.objects.get(**cached_obj.attrs)
@@ -177,7 +172,6 @@ class ModelMixin(object):
         Translation instance if found, otherwise retrieves it from the database
         and cached it.
         """
-        # Determines if object already exists in db or not
         is_new = bool(self.pk is None)
 
         cache_key = make_cache_key(**{
@@ -186,11 +180,9 @@ class ModelMixin(object):
             'field_name': field_name
         })
 
-        # First, try the fetch the value from the cache
         if cache_key in self._linguist.translations:
             return self._linguist.translations[cache_key].field_value
 
-        # Not cached? If it's not a new object, let's fetch it from db.
         cached_obj = CachedTranslation(**{
             'instance': self,
             'language': language,
@@ -198,13 +190,13 @@ class ModelMixin(object):
         })
 
         obj = None
+
         if not is_new:
             try:
                 obj = Translation.objects.get(**cached_obj.attrs)
             except Translation.DoesNotExist:
                 pass
 
-        # Object exists: let's populate the cache and return the field value.
         if obj is not None:
             cached_obj.update_from_object(obj)
             return obj.field_value
