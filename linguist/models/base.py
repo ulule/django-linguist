@@ -6,14 +6,14 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
 from .. import settings
+from ..cache import make_cache_key
 
 
 class TranslationManager(models.Manager):
 
-    @staticmethod
-    def _get_object_lookup(obj, language=None):
+    def get_object_translations(self, obj, language=None):
         """
-        Returns object's lookup (for filter() method).
+        Shorcut method to retrieve translations for a given object.
         """
         lookup = {
             'identifier': obj.linguist_identifier,
@@ -23,13 +23,6 @@ class TranslationManager(models.Manager):
         if language is not None:
             lookup['language'] = language
 
-        return lookup
-
-    def get_object_translations(self, obj, language=None):
-        """
-        Shorcut method to retrieve translations for a given object.
-        """
-        lookup = self._get_object_lookup(obj, language)
         return self.get_queryset().filter(**lookup)
 
     def delete_object_translations(self, obj, language=None):
@@ -47,47 +40,101 @@ class TranslationManager(models.Manager):
                     .distinct()
                     .order_by('language'))
 
-    def save_cached(self, dicts):
+    @staticmethod
+    def _sanitize_cached_translations(instances):
+        """
+        Sanitizes cache by assigning instance pk in object_id field.
+        """
+        for instance in instances:
+
+            new_objects_keys = []
+
+            for key in instance._linguist.translations:
+                object_id = key.split('_')[2]  # translation_identifier_objectid_language_fieldname
+                if object_id == 'new-%s' % id(instance):
+                    new_objects_keys.append(key)
+
+            for key in new_objects_keys:
+
+                parts = key.split('_')
+                parts[2] = '%s' % instance.pk
+                new_key = '_'.join(parts)
+
+                cached_obj = instance._linguist.translations.get(key)
+                cached_obj.object_id = '%s' % instance.pk
+
+                instance._linguist.translations[new_key] = cached_obj
+                del instance._linguist.translations[key]
+
+                keys_to_remove = []
+                for key, cached_obj in instance._linguist.translations.iteritems():
+                    if not cached_obj.field_value:
+                        keys_to_remove.append(key)
+
+                for key in keys_to_remove:
+                    del instance._linguist.translations[key]
+
+    @staticmethod
+    def _filter_translations_to_save(instances):
+        """
+        Takes a list of model instances and returns a tuple
+        ``(to_create, to_update)``.
+        """
+        to_create, to_update = [], []
+
+        for instance in instances:
+
+            translations = instance._linguist.translations
+
+            for translation in translations:
+                if translation.is_new:
+                    to_create.append(translation)
+                else:
+                    to_update.append(translation)
+
+        return (to_create, to_update)
+
+    def _prepare_translations_to_save(self, to_create, to_update):
+        """
+        Prepare objects for bulk create and update.
+        """
+        create, update = [], []
+
+        if to_create:
+            for translation in to_create:
+                create.append((translation.lookup, self.model(**translation.attrs)))
+
+        if to_update:
+            for translation in to_update:
+                update.append((translation.lookup, translation.attrs))
+
+        return create, update
+
+    def save_translations(self, instances):
         """
         Saves cached translations (cached in model instances as dictionaries).
         """
-        to_create = []
-        to_update = []
-        bulk_create_objects = []
+        if not isinstance(instances, (list, tuple)):
+            instances = [instances]
 
-        # is_new is True? create object.
-        # Otherwise, just update it
-        for dct in dicts:
-            is_new = dct.get('is_new', False)
-            if is_new:
-                to_create.append(dct)
-            else:
-                to_update.append(dct)
-
-        for dct in to_create:
-            new_dct = copy.copy(dct)
-            del new_dct['is_new']
-            bulk_create_objects.append(self.model(**new_dct))
+        instances = self._sanitize_cached_translations(instances)
+        to_create, to_update = self._filter_translations_to_save(instances)
+        create_objects, update_objects = self._prepare_translations_to_save(to_create, to_update)
 
         created = True
-        if bulk_create_objects:
+        if create_objects:
             try:
-                self.bulk_create(bulk_create_objects)
+                self.bulk_create(create_objects)
             except IntegrityError:
                 created = False
 
-        if created:
-            for dct in to_create:
-                dct['is_new'] = False
+        if update_objects:
+            for lookup, attrs in to_update:
+                self.filter(**lookup).update(**attrs)
 
-        for dct in to_update:
-            new_dct = copy.copy(dct)
-            del new_dct['is_new']
-            lookup = {}
-            lookup['identifier'] = new_dct['identifier']
-            lookup['object_id'] = new_dct['object_id']
-            lookup['language'] = new_dct['language']
-            self.filter(**lookup).update(**new_dct)
+        if created:
+            for obj in to_create:
+                obj.is_new = False
 
 
 @python_2_unicode_compatible
