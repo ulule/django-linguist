@@ -7,14 +7,6 @@ from django.utils.translation import get_language as _get_language
 from .. import settings
 
 
-def get_cache_key(**kwargs):
-    """
-    Returns cache key.
-    """
-    keys = ('identifier', 'object_id', 'language', 'field_name')
-    return 'translation_%s_%s_%s_%s' % tuple(kwargs[attr] for attr in keys)
-
-
 def get_language_name(code):
     languages = dict((lang_code, lang_name) for lang_code, lang_name in settings.SUPPORTED_LANGUAGES)
     return languages.get(code)
