@@ -82,7 +82,6 @@ class TranslationManager(models.Manager):
         to_create, to_update = [], []
 
         for instance in instances:
-            translations = instance._linguist.translations
             for key, cached_obj in instance._linguist.translations.iteritems():
                 if cached_obj.is_new:
                     to_create.append((key, cached_obj))
