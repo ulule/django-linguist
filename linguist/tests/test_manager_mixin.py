@@ -14,30 +14,6 @@ class ManagerMixinTest(BaseTestCase):
     def setUp(self):
         self.create_registry()
 
-    def test_get_translation_lookups(self):
-        from ..mixins import get_translation_lookups
-
-        lookups = get_translation_lookups(self.instance)
-        self.assertEqual(lookups, {
-            'identifier': self.instance.linguist_identifier,
-            'object_id': self.instance.pk,
-        })
-
-        lookups = get_translation_lookups(self.instance, fields=['title', 'body'])
-        self.assertEqual(lookups, {
-            'identifier': self.instance.linguist_identifier,
-            'object_id': self.instance.pk,
-            'field_name__in': ['title', 'body'],
-        })
-
-        lookups = get_translation_lookups(self.instance, fields=['title'], languages=['en', 'fr'])
-        self.assertEqual(lookups, {
-            'identifier': self.instance.linguist_identifier,
-            'object_id': self.instance.pk,
-            'field_name__in': ['title'],
-            'language__in': ['en', 'fr'],
-        })
-
     def test_with_translations(self):
         self.assertTrue(hasattr(FooModel.objects, 'with_translations'))
         FooModel.objects.with_translations()

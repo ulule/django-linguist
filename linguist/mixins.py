@@ -3,23 +3,6 @@ from .cache import make_cache_key, CachedTranslation
 from .models import Translation
 
 
-def get_translation_lookups(instance, fields=None, languages=None):
-    """
-    Returns a dict to pass to Translation.objects.filter().
-    """
-    lookups = dict(
-        identifier=instance.linguist_identifier,
-        object_id=instance.pk)
-
-    if fields is not None:
-        lookups['field_name__in'] = fields
-
-    if languages is not None:
-        lookups['language__in'] = languages
-
-    return lookups
-
-
 def set_instance_cache(instance, translations):
     """
     Sets Linguist cache for the given instance.
@@ -41,9 +24,23 @@ class ManagerMixin(object):
         """
         Prefetches translations.
         """
-        for instance in self.get_queryset():
-            lookups = get_translation_lookups(instance, fields, languages)
-            translations = Translation.objects.filter(**lookups)
+        qs = self.get_queryset()
+        batch_size = 50 if qs.count() >= 50 else None
+        object_ids = qs.values_list('id', flat=True)
+
+        lookup = dict(identifier=self.model._linguist.identifier)
+
+        if fields is not None:
+            lookup['field_name__in'] = fields
+
+        if languages is not None:
+            lookup['language__in'] = languages
+
+        lookup['object_id__in'] = object_ids
+
+        translations = Translation.objects.filter(**lookup)
+
+        for instance in qs:
             set_instance_cache(instance, translations)
 
 
