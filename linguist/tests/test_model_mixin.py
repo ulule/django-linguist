@@ -117,7 +117,6 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(cached_obj.identifier, 'foo')
         self.assertEqual(cached_obj.field_name, 'title')
 
-
         cached_obj = self.instance._linguist.translations.get(cache_key_fr)
         self.assertEqual(cached_obj.language, 'fr')
         self.assertEqual(cached_obj.object_id, '%s' % self.instance.pk)

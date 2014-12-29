@@ -15,6 +15,7 @@ class ManagerMixinTest(BaseTestCase):
         self.create_registry()
 
     def test_with_translations(self):
+
         self.assertTrue(hasattr(FooModel.objects, 'with_translations'))
         FooModel.objects.with_translations()
         for obj in FooModel.objects.all():

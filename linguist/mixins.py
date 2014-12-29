@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import copy
+
 from .cache import make_cache_key, CachedTranslation
 from .models import Translation
+from .utils import chunks
 
 
 def set_instance_cache(instance, translations):
@@ -20,28 +23,33 @@ class ManagerMixin(object):
     Linguist Manager Mixin.
     """
 
-    def with_translations(self, fields=None, languages=None):
+    def with_translations(self, fields=None, languages=None, chunks_length=None):
         """
         Prefetches translations.
         """
         qs = self.get_queryset()
-        batch_size = 50 if qs.count() >= 50 else None
         object_ids = qs.values_list('id', flat=True)
 
-        lookup = dict(identifier=self.model._linguist.identifier)
+        chunks_length = chunks_length if chunks_length is not None else 1
+
+        base_lookup = dict(identifier=self.model._linguist.identifier)
 
         if fields is not None:
-            lookup['field_name__in'] = fields
+            base_lookup['field_name__in'] = fields
 
         if languages is not None:
-            lookup['language__in'] = languages
+            base_lookup['language__in'] = languages
 
-        lookup['object_id__in'] = object_ids
+        translations = []
 
-        translations = Translation.objects.filter(**lookup)
+        for ids in chunks(object_ids, chunks_length):
+            lookup = copy.copy(base_lookup)
+            lookup['object_id__in'] = ids
+            translations += Translation.objects.filter(**lookup)
 
         for instance in qs:
-            set_instance_cache(instance, translations)
+            instance_translations = [obj for obj in translations if obj.object_id == instance.pk]
+            set_instance_cache(instance, instance_translations)
 
 
 class ModelMixin(object):
