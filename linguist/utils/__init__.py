@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from .i18n import (get_language_name,
                    get_language,
                    get_fallback_language,
@@ -41,7 +43,7 @@ def make_temp_id(instance):
     Takes a instance and returns a temp ID for new objects cache keys.
     """
     import hashlib
-    return hashlib.sha1(id(instance)).hexdigest()
+    return hashlib.sha1('%s' % id(instance)).hexdigest()
 
 
 def chunks(l, n):
