@@ -12,6 +12,14 @@ from .template import select_template_name
 from .views import get_language_parameter, get_language_tabs
 
 
+def make_temp_id(instance):
+    """
+    Takes a instance and returns a temp ID for new objects cache keys.
+    """
+    import hashlib
+    return hashlib.sha1('%s' % id(instance)).hexdigest()
+
+
 def make_cache_key(instance, **kwargs):
     """
     Generates translation cache key.
@@ -29,21 +37,13 @@ def make_cache_key(instance, **kwargs):
         field_name = translation.field_name
 
     is_new = bool(instance.pk is None)
-    instance_pk = instance.pk if not is_new else id(instance)
+    instance_pk = instance.pk if not is_new else make_temp_id(instance)
 
     return '%s_%s_%s_%s' % (
         instance.linguist_identifier,
         instance_pk,
         language,
         field_name)
-
-
-def make_temp_id(instance):
-    """
-    Takes a instance and returns a temp ID for new objects cache keys.
-    """
-    import hashlib
-    return hashlib.sha1('%s' % id(instance)).hexdigest()
 
 
 def chunks(l, n):
