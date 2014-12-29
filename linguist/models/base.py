@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
 from .. import settings
+from .. import utils
 
 
 class TranslationManager(models.Manager):
@@ -44,10 +45,11 @@ class TranslationManager(models.Manager):
         for instance in instances:
 
             new_objects_keys = []
+            temp_id = utils.make_temp_id(instance)
 
             for key in instance._linguist.translations:
                 object_id = key.split('_')[1]  # identifier_objectid_language_fieldname
-                if object_id == 'new-%s' % id(instance):
+                if object_id == temp_id:
                     new_objects_keys.append(key)
 
             for key in new_objects_keys:
@@ -57,7 +59,7 @@ class TranslationManager(models.Manager):
                 new_key = '_'.join(parts)
 
                 cached_obj = instance._linguist.translations.get(key)
-                cached_obj.object_id = '%s' % instance.pk
+                cached_obj.object_id = instance.pk
 
                 instance._linguist.translations[new_key] = cached_obj
                 del instance._linguist.translations[key]
