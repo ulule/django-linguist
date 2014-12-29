@@ -29,7 +29,7 @@ class ManagerMixinTest(BaseTestCase):
 
         self.assertEqual(self.instance.cached_translations_count, 2)
 
-    def test_with_translations_fields(self):
+    def test_with_translations_args(self):
         # Let's create an English post
         self.instance.language = 'en'
         self.instance.title = 'Hello'
@@ -67,3 +67,30 @@ class ManagerMixinTest(BaseTestCase):
         self.assertTrue('foo_1_en_title' in self.instance._linguist.translations)
         self.assertTrue('foo_1_fr_body' in self.instance._linguist.translations)
         self.assertTrue('foo_1_en_body' in self.instance._linguist.translations)
+
+        # Clear cache (remove all translations previously cached)
+        self.instance.clear_translations_cache()
+        self.assertEqual(self.instance.cached_translations_count, 0)
+
+        # If we just want title and excerpt and only english
+        FooModel.objects.with_translations(field_names=('title', 'excerpt'), languages=('en',))
+        self.assertEqual(self.instance.cached_translations_count, 2)
+        self.assertTrue('foo_1_en_title' in self.instance._linguist.translations)
+        self.assertTrue('foo_1_en_excerpt' in self.instance._linguist.translations)
+
+        # Clear cache (remove all translations previously cached)
+        self.instance.clear_translations_cache()
+        self.assertEqual(self.instance.cached_translations_count, 0)
+
+        # If we just want title, excerpt, body and only french
+        FooModel.objects.with_translations(field_names=('title', 'excerpt', 'body'), languages=('fr',))
+        self.assertEqual(self.instance.cached_translations_count, 3)
+        self.assertTrue('foo_1_fr_title' in self.instance._linguist.translations)
+        self.assertTrue('foo_1_fr_excerpt' in self.instance._linguist.translations)
+        self.assertTrue('foo_1_fr_body' in self.instance._linguist.translations)
+
+        # If we just want title in english and french
+        FooModel.objects.with_translations(field_names=('title',), languages=('fr', 'en'))
+        self.assertEqual(self.instance.cached_translations_count, 2)
+        self.assertTrue('foo_1_fr_title' in self.instance._linguist.translations)
+        self.assertTrue('foo_1_en_title' in self.instance._linguist.translations)
