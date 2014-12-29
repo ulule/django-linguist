@@ -38,7 +38,8 @@ class TranslationDescriptor(object):
 
     def __set__(self, instance, value):
         instance_only(instance)
-        self.cache_translation(instance, self.language, self.field.name, value)
+        if value:
+            self.cache_translation(instance, self.language, self.field.name, value)
 
     def db_type(self, connection):
         """
