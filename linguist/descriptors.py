@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 
 from . import settings
+from .cache import CachedTranslation, make_cache_key
+from .models import Translation
 from .utils.i18n import build_localized_field_name, build_localized_verbose_name
 
 
@@ -31,11 +33,11 @@ class TranslationDescriptor(object):
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
-        return instance._get_translated_value(self.language, self.field.name)
+        return self.get_translated_value(instance, self.language, self.field.name)
 
     def __set__(self, instance, value):
         instance_only(instance)
-        instance._cache_translation(self.language, self.field.name, value)
+        self.cache_translation(instance, self.language, self.field.name, value)
 
     def db_type(self, connection):
         """
@@ -43,6 +45,79 @@ class TranslationDescriptor(object):
         field list (``_meta.concrete_fields``) resulting in the fact that syncdb
         will skip this field when creating tables in PostgreSQL.
         """
+        return None
+
+    def cache_translation(self, instance, language, field_name, value):
+        """
+        Caches a translation.
+        """
+        is_new = bool(instance.pk is None)
+
+        cache_key = make_cache_key(**{
+            'instance': instance,
+            'language': language,
+            'field_name': field_name,
+        })
+
+        if cache_key in instance._linguist.translations:
+            instance._linguist.translations[cache_key].field_value = value
+            return
+
+        cached_obj = CachedTranslation(**{
+            'instance': instance,
+            'language': language,
+            'field_name': field_name,
+            'field_value': value,
+        })
+
+        obj = None
+
+        if not is_new:
+            try:
+                obj = Translation.objects.get(**cached_obj.attrs)
+            except Translation.DoesNotExist:
+                pass
+
+        if obj is not None:
+            cached_obj.update_from_object(obj)
+
+        instance._linguist.translations[cache_key] = cached_obj
+
+    def get_translated_value(self, instance, language, field_name):
+        """
+        Takes a language and a field name and returns the cached
+        Translation instance if found, otherwise retrieves it from the database
+        and cached it.
+        """
+        is_new = bool(instance.pk is None)
+
+        cache_key = make_cache_key(**{
+            'instance': instance,
+            'language': language,
+            'field_name': field_name
+        })
+
+        if cache_key in instance._linguist.translations:
+            return instance._linguist.translations[cache_key].field_value
+
+        cached_obj = CachedTranslation(**{
+            'instance': instance,
+            'language': language,
+            'field_name': field_name,
+        })
+
+        obj = None
+
+        if not is_new:
+            try:
+                obj = Translation.objects.get(**cached_obj.attrs)
+            except Translation.DoesNotExist:
+                pass
+
+        if obj is not None:
+            cached_obj.update_from_object(obj)
+            return obj.field_value
+
         return None
 
 
