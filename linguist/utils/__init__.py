@@ -20,13 +20,17 @@ def make_temp_id(instance):
     return hashlib.sha1('%s' % id(instance)).hexdigest()
 
 
-def make_cache_key(instance, **kwargs):
+def make_cache_key(**kwargs):
     """
     Generates translation cache key.
     """
+    instance = kwargs.get('instance', None)
     translation = kwargs.get('translation', None)
     language = kwargs.get('language', None)
     field_name = kwargs.get('field_name', None)
+
+    if instance is None:
+        raise Exception("You must give the instance")
 
     if translation is None:
         if not (language and field_name):
