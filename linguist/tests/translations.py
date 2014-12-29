@@ -24,7 +24,7 @@ class FooModel(ModelMixin, models.Model):
 class FooTranslation(ModelTranslationBase):
     model = FooModel
     identifier = 'foo'
-    fields = ('title', )
+    fields = ('title', 'excerpt', 'body')
 
 
 class BarModel(ModelMixin, models.Model):
