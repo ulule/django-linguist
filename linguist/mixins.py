@@ -10,8 +10,9 @@ def set_instance_cache(instance, translations):
     """
     Sets Linguist cache for the given instance.
     """
+    instance.clear_translations_cache()
     for translation in translations:
-        cache_key = utils.make_cache_key(instance, **{'translation': translation})
+        cache_key = utils.make_cache_key(**{'instance': instance, 'translation': translation})
         if cache_key not in instance._linguist.translations:
             cached_obj = CachedTranslation(**{'instance': instance, 'translation': translation})
             instance._linguist.translations[cache_key] = cached_obj
@@ -23,7 +24,7 @@ class ManagerMixin(object):
     Linguist Manager Mixin.
     """
 
-    def with_translations(self, fields=None, languages=None, chunks_length=None):
+    def with_translations(self, field_names=None, languages=None, chunks_length=None):
         """
         Prefetches translations.
         """
@@ -32,20 +33,24 @@ class ManagerMixin(object):
 
         chunks_length = chunks_length if chunks_length is not None else 1
 
-        base_lookup = dict(identifier=self.model._linguist.identifier)
+        lookup = dict(identifier=self.model._linguist.identifier)
 
-        if fields is not None:
-            base_lookup['field_name__in'] = fields
+        if field_names is not None:
+            if not isinstance(field_names, (list, tuple)):
+                field_names = [field_names]
+            lookup['field_name__in'] = field_names
 
         if languages is not None:
-            base_lookup['language__in'] = languages
+            if not isinstance(languages, (list, tuple)):
+                languages = [languages]
+            lookup['language__in'] = languages
 
         translations = []
 
         for ids in utils.chunks(object_ids, chunks_length):
-            lookup = copy.copy(base_lookup)
-            lookup['object_id__in'] = ids
-            translations += Translation.objects.filter(**lookup)
+            filter_lookup = copy.copy(lookup)
+            filter_lookup['object_id__in'] = ids
+            translations += Translation.objects.filter(**filter_lookup)
 
         for instance in qs:
             instance_translations = [obj for obj in translations if obj.object_id == instance.pk]
