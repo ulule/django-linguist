@@ -8,7 +8,7 @@ from .. import settings
 
 class TranslationManager(models.Manager):
 
-    def get_object_translations(self, obj, language=None):
+    def get_translations(self, obj, language=None):
         """
         Shorcut method to retrieve translations for a given object.
         """
@@ -22,11 +22,11 @@ class TranslationManager(models.Manager):
 
         return self.get_queryset().filter(**lookup)
 
-    def delete_object_translations(self, obj, language=None):
+    def delete_translations(self, obj, language=None):
         """
         Shortcut method to delete translations for a given object.
         """
-        self.get_object_translations(obj, language).delete()
+        self.get_translations(obj, language).delete()
 
     def get_languages(self):
         """

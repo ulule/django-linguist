@@ -122,13 +122,13 @@ class ModelMixin(object):
         """
         if not self.pk:
             return Translation.objects.none()
-        return Translation.objects.get_object_translations(**{'obj': self, 'language': language})
+        return Translation.objects.get_translations(**{'obj': self, 'language': language})
 
     def delete_translations(self, language=None):
         """
         Deletes related translations.
         """
-        return Translation.objects.delete_object_translations(**{'obj': self, 'language': language})
+        return Translation.objects.delete_translations(**{'obj': self, 'language': language})
 
     def _cache_translation(self, language, field_name, value):
         """
