@@ -41,7 +41,7 @@ class ModelMixinTest(BaseTestCase):
 
     def test_translatable_fields(self):
         self.assertTrue(hasattr(self.instance, 'translatable_fields'))
-        self.assertEqual(self.instance.translatable_fields, ('title',))
+        self.assertEqual(self.instance.translatable_fields, ('title', 'excerpt', 'body'))
 
     def test_cached_translations_count(self):
         self.instance.language = 'en'
