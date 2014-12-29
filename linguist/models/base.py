@@ -45,6 +45,7 @@ class TranslationManager(models.Manager):
         for instance in instances:
 
             new_objects_keys = []
+            keys_to_remove = []
             temp_id = utils.make_temp_id(instance)
 
             for key in instance._linguist.translations:
@@ -58,19 +59,18 @@ class TranslationManager(models.Manager):
                 parts[1] = '%s' % instance.pk
                 new_key = '_'.join(parts)
 
-                cached_obj = instance._linguist.translations.get(key)
+                cached_obj = instance._linguist.translations[key]
                 cached_obj.object_id = instance.pk
 
                 instance._linguist.translations[new_key] = cached_obj
                 del instance._linguist.translations[key]
 
-                keys_to_remove = []
-                for key, cached_obj in instance._linguist.translations.iteritems():
-                    if not cached_obj.field_value:
-                        keys_to_remove.append(key)
+            for key, cached_obj in instance._linguist.translations.iteritems():
+                if cached_obj.field_value in (None, ''):
+                    keys_to_remove.append(key)
 
-                for key in keys_to_remove:
-                    del instance._linguist.translations[key]
+            for key in keys_to_remove:
+                del instance._linguist.translations[key]
 
         return instances
 
