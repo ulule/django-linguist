@@ -15,8 +15,8 @@ class BarManager(ManagerMixin, models.Manager):
 
 class FooModel(ModelMixin, models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
-    excerpt = models.TextField(blank=True)
-    body = models.TextField(blank=True)
+    excerpt = models.TextField(null=True, blank=True)
+    body = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     objects = FooManager()
 
