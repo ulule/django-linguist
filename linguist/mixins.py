@@ -11,10 +11,10 @@ def set_instance_cache(instance, translations):
     Sets Linguist cache for the given instance.
     """
     for translation in translations:
-        cache_key = utils.make_cache_key(instance, translation)
+        cache_key = utils.make_cache_key(instance, **{'translation': translation})
         if cache_key not in instance._linguist.translations:
             cached_obj = CachedTranslation(**{'instance': instance, 'translation': translation})
-            instance._linguist.translation[cache_key] = cached_obj
+            instance._linguist.translations[cache_key] = cached_obj
     return instance
 
 
