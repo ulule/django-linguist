@@ -17,11 +17,10 @@ from django.utils.http import urlencode
 from django.utils.translation import ugettext_lazy as _
 from django.utils import six
 
+from . import utils
+
 from .forms import ModelTranslationForm
 from .models import Translation as LinguistTranslationModel
-from .utils.views import get_language_parameter, get_language_tabs
-from .utils.i18n import get_language_name
-from .utils.template import select_template_name
 
 __all__ = (
     'BaseModelTranslationAdmin',
@@ -44,11 +43,11 @@ class BaseModelTranslationAdmin(BaseModelAdmin):
         return base_media + _language_media
 
     def get_language(self, request):
-        return get_language_parameter(request, self.query_language_key)
+        return utils.get_language_parameter(request, self.query_language_key)
 
     def get_language_tabs(self, request, obj, available_languages, css_class=None):
         current_language = self.get_language(request)
-        return get_language_tabs(request, current_language, available_languages, css_class=css_class)
+        return utils.get_language_tabs(request, current_language, available_languages, css_class=css_class)
 
 
 class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
@@ -132,7 +131,7 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
     def delete_translations(self, request, object_id, language):
         opts = self.model._meta
         obj = self.get_object(request, unquote(object_id))
-        language_name = get_language_name(language)
+        language_name = utils.get_language_name(language)
 
         if obj is None:
             raise Http404
@@ -188,7 +187,7 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
             "admin/{0}/change_form.html".format(app_label),
             "admin/change_form.html"))
 
-_lazy_select_template_name = lazy(select_template_name, six.text_type)
+_lazy_select_template_name = lazy(utils.select_template_name, six.text_type)
 
 
 class LinguistTranslationModelAdmin(admin.ModelAdmin):

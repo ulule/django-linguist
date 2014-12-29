@@ -2,9 +2,10 @@
 from __future__ import unicode_literals
 
 from . import settings
-from .cache import CachedTranslation, make_cache_key
+from . import utils
+
+from .cache import CachedTranslation
 from .models import Translation
-from .utils.i18n import build_localized_field_name, build_localized_verbose_name
 
 
 def instance_only(instance):
@@ -23,9 +24,9 @@ class TranslationDescriptor(object):
     def __init__(self, field, language):
         self.field = field
         self.language = language
-        self.attname = build_localized_field_name(self.field.name, language)
+        self.attname = utils.build_localized_field_name(self.field.name, language)
         self.name = self.attname
-        self.verbose_name = build_localized_verbose_name(field.verbose_name, language)
+        self.verbose_name = utils.build_localized_verbose_name(field.verbose_name, language)
         self.null = True
         self.blank = True
         self.column = None
@@ -53,7 +54,7 @@ class TranslationDescriptor(object):
         """
         is_new = bool(instance.pk is None)
 
-        cache_key = make_cache_key(**{
+        cache_key = utils.make_cache_key(**{
             'instance': instance,
             'language': language,
             'field_name': field_name,
@@ -79,7 +80,7 @@ class TranslationDescriptor(object):
                 pass
 
         if obj is not None:
-            cached_obj.update_from_object(obj)
+            cached_obj.from_object(obj)
 
         instance._linguist.translations[cache_key] = cached_obj
 
@@ -91,7 +92,7 @@ class TranslationDescriptor(object):
         """
         is_new = bool(instance.pk is None)
 
-        cache_key = make_cache_key(**{
+        cache_key = utils.make_cache_key(**{
             'instance': instance,
             'language': language,
             'field_name': field_name
@@ -115,7 +116,7 @@ class TranslationDescriptor(object):
                 pass
 
         if obj is not None:
-            cached_obj.update_from_object(obj)
+            cached_obj.from_object(obj)
             return obj.field_value
 
         return None
@@ -199,7 +200,7 @@ def default_value_getter(field):
     """
     def default_value_func_getter(self):
         language = self.language or self.default_language
-        localized_field = build_localized_field_name(field, language)
+        localized_field = utils.build_localized_field_name(field, language)
         return getattr(self, localized_field)
     return default_value_func_getter
 
@@ -211,7 +212,7 @@ def default_value_setter(field):
     """
     def default_value_func_setter(self, value):
         language = self.language or self.default_language
-        localized_field = build_localized_field_name(field, language)
+        localized_field = utils.build_localized_field_name(field, language)
         setattr(self, localized_field, value)
     return default_value_func_setter
 
@@ -244,7 +245,7 @@ def add_language_fields(translation_class):
         field = model._meta.get_field(field_name)
         for language_code, language_name in settings.SUPPORTED_LANGUAGES:
             translation_field = TranslationDescriptor(field, language_code)
-            localized_field_name = build_localized_field_name(field.name, language_code)
+            localized_field_name = utils.build_localized_field_name(field.name, language_code)
             if hasattr(model, localized_field_name):
                 raise ValueError(
                     "Error adding translation field. Model '%s' already contains a field named"

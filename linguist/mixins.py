@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import copy
 
-from .cache import make_cache_key, CachedTranslation
+from . import utils
+from .cache import CachedTranslation
 from .models import Translation
-from .utils import chunks
 
 
 def set_instance_cache(instance, translations):
@@ -11,7 +11,7 @@ def set_instance_cache(instance, translations):
     Sets Linguist cache for the given instance.
     """
     for translation in translations:
-        cache_key = make_cache_key(instance, translation)
+        cache_key = utils.make_cache_key(instance, translation)
         if cache_key not in instance._linguist.translations:
             cached_obj = CachedTranslation(**{'instance': instance, 'translation': translation})
             instance._linguist.translation[cache_key] = cached_obj
@@ -42,7 +42,7 @@ class ManagerMixin(object):
 
         translations = []
 
-        for ids in chunks(object_ids, chunks_length):
+        for ids in utils.chunks(object_ids, chunks_length):
             lookup = copy.copy(base_lookup)
             lookup['object_id__in'] = ids
             translations += Translation.objects.filter(**lookup)
