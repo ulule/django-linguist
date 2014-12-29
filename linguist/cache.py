@@ -51,10 +51,11 @@ class CachedTranslation(object):
             lookup['language'] = self.language
         return lookup
 
-    def from_object(self, obj):
+    @classmethod
+    def from_object(cls, obj):
         """
         Updates values from the given object.
         """
-        fields = ('identifier', 'object_id', 'language', 'field_name', 'field_value')
-        for field in fields:
-            setattr(self, field, getattr(obj, field))
+        fields = obj._meta.get_all_field_names()
+        fields.remove('id')
+        return cls(**dict((field, getattr(obj, field)) for field in fields))

@@ -80,7 +80,7 @@ class TranslationDescriptor(object):
                 pass
 
         if obj is not None:
-            cached_obj.from_object(obj)
+            cached_obj = cached_obj.from_object(obj)
 
         instance._linguist.translations[cache_key] = cached_obj
 
@@ -116,7 +116,8 @@ class TranslationDescriptor(object):
                 pass
 
         if obj is not None:
-            cached_obj.from_object(obj)
+            cached_obj = cached_obj.from_object(obj)
+            instance._linguist[cache_key] = cached_obj
             return obj.field_value
 
         return None
