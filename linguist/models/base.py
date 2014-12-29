@@ -37,8 +37,7 @@ class TranslationManager(models.Manager):
                     .distinct()
                     .order_by('language'))
 
-    @staticmethod
-    def _sanitize_cached_translations(instances):
+    def _sanitize_cached_translations(self, instances):
         """
         Sanitizes cache by assigning instance pk in object_id field.
         """
@@ -73,8 +72,7 @@ class TranslationManager(models.Manager):
 
         return instances
 
-    @staticmethod
-    def _filter_translations_to_save(instances):
+    def _filter_translations_to_save(self, instances):
         """
         Takes a list of model instances and returns a tuple
         ``(to_create, to_update)``.
