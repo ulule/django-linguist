@@ -146,7 +146,7 @@ class Translation(models.Model):
 
     object_id = models.IntegerField(
         verbose_name=_('The object ID'),
-        null=True,
+        db_index=True,
         help_text=_('The object ID of this translation'))
 
     language = models.CharField(
@@ -154,11 +154,13 @@ class Translation(models.Model):
         verbose_name=_('language'),
         choices=settings.SUPPORTED_LANGUAGES,
         default=settings.DEFAULT_LANGUAGE,
+        db_index=True,
         help_text=_('The language for this translation'))
 
     field_name = models.CharField(
         max_length=100,
         verbose_name=_('field name'),
+        db_index=True,
         help_text=_('The model field name for this translation.'))
 
     field_value = models.TextField(
