@@ -2,6 +2,7 @@
 from django.db import models, IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils import six
 
 from .. import settings
 from .. import utils
@@ -65,7 +66,7 @@ class TranslationManager(models.Manager):
                 instance._linguist.translations[new_key] = cached_obj
                 del instance._linguist.translations[key]
 
-            for key, cached_obj in instance._linguist.translations.iteritems():
+            for key, cached_obj in six.iteritems(instance._linguist.translations):
                 if cached_obj.field_value in (None, ''):
                     keys_to_remove.append(key)
 
@@ -82,7 +83,7 @@ class TranslationManager(models.Manager):
         to_create, to_update = [], []
 
         for instance in instances:
-            for key, cached_obj in instance._linguist.translations.iteritems():
+            for key, cached_obj in six.iteritems(instance._linguist.translations):
                 if cached_obj.is_new:
                     to_create.append((key, cached_obj))
                 else:
