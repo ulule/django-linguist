@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import copy
+from operator import itemgetter
+import itertools
 
 from . import utils
 from .cache import CachedTranslation
@@ -23,37 +25,51 @@ class ManagerMixin(object):
     Linguist Manager Mixin.
     """
 
-    def with_translations(self, field_names=None, languages=None, chunks_length=None):
+    def with_translations(self, **kwargs):
         """
         Prefetches translations.
+
+        Takes three optional keyword arguments:
+
+        * ``field_names``: ``field_name`` values for SELECT IN
+        * ``languages``: ``language`` values for SELECT IN
+        * ``chunks_length``: fetches IDs by chunk
+
         """
         qs = self.get_queryset()
-        object_ids = qs.values_list('id', flat=True)
-
-        chunks_length = chunks_length if chunks_length is not None else 1
+        object_ids = [obj.pk for obj in qs.all()]
+        chunks_length = kwargs.get('chunks_length', None)
 
         lookup = dict(identifier=self.model._linguist.identifier)
 
-        if field_names is not None:
-            if not isinstance(field_names, (list, tuple)):
-                field_names = [field_names]
-            lookup['field_name__in'] = field_names
+        for kwarg in ('field_names', 'languages'):
+            value = kwargs.get(kwarg, None)
+            if value is not None:
+                if not isinstance(value, (list, tuple)):
+                    value = [value]
+                lookup['%s__in' % kwarg[:-1]] = value
 
-        if languages is not None:
-            if not isinstance(languages, (list, tuple)):
-                languages = [languages]
-            lookup['language__in'] = languages
+        translations_qs = []
 
-        translations = []
+        if chunks_length is not None:
+            for ids in utils.chunks(object_ids, chunks_length):
+                ids_lookup = copy.copy(lookup)
+                ids_lookup['object_id__in'] = ids
+                translations_qs.append(Translation.objects.filter(**ids_lookup))
+        else:
+            lookup['object_id__in'] = object_ids
+            translations_qs.append(Translation.objects.filter(**lookup))
 
-        for ids in utils.chunks(object_ids, chunks_length):
-            filter_lookup = copy.copy(lookup)
-            filter_lookup['object_id__in'] = ids
-            translations += Translation.objects.filter(**filter_lookup)
+        translations = itertools.chain.from_iterable(translations_qs)
+
+        grouped_translations = {}
+        for obj in translations:
+            if obj.object_id not in grouped_translations:
+                grouped_translations[obj.object_id] = []
+            grouped_translations[obj.object_id].append(obj)
 
         for instance in qs:
-            instance_translations = [obj for obj in translations if obj.object_id == instance.pk]
-            set_instance_cache(instance, instance_translations)
+            set_instance_cache(instance, grouped_translations[instance.pk])
 
 
 class ModelMixin(object):
