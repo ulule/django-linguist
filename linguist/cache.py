@@ -4,20 +4,15 @@ from . import utils
 
 class CachedTranslation(object):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         from .models import Translation
 
-        # Is a new instance (not saved in db)
         self.is_new = kwargs.get('is_new', True)
-
-        # Translation model fields
         self.fields = Translation._meta.get_all_field_names()
         self.fields.remove('id')
 
-        # Model instances
         self.instances = ['instance', 'translation']
 
-        # Set all attributes to None by default
         attrs = self.fields + self.instances
         for attr in attrs:
             setattr(self, attr, None)
@@ -25,10 +20,8 @@ class CachedTranslation(object):
         self.__dict__.update(**kwargs)
 
         if self.instance is not None:
-            is_new = bool(self.instance.pk is None)
-            instance_pk = self.instance.pk if not is_new else utils.make_temp_id(self.instance)
             self.identifier = self.instance.linguist_identifier
-            self.object_id = instance_pk
+            self.object_id = self.instance.pk if not self.is_new else None
 
         if self.translation is not None:
             for attr in ('language', 'field_name', 'field_value'):

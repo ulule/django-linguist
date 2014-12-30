@@ -14,9 +14,7 @@ def set_instance_cache(instance, translations):
     """
     instance.clear_translations_cache()
     for translation in translations:
-        cache_key = utils.make_cache_key(**{'instance': instance, 'translation': translation})
-        cached_obj = CachedTranslation(**{'instance': instance, 'translation': translation})
-        instance._linguist.translations[cache_key] = cached_obj
+        instance._linguist.get_or_create_cache(**{'instance': instance, 'translation': translation})
     return instance
 
 
@@ -133,7 +131,7 @@ class ModelMixin(object):
         """
         Returns cached translations count.
         """
-        return len(self._linguist.translations)
+        return self._linguist.translations_count
 
     def clear_translations_cache(self):
         """

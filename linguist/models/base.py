@@ -39,74 +39,6 @@ class TranslationManager(models.Manager):
                     .distinct()
                     .order_by('language'))
 
-    def _sanitize_cached_translations(self, instances):
-        """
-        Sanitizes cache by assigning instance pk in object_id field.
-        """
-        for instance in instances:
-
-            new_objects_keys = []
-            keys_to_remove = []
-            temp_id = utils.make_temp_id(instance)
-
-            for key in instance._linguist.translations:
-                object_id = key.split('_')[1]  # identifier_objectid_language_fieldname
-                if object_id == temp_id:
-                    new_objects_keys.append(key)
-
-            for key in new_objects_keys:
-
-                parts = key.split('_')
-                parts[1] = '%s' % instance.pk
-                new_key = '_'.join(parts)
-
-                cached_obj = instance._linguist.translations[key]
-                cached_obj.object_id = instance.pk
-
-                instance._linguist.translations[new_key] = cached_obj
-                del instance._linguist.translations[key]
-
-            for key, cached_obj in six.iteritems(instance._linguist.translations):
-                if cached_obj.field_value in (None, ''):
-                    keys_to_remove.append(key)
-
-            for key in keys_to_remove:
-                del instance._linguist.translations[key]
-
-        return instances
-
-    def _filter_translations_to_save(self, instances):
-        """
-        Takes a list of model instances and returns a tuple
-        ``(to_create, to_update)``.
-        """
-        to_create, to_update = [], []
-
-        for instance in instances:
-            for key, cached_obj in six.iteritems(instance._linguist.translations):
-                if cached_obj.is_new:
-                    to_create.append((key, cached_obj))
-                else:
-                    to_update.append((key, cached_obj))
-
-        return (to_create, to_update)
-
-    def _prepare_translations_to_save(self, to_create, to_update):
-        """
-        Prepare objects for bulk create and update.
-        """
-        create, update = [], []
-
-        if to_create:
-            for key, cached_obj in to_create:
-                create.append(self.model(**cached_obj.attrs))
-
-        if to_update:
-            for key, cached_obj in to_update:
-                update.append((cached_obj.lookup, cached_obj.attrs))
-
-        return create, update
-
     def save_translations(self, instances):
         """
         Saves cached translations (cached in model instances as dictionaries).
@@ -114,24 +46,33 @@ class TranslationManager(models.Manager):
         if not isinstance(instances, (list, tuple)):
             instances = [instances]
 
-        instances = self._sanitize_cached_translations(instances)
-        to_create, to_update = self._filter_translations_to_save(instances)
-        create_objects, update_objects = self._prepare_translations_to_save(to_create, to_update)
+        for instance in instances:
 
-        created = True
-        if create_objects:
-            try:
-                self.bulk_create(create_objects)
-            except IntegrityError:
-                created = False
+            translations = []
 
-        if update_objects:
-            for key, cached_obj in to_update:
-                self.filter(**cached_obj.lookup).update(**cached_obj.attrs)
+            for obj in instance._linguist.translation_instances:
+                obj.object_id = instance.pk
+                translations.append(obj)
 
-        if created:
-            for key, cached_obj in to_create:
-                cached_obj.is_new = False
+            to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new]
+            to_update = [obj for obj in translations if not obj.is_new]
+
+            created = True
+
+            if to_create:
+                objects = [obj for cached, obj in to_create]
+                try:
+                    self.bulk_create(objects)
+                except IntegrityError:
+                    created = False
+
+            if to_update:
+                for obj in to_update:
+                    self.filter(**obj.lookup).update(**obj.attrs)
+
+            if created:
+                for cached, obj in to_create:
+                    cached.is_new = False
 
 
 @python_2_unicode_compatible

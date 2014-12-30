@@ -70,12 +70,11 @@ class ModelMixinTest(BaseTestCase):
     def test_new_instance_cache(self):
         self.instance.language = 'en'
         self.instance.title = 'Hello'
-        cache_key = 'foo_%s_en_title' % utils.make_temp_id(self.instance)
-        self.assertTrue(cache_key in self.instance._linguist.translations)
+        self.assertTrue(self.instance._linguist.translations['title']['en'])
 
-        cached_obj = self.instance._linguist.translations.get(cache_key)
+        cached_obj = self.instance._linguist.translations['title']['en']
         self.assertEqual(cached_obj.language, 'en')
-        self.assertEqual(cached_obj.object_id, utils.make_temp_id(self.instance))
+        self.assertIsNone(cached_obj.object_id)
         self.assertEqual(cached_obj.field_value, 'Hello')
         self.assertEqual(cached_obj.is_new, True)
         self.assertEqual(cached_obj.identifier, 'foo')
@@ -83,13 +82,12 @@ class ModelMixinTest(BaseTestCase):
 
         self.instance.language = 'fr'
         self.instance.title = 'Bonjour'
-        cache_key = 'foo_%s_fr_title' % utils.make_temp_id(self.instance)
         self.assertEqual(self.instance.cached_translations_count, 2)
-        self.assertTrue(cache_key in self.instance._linguist.translations)
+        self.assertTrue(self.instance._linguist.translations['title']['fr'])
 
-        cached_obj = self.instance._linguist.translations.get(cache_key)
+        cached_obj = self.instance._linguist.translations['title']['fr']
         self.assertEqual(cached_obj.language, 'fr')
-        self.assertEqual(cached_obj.object_id, utils.make_temp_id(self.instance))
+        self.assertIsNone(cached_obj.object_id)
         self.assertEqual(cached_obj.field_value, 'Bonjour')
         self.assertEqual(cached_obj.is_new, True)
         self.assertEqual(cached_obj.identifier, 'foo')
@@ -102,29 +100,25 @@ class ModelMixinTest(BaseTestCase):
         self.instance.title = 'Bonjour'
         self.instance.save()
 
-        cache_key_en = 'foo_%s_en_title' % self.instance.pk
-        cache_key_fr = 'foo_%s_fr_title' % self.instance.pk
+        self.assertTrue(self.instance._linguist.translations['title']['fr'])
+        self.assertTrue(self.instance._linguist.translations['title']['en'])
 
-        cache_keys = [cache_key_en, cache_key_fr]
+        title_fr = self.instance._linguist.translations['title']['fr']
+        title_en = self.instance._linguist.translations['title']['en']
 
-        for cache_key in cache_keys:
-            self.assertTrue(cache_key in self.instance._linguist.translations)
+        self.assertEqual(title_en.language, 'en')
+        self.assertEqual(title_en.object_id, self.instance.pk)
+        self.assertEqual(title_en.field_value, 'Hello')
+        self.assertEqual(title_en.is_new, False)
+        self.assertEqual(title_en.identifier, 'foo')
+        self.assertEqual(title_en.field_name, 'title')
 
-        cached_obj = self.instance._linguist.translations.get(cache_key_en)
-        self.assertEqual(cached_obj.language, 'en')
-        self.assertEqual(cached_obj.object_id, self.instance.pk)
-        self.assertEqual(cached_obj.field_value, 'Hello')
-        self.assertEqual(cached_obj.is_new, False)
-        self.assertEqual(cached_obj.identifier, 'foo')
-        self.assertEqual(cached_obj.field_name, 'title')
-
-        cached_obj = self.instance._linguist.translations.get(cache_key_fr)
-        self.assertEqual(cached_obj.language, 'fr')
-        self.assertEqual(cached_obj.object_id, self.instance.pk)
-        self.assertEqual(cached_obj.field_value, 'Bonjour')
-        self.assertEqual(cached_obj.is_new, False)
-        self.assertEqual(cached_obj.identifier, 'foo')
-        self.assertEqual(cached_obj.field_name, 'title')
+        self.assertEqual(title_fr.language, 'fr')
+        self.assertEqual(title_fr.object_id, self.instance.pk)
+        self.assertEqual(title_fr.field_value, 'Bonjour')
+        self.assertEqual(title_fr.is_new, False)
+        self.assertEqual(title_fr.identifier, 'foo')
+        self.assertEqual(title_fr.field_name, 'title')
 
     def test_default_language_scenario(self):
         #
@@ -157,7 +151,8 @@ class ModelMixinTest(BaseTestCase):
         self.instance.language = 'en'
         self.instance.title = 'Hello'
         self.instance.save()
-        self.assertEqual(Translation.objects.count(), 2)
+
+        self.assertEqual(Translation.objects.count(), 1)
         self.assertEqual(list(Translation.objects.get_languages()), ['en', 'fr'])
 
         #
