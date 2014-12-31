@@ -2,6 +2,8 @@
 import copy
 import itertools
 
+from collections import defaultdict
+
 from . import utils
 from .models import Translation
 
@@ -59,7 +61,7 @@ class ManagerMixin(object):
             lookup['object_id__in'] = [obj.pk for obj in qs.all()]
             translations = Translation.objects.filter(**lookup)
 
-        grouped_translations = itertools.defaultdict(list)
+        grouped_translations = defaultdict(list)
 
         for obj in translations:
             grouped_translations[obj.object_id].append(obj)
