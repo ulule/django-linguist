@@ -21,7 +21,7 @@ class CachedTranslation(object):
 
         if self.instance is not None:
             self.identifier = self.instance.linguist_identifier
-            self.object_id = self.instance.pk if not self.is_new else None
+            self.object_id = self.instance.pk
 
         if self.translation is not None:
             for attr in ('language', 'field_name', 'field_value'):
