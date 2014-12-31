@@ -100,6 +100,8 @@ class ModelMixinTest(BaseTestCase):
         self.instance.title = 'Bonjour'
         self.instance.save()
 
+        self.assertEqual(Translation.objects.count(), 2)
+
         self.assertTrue(self.instance._linguist.translations['title']['fr'])
         self.assertTrue(self.instance._linguist.translations['title']['en'])
 
@@ -120,14 +122,14 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(title_fr.identifier, 'foo')
         self.assertEqual(title_fr.field_name, 'title')
 
-    def test_default_language_scenario(self):
+    def test_default_language(self):
         #
         # Let's define a default language in translation class.
         #
         class FooTranslationDefaultLanguage(ModelTranslationBase):
             model = FooModel
             identifier = 'foo'
-            fields = ('title', )
+            fields = ('title', 'excerpt', 'body')
             default_language = 'fr'
 
         #
@@ -143,6 +145,8 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(self.instance.default_language, 'fr')
         self.instance.title = 'Bonjour'
         self.instance.save()
+
+        self.assertEqual(Translation.objects.count(), 1)
         self.assertEqual(Translation.objects.first().language, 'fr')
 
         #
@@ -152,7 +156,8 @@ class ModelMixinTest(BaseTestCase):
         self.instance.title = 'Hello'
         self.instance.save()
 
-        self.assertEqual(Translation.objects.count(), 1)
+        self.assertEqual(Translation.objects.count(), 2)
+
         self.assertEqual(list(Translation.objects.get_languages()), ['en', 'fr'])
 
         #
