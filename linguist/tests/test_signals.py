@@ -7,7 +7,7 @@ from django.dispatch import receiver
 from ..models import Translation
 
 from .base import BaseTestCase
-from .translations import FooModel
+from .translations import FooModel, BarModel
 
 
 class SignalsTest(BaseTestCase):
@@ -17,11 +17,6 @@ class SignalsTest(BaseTestCase):
 
     def setUp(self):
         self.create_registry()
-        self.deleted_count = 0
-        post_delete.connect(self.post_delete_listener, sender=FooModel)
-
-    def post_delete_listener(self, sender, instance, **kwargs):
-        self.deleted_count += 1
 
     def test_post_delete(self):
         self.instance.language = 'en'
@@ -33,8 +28,16 @@ class SignalsTest(BaseTestCase):
         self.instance.save()
 
         self.assertEqual(Translation.objects.count(), 2)
-        self.assertEqual(self.deleted_count, 0)
+
+        bar_instance = BarModel()
+        bar_instance.language = 'fr'
+        bar_instance.title = 'Bonjour'
+        bar_instance.save()
+
+        self.assertEqual(Translation.objects.count(), 3)
 
         self.instance.delete()
-        self.assertEqual(self.deleted_count, 1)
+        self.assertEqual(Translation.objects.count(), 1)
+
+        bar_instance.delete()
         self.assertEqual(Translation.objects.count(), 0)
