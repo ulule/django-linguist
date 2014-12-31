@@ -80,6 +80,7 @@ class Translation(models.Model):
     """
     identifier = models.CharField(
         max_length=100,
+        db_index=True,
         verbose_name=_('identifier'),
         help_text=_('The registered model identifier.'))
 
