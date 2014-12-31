@@ -40,7 +40,7 @@ class Post(LinguistModelMixin, models.Model):
     """
     created_at = models.DateTimeField(auto_now_add=True)
     title = models.CharField(_('title'), max_length=255)
-    body = models.TextField(blank=True)
+    body = models.TextField(null=True, blank=True)
     category = models.ForeignKey(Category, blank=True, null=True)
 
     objects = PostManager()
