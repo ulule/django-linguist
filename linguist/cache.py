@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
-from . import utils
 
 
 class CachedTranslation(object):
 
     def __init__(self, **kwargs):
-        from .models import Translation
-
         self.is_new = kwargs.get('is_new', True)
-        self.fields = Translation._meta.get_all_field_names()
-        self.fields.remove('id')
-
         self.instances = ['instance', 'translation']
 
         attrs = self.fields + self.instances
@@ -27,6 +21,15 @@ class CachedTranslation(object):
             for attr in ('language', 'field_name', 'field_value'):
                 setattr(self, attr, getattr(self.translation, attr))
 
+    @staticmethod
+    def fields(self):
+        from .models import Translation
+
+        fields = Translation._meta.get_all_field_names()
+        fields.remove('id')
+
+        return fields
+
     @property
     def attrs(self):
         """
@@ -39,9 +42,12 @@ class CachedTranslation(object):
         """
         Returns Translation lookup to use for filter method.
         """
-        lookup = {'identifier': self.identifier, 'object_id': self.object_id}
+        lookup = {'identifier': self.identifier,
+                  'object_id': self.object_id}
+
         if self.language is not None:
             lookup['language'] = self.language
+
         return lookup
 
     @classmethod
@@ -49,6 +55,4 @@ class CachedTranslation(object):
         """
         Updates values from the given object.
         """
-        fields = obj._meta.get_all_field_names()
-        fields.remove('id')
-        return cls(**dict((field, getattr(obj, field)) for field in fields))
+        return cls(**dict((field, getattr(obj, field)) for field in cls.fields))

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import copy
-from operator import itemgetter
 import itertools
 
 from . import utils
-from .cache import CachedTranslation
 from .models import Translation
 
 
@@ -35,7 +33,7 @@ class ManagerMixin(object):
 
         """
         qs = self.get_queryset()
-        object_ids = [obj.pk for obj in qs.all()]
+
         chunks_length = kwargs.get('chunks_length', None)
 
         lookup = dict(identifier=self.model._linguist.identifier)
@@ -45,25 +43,25 @@ class ManagerMixin(object):
             if value is not None:
                 if not isinstance(value, (list, tuple)):
                     value = [value]
+
                 lookup['%s__in' % kwarg[:-1]] = value
 
-        translations_qs = []
-
         if chunks_length is not None:
-            for ids in utils.chunks(object_ids, chunks_length):
+            translations_qs = []
+
+            for ids in utils.chunks(qs.values_list('id', flat=True), chunks_length):
                 ids_lookup = copy.copy(lookup)
                 ids_lookup['object_id__in'] = ids
                 translations_qs.append(Translation.objects.filter(**ids_lookup))
+
+            translations = itertools.chain.from_iterable(translations_qs)
         else:
-            lookup['object_id__in'] = object_ids
-            translations_qs.append(Translation.objects.filter(**lookup))
+            lookup['object_id__in'] = [obj.pk for obj in qs.all()]
+            translations = Translation.objects.filter(**lookup)
 
-        translations = itertools.chain.from_iterable(translations_qs)
+        grouped_translations = itertools.defaultdict(list)
 
-        grouped_translations = {}
         for obj in translations:
-            if obj.object_id not in grouped_translations:
-                grouped_translations[obj.object_id] = []
             grouped_translations[obj.object_id].append(obj)
 
         for instance in qs:
