@@ -4,10 +4,16 @@
 class CachedTranslation(object):
 
     def __init__(self, **kwargs):
+        from .models import Translation
+
         self.is_new = kwargs.get('is_new', True)
         self.instances = ['instance', 'translation']
 
+        self.fields = Translation._meta.get_all_field_names()
+        self.fields.remove('id')
+
         attrs = self.fields + self.instances
+
         for attr in attrs:
             setattr(self, attr, None)
 
@@ -20,15 +26,6 @@ class CachedTranslation(object):
         if self.translation is not None:
             for attr in ('language', 'field_name', 'field_value'):
                 setattr(self, attr, getattr(self.translation, attr))
-
-    @staticmethod
-    def fields(self):
-        from .models import Translation
-
-        fields = Translation._meta.get_all_field_names()
-        fields.remove('id')
-
-        return fields
 
     @property
     def attrs(self):
@@ -55,4 +52,9 @@ class CachedTranslation(object):
         """
         Updates values from the given object.
         """
-        return cls(**dict((field, getattr(obj, field)) for field in cls.fields))
+        from .models import Translation
+
+        fields = Translation._meta.get_all_field_names()
+        fields.remove('id')
+
+        return cls(**dict((field, getattr(obj, field)) for field in fields))
