@@ -2,10 +2,8 @@
 from django.db import models, IntegrityError
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils import six
 
 from .. import settings
-from .. import utils
 
 
 class TranslationManager(models.Manager):
@@ -35,9 +33,9 @@ class TranslationManager(models.Manager):
         Returns all available languages.
         """
         return (self.get_queryset()
-                    .values_list('language', flat=True)
-                    .distinct()
-                    .order_by('language'))
+                .values_list('language', flat=True)
+                .distinct()
+                .order_by('language'))
 
     def save_translations(self, instances):
         """
