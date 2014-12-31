@@ -11,6 +11,6 @@ def delete_translations(sender, instance, **kwargs):
     """
     Deletes related instance's translations when instance is deleted.
     """
-    if isinstance(instance, (ModelMixin, )):
+    if issubclass(sender, (ModelMixin, )):
         Translation.objects.filter(identifier=instance.linguist_identifier,
                                    object_id=instance.pk).delete()
