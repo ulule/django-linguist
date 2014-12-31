@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
-
 from ..models import Translation
 
 from .base import BaseTestCase
-from .translations import FooModel, BarModel
+from .translations import BarModel
 
 
 class SignalsTest(BaseTestCase):

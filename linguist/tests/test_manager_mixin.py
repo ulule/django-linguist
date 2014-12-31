@@ -56,9 +56,6 @@ class ManagerMixinTest(BaseTestCase):
         self.assertTrue(self.instance._linguist.translations['title']['fr'])
         self.assertTrue(self.instance._linguist.translations['title']['en'])
 
-        title_fr = self.instance._linguist.translations['title']['fr']
-        title_en = self.instance._linguist.translations['title']['en']
-
         # Clear cache (remove all translations previously cached)
         self.instance.clear_translations_cache()
         self.assertEqual(self.instance.cached_translations_count, 0)

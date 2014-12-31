@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from .base import BaseTestCase
 
 from .. import settings
-from .. import utils
 from ..base import ModelTranslationBase
 from ..models import Translation
 
@@ -122,7 +121,7 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(title_fr.identifier, 'foo')
         self.assertEqual(title_fr.field_name, 'title')
 
-    def test_default_language(self):
+    def test_default_language_instance(self):
         #
         # Let's define a default language in translation class.
         #

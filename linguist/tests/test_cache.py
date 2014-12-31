@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.test import TestCase
-
 from ..cache import CachedTranslation
 
 from .base import BaseTestCase
