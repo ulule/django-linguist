@@ -111,10 +111,18 @@ class Translation(models.Model):
 
     class Meta:
         abstract = True
+
         app_label = 'linguist'
         verbose_name = _('translation')
         verbose_name_plural = _('translations')
-        unique_together = (('identifier', 'object_id', 'language', 'field_name'),)
+
+        unique_together = (
+            ('identifier', 'object_id', 'language', 'field_name'),
+        )
+
+        index_together = [
+            ['identifier', 'object_id'],
+        ]
 
     def __str__(self):
         return '%s:%s:%s:%s' % (
