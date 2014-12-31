@@ -151,6 +151,7 @@ class CacheDescriptor(dict):
         Add a new translation into the cache.
         """
         is_new = bool(instance.pk is None)
+
         translation = kwargs.get('translation', None)
         language = kwargs.get('language', None)
         field_name = kwargs.get('field_name', None)
@@ -166,7 +167,6 @@ class CacheDescriptor(dict):
             field_value = translation.field_value
 
         cached_obj = CachedTranslation(**{
-            'is_new': is_new,
             'instance': instance,
             'language': language,
             'field_name': field_name,
@@ -183,7 +183,6 @@ class CacheDescriptor(dict):
 
         if obj is not None:
             cached_obj = cached_obj.from_object(obj)
-            cached_obj.is_new = False
 
         try:
             cached_obj = self.translations[field_name][language]
