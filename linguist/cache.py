@@ -6,7 +6,6 @@ class CachedTranslation(object):
     def __init__(self, **kwargs):
         from .models import Translation
 
-        self.is_new = kwargs.get('is_new', True)
         self.instances = ['instance', 'translation']
 
         self.fields = Translation._meta.get_all_field_names()
@@ -19,11 +18,14 @@ class CachedTranslation(object):
 
         self.__dict__.update(**kwargs)
 
+        self.is_new = True
+
         if self.instance is not None:
             self.identifier = self.instance.linguist_identifier
             self.object_id = self.instance.pk
 
         if self.translation is not None:
+            self.is_new = bool(self.translation.pk is None)
             for attr in ('language', 'field_name', 'field_value'):
                 setattr(self, attr, getattr(self.translation, attr))
 
