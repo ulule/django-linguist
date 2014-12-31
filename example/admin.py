@@ -7,7 +7,7 @@ from .models import Post, Category
 
 
 class PostAdmin(ModelTranslationAdmin):
-    list_display = ('title', 'body', 'created_at')
+    list_display = ('title', 'body', 'languages_column', 'created_at')
 
 
 class CategoryAdmin(ModelTranslationAdmin):
