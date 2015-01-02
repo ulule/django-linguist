@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+from django.utils.encoding import python_2_unicode_compatible
 
 
+@python_2_unicode_compatible
 class CachedTranslation(object):
 
     def __init__(self, **kwargs):
@@ -60,3 +62,10 @@ class CachedTranslation(object):
         fields.remove('id')
 
         return cls(**dict((field, getattr(obj, field)) for field in fields))
+
+    def __str__(self):
+        return '%s:%s:%s:%s' % (
+            self.identifier,
+            self.object_id,
+            self.field_name,
+            self.language)
