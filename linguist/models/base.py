@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, transaction
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -59,14 +59,16 @@ class TranslationManager(models.Manager):
 
             if to_create:
                 objects = [obj for cached, obj in to_create]
-                try:
-                    self.bulk_create(objects)
-                except IntegrityError:
-                    created = False
+                with transaction.atomic():
+                    try:
+                        self.bulk_create(objects)
+                    except IntegrityError:
+                        created = False
 
             if to_update:
                 for obj in to_update:
-                    self.filter(**obj.lookup).update(**obj.attrs)
+                    with transaction.atomic():
+                        self.filter(**obj.lookup).update(**obj.attrs)
 
             if created:
                 for cached, obj in to_create:
