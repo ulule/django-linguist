@@ -59,16 +59,15 @@ class TranslationManager(models.Manager):
 
             if to_create:
                 objects = [obj for cached, obj in to_create]
-                with transaction.atomic():
-                    try:
+                try:
+                    with transaction.atomic():
                         self.bulk_create(objects)
-                    except IntegrityError:
-                        created = False
+                except IntegrityError:
+                    created = False
 
             if to_update:
                 for obj in to_update:
-                    with transaction.atomic():
-                        self.filter(**obj.lookup).update(**obj.attrs)
+                    self.filter(**obj.lookup).update(**obj.attrs)
 
             if created:
                 for cached, obj in to_create:
