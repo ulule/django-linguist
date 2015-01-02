@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import django
 from django.conf.urls import patterns, url
 from django.contrib import admin
-from django.contrib.admin.options import csrf_protect_m, BaseModelAdmin
+from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.util import unquote
 from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
 from django.core.urlresolvers import reverse
@@ -22,58 +22,105 @@ from . import utils
 from .forms import ModelTranslationForm
 from .models import Translation as LinguistTranslationModel
 
-__all__ = (
-    'BaseModelTranslationAdmin',
+__all__ = [
     'ModelTranslationAdmin',
-)
-
-_language_media = Media(css={
-    'all': ('linguist/admin/language_tabs.css',)
-})
+]
 
 
-class BaseModelTranslationAdmin(BaseModelAdmin):
+_lazy_select_template_name = lazy(utils.select_template_name, six.text_type)
+
+
+class ModelTranslationAdmin(admin.ModelAdmin):
 
     form = ModelTranslationForm
     query_language_key = 'language'
 
     @property
     def media(self):
-        base_media = super(BaseModelTranslationAdmin, self).media
-        return base_media + _language_media
+        """
+        Add Linguist media files.
+        """
+        return super(ModelTranslationAdmin, self).media + Media(css={
+          'all': ('linguist/admin/language_tabs.css',)})
 
     def get_language(self, request):
+        """
+        Returns current language (from request).
+        """
         return utils.get_language_parameter(request, self.query_language_key)
 
     def get_language_tabs(self, request, obj, available_languages, css_class=None):
+        """
+        Returns language tabs.
+        """
         current_language = self.get_language(request)
-        return utils.get_language_tabs(request, current_language, available_languages, css_class=css_class)
-
-
-class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
+        return utils.get_language_tabs(
+            request,
+            current_language,
+            available_languages,
+            css_class=css_class)
 
     @property
     def change_form_template(self):
+        """
+        Overrides ``admin/change_form.html`` template.
+        """
         return 'admin/linguist/change_form.html'
 
-    def language_column(self, obj):
-        languages = self.get_available_languages(obj)
-        languages = [code for code in languages]
-        return '<span class="available-languages">{0}</span>'.format(' '.join(languages))
-
-    language_column.allow_tags = True
-    language_column.short_description = _('Languages')
+    def get_change_form_base_template(self):
+        """
+        Overrides base change form template.
+        """
+        opts = self.model._meta
+        app_label = opts.app_label
+        return _lazy_select_template_name((
+            "admin/{0}/{1}/change_form.html".format(app_label, opts.object_name.lower()),
+            "admin/{0}/change_form.html".format(app_label),
+            "admin/change_form.html"))
 
     def get_available_languages(self, obj):
-        return obj.available_languages if obj else self.model.objects.none()
+        """
+        Returns available languages for current object.
+        """
+        return obj.available_languages if obj is not None else self.model.objects.none()
+
+    def languages_column(self, obj):
+        """
+        Adds languages columns.
+        """
+        languages = self.get_available_languages(obj)
+        return '<span class="available-languages">{0}</span>'.format(' '.join(languages))
+
+    languages_column.allow_tags = True
+    languages_column.short_description = _('Languages')
 
     def get_object(self, request, object_id):
+        """
+        Returns current object.
+        """
         obj = super(ModelTranslationAdmin, self).get_object(request, object_id)
-        if obj:
+        if obj is not None:
             obj.language = self.get_language(request)
         return obj
 
+    def get_form_language(self, request):
+        """
+        Returns the current language for the currently displayed object fields.
+        """
+        return self.get_language(request)
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Passes the current language to the form.
+        """
+        form_class = super(ModelTranslationAdmin, self).get_form(request, obj, **kwargs)
+        form_class.language = self.get_form_language(request)
+        return form_class
+
     def get_urls(self):
+        """
+        Overrides URLs to add delete translations URLs.
+        """
         urlpatterns = super(ModelTranslationAdmin, self).get_urls()
         opts = self.model._meta
         info = opts.app_label, opts.model_name if django.VERSION >= (1, 7) else opts.module_name
@@ -85,6 +132,9 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
         ) + urlpatterns
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        """
+        Renders change form.
+        """
         language = self.get_language(request)
         available_languages = self.get_available_languages(obj)
         language_tabs = self.get_language_tabs(request, obj, available_languages)
@@ -107,14 +157,23 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
         return super(ModelTranslationAdmin, self).render_change_form(request, context, add, change, form_url, obj)
 
     def response_add(self, request, obj, post_url_continue=None):
+        """
+        Handles rediret at response add.
+        """
         redirect = super(ModelTranslationAdmin, self).response_add(request, obj, post_url_continue)
         return self._patch_redirect(request, obj, redirect)
 
     def response_change(self, request, obj):
+        """
+        Handes redirect at response change.
+        """
         redirect = super(ModelTranslationAdmin, self).response_change(request, obj)
         return self._patch_redirect(request, obj, redirect)
 
     def _patch_redirect(self, request, obj, redirect):
+        """
+        Redirects to the relavant language.
+        """
         if redirect.status_code not in (301, 302):
             return redirect
         uri = iri_to_uri(request.path)
@@ -129,6 +188,9 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
 
     @csrf_protect_m
     def delete_translations(self, request, object_id, language):
+        """
+        Deletes object related translations.
+        """
         opts = self.model._meta
         obj = self.get_object(request, unquote(object_id))
         language_name = utils.get_language_name(language)
@@ -179,18 +241,11 @@ class ModelTranslationAdmin(BaseModelTranslationAdmin, admin.ModelAdmin):
             "admin/delete_confirmation.html"
         ], context)
 
-    def get_change_form_base_template(self):
-        opts = self.model._meta
-        app_label = opts.app_label
-        return _lazy_select_template_name((
-            "admin/{0}/{1}/change_form.html".format(app_label, opts.object_name.lower()),
-            "admin/{0}/change_form.html".format(app_label),
-            "admin/change_form.html"))
-
-_lazy_select_template_name = lazy(utils.select_template_name, six.text_type)
-
 
 class LinguistTranslationModelAdmin(admin.ModelAdmin):
+    """
+    Linguist Translation admin options.
+    """
     list_display = ('identifier', 'object_id', 'language', 'field_name', 'field_value')
 
 
