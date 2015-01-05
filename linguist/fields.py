@@ -31,8 +31,9 @@ class TranslationDescriptor(object):
     Translation Field Descriptor.
     """
 
-    def __init__(self, field, language):
+    def __init__(self, field, translated_field, language):
         self.field = field
+        self.translated_field = translated_field
         self.language = language
         self.attname = utils.build_localized_field_name(self.field.name, language)
         self.name = self.attname
@@ -44,10 +45,9 @@ class TranslationDescriptor(object):
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
-
         obj = instance._linguist.get_or_create_cache(instance=instance,
                                                      language=self.language,
-                                                     field_name=self.field.name)
+                                                     field_name=self.translated_field.name)
         return obj.field_value or None
 
     def __set__(self, instance, value):
@@ -56,7 +56,7 @@ class TranslationDescriptor(object):
         if value:
             instance._linguist.get_or_create_cache(instance=instance,
                                                    language=self.language,
-                                                   field_name=self.field.name,
+                                                   field_name=self.translated_field.name,
                                                    field_value=value)
 
     def db_type(self, connection):
@@ -145,7 +145,6 @@ class CacheDescriptor(dict):
         """
         Returns translation instances.
         """
-
         return [instance
                 for k, v in self.translations.items()
                 for instance in v.values()]
@@ -177,8 +176,7 @@ class CacheDescriptor(dict):
             instance=instance,
             language=language,
             field_name=field_name,
-            field_value=field_value,
-        )
+            field_value=field_value)
 
         obj = None
 
@@ -224,7 +222,7 @@ class TranslationField(object):
         self.column = None
 
     def contribute_to_class(self, cls, name):
-        setattr(cls, self.name, TranslationDescriptor(self, self.language))
+        setattr(cls, self.name, TranslationDescriptor(self, self.translated_field, self.language))
         cls._meta.add_field(self)
         cls._meta.virtual_fields.append(self)
 
