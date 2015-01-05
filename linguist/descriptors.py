@@ -6,8 +6,16 @@ from . import utils
 
 from collections import defaultdict
 
+from django.core.exceptions import ImproperlyConfigured
+from django.db import models
+
 from .cache import CachedTranslation
 from .models import Translation
+
+SUPPORTED_FIELDS = (
+    models.fields.CharField,
+    models.fields.TextField,
+)
 
 
 def instance_only(instance):
@@ -192,6 +200,35 @@ class CacheDescriptor(dict):
         return cached_obj
 
 
+class TranslationField(object):
+    """
+    Proxy of original field.
+    """
+
+    def __init__(self, translated_field, language, *args, **kwargs):
+        self.__dict__.update(translated_field.__dict__)
+        self.translated_field = translated_field
+        self.language = language
+
+        # All translations are optional
+        if not isinstance(self, models.fields.BooleanField):
+            self.null = True
+        self.blank = True
+
+        # Suffix field with '_fr', '_en', etc.
+        self.attname = utils.build_localized_field_name(self.translated_field.name, language)
+        self.name = self.attname
+        self.verbose_name = utils.build_localized_verbose_name(translated_field.verbose_name, language)
+
+        # No concrete field
+        self.column = None
+
+    def contribute_to_class(self, cls, name):
+        setattr(cls, self.name, TranslationDescriptor(self, self.language))
+        cls._meta.add_field(self)
+        cls._meta.virtual_fields.append(self)
+
+
 def default_value_getter(field):
     """
     When accessing to the name of the field itself, the value
@@ -216,6 +253,27 @@ def default_value_setter(field):
         localized_field = utils.build_localized_field_name(field, language)
         setattr(self, localized_field, value)
     return default_value_func_setter
+
+
+def field_factory(base_class):
+    class TranslationFieldField(TranslationField, base_class):
+        pass
+    TranslationFieldField.__name__ = b'Translation%s' % base_class.__name__
+    return TranslationFieldField
+
+
+def create_translation_field(translated_field, language):
+    """
+    Takes the original field, a given language and return a Field class for model.
+    """
+    cls_name = translated_field.__class__.__name__
+
+    if not isinstance(translated_field, SUPPORTED_FIELDS):
+        raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
+
+    translation_class = field_factory(translated_field.__class__)
+
+    return translation_class(translated_field=translated_field, language=language)
 
 
 def add_cache_property(translation_class):
@@ -245,14 +303,13 @@ def add_language_fields(translation_class):
     for field_name in fields:
         field = model._meta.get_field(field_name)
         for language_code, language_name in settings.SUPPORTED_LANGUAGES:
-            translation_field = TranslationDescriptor(field, language_code)
             localized_field_name = utils.build_localized_field_name(field.name, language_code)
+            translation_field = create_translation_field(field, language_code)
             if hasattr(model, localized_field_name):
                 raise ValueError(
                     "Error adding translation field. Model '%s' already contains a field named"
                     "'%s'." % (model._meta.object_name, localized_field_name))
-            model.add_to_class(localized_field_name, translation_field)
-            model._meta.fields.append(translation_field)
+            translation_field.contribute_to_class(model, localized_field_name)
 
 
 def contribute_to_model(translation_class):
