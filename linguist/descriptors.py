@@ -36,18 +36,20 @@ class TranslationDescriptor(object):
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
-        obj = instance._linguist.get_or_create_cache(instance=instance, **{
-            'language': self.language,
-            'field_name': self.field.name})
+
+        obj = instance._linguist.get_or_create_cache(instance=instance,
+                                                     language=self.language,
+                                                     field_name=self.field.name)
         return obj.field_value or None
 
     def __set__(self, instance, value):
         instance_only(instance)
+
         if value:
-            instance._linguist.get_or_create_cache(instance=instance, **{
-                'language': self.language,
-                'field_name': self.field.name,
-                'field_value': value})
+            instance._linguist.get_or_create_cache(instance=instance,
+                                                   language=self.language,
+                                                   field_name=self.field.name,
+                                                   field_value=value)
 
     def db_type(self, connection):
         """
@@ -135,12 +137,10 @@ class CacheDescriptor(dict):
         """
         Returns translation instances.
         """
-        instances = []
-        for field_name in self.translations:
-            for language in self.translations[field_name]:
-                instances.append(self.translations[field_name][language])
 
-        return instances
+        return [instance
+                for k, v in self.translations.items()
+                for instance in v.values()]
 
     @property
     def translations_count(self):
@@ -202,6 +202,7 @@ def default_value_getter(field):
         language = self.language or self.default_language
         localized_field = utils.build_localized_field_name(field, language)
         return getattr(self, localized_field)
+
     return default_value_func_getter
 
 
