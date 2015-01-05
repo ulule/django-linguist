@@ -32,6 +32,25 @@ _lazy_select_template_name = lazy(utils.select_template_name, six.text_type)
 
 class ModelTranslationAdmin(admin.ModelAdmin):
 
+    def get_available_languages(self, obj):
+        """
+        Returns available languages for current object.
+        """
+        return obj.available_languages if obj is not None else self.model.objects.none()
+
+    def languages_column(self, obj):
+        """
+        Adds languages columns.
+        """
+        languages = self.get_available_languages(obj)
+        return '<span class="available-languages">{0}</span>'.format(' '.join(languages))
+
+    languages_column.allow_tags = True
+    languages_column.short_description = _('Languages')
+
+
+class ModelTranslationTabbedAdmin(admin.ModelAdmin):
+
     form = ModelTranslationForm
     query_language_key = 'language'
 
