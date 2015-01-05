@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 from . import settings
 from . import utils
 
+from collections import defaultdict
+
 from .cache import CachedTranslation
 from .models import Translation
 
@@ -67,7 +69,7 @@ class CacheDescriptor(dict):
         self['fields'] = self._translation_class.fields
         self['default_language'] = self._translation_class.default_language or settings.DEFAULT_LANGUAGE
         self['language'] = self['default_language']
-        self['translations'] = {}
+        self['translations'] = defaultdict(dict)
 
     @property
     def identifier(self):
@@ -137,6 +139,7 @@ class CacheDescriptor(dict):
         for field_name in self.translations:
             for language in self.translations[field_name]:
                 instances.append(self.translations[field_name][language])
+
         return instances
 
     @property
@@ -146,16 +149,12 @@ class CacheDescriptor(dict):
         """
         return len(self.translation_instances)
 
-    def get_or_create_cache(self, instance, **kwargs):
+    def get_or_create_cache(self, instance, translation=None,
+                            language=None, field_name=None, field_value=None):
         """
         Add a new translation into the cache.
         """
         is_new = bool(instance.pk is None)
-
-        translation = kwargs.get('translation', None)
-        language = kwargs.get('language', None)
-        field_name = kwargs.get('field_name', None)
-        field_value = kwargs.get('field_value', None)
 
         if translation is None:
             if not (language and field_name):
@@ -166,12 +165,12 @@ class CacheDescriptor(dict):
             field_name = translation.field_name
             field_value = translation.field_value
 
-        cached_obj = CachedTranslation(**{
-            'instance': instance,
-            'language': language,
-            'field_name': field_name,
-            'field_value': field_value,
-        })
+        cached_obj = CachedTranslation(
+            instance=instance,
+            language=language,
+            field_name=field_name,
+            field_value=field_value,
+        )
 
         obj = None
 
@@ -188,8 +187,6 @@ class CacheDescriptor(dict):
             cached_obj = self.translations[field_name][language]
         except KeyError:
             if field_value is not None:
-                if field_name not in self.translations:
-                    self.translations[field_name] = {}
                 self.translations[field_name][language] = cached_obj
 
         return cached_obj
