@@ -6,8 +6,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from .. import settings
 
 
-class TranslationManager(models.Manager):
-
+class TranslationQuerySet(models.query.QuerySet):
     def get_translations(self, obj, language=None):
         """
         Shorcut method to retrieve translations for a given object.
@@ -21,6 +20,14 @@ class TranslationManager(models.Manager):
             lookup['language'] = language
 
         return self.get_queryset().filter(**lookup)
+
+
+class TranslationManager(models.Manager):
+    def get_queryset(self):
+        return TranslationQuerySet(self.model)
+
+    def get_translations(self, obj, language=None):
+        return self.get_queryset().get_translations(obj, language=language)
 
     def delete_translations(self, obj, language=None):
         """
