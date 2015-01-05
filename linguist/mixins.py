@@ -14,7 +14,8 @@ def set_instance_cache(instance, translations):
     """
     instance.clear_translations_cache()
     for translation in translations:
-        instance._linguist.get_or_create_cache(**{'instance': instance, 'translation': translation})
+        instance._linguist.get_or_create_cache(instance=instance,
+                                               translation=translation)
     return instance
 
 
@@ -121,10 +122,10 @@ class ModelMixin(object):
         Returns available languages.
         """
         return (Translation.objects
-                           .filter(identifier=self.linguist_identifier, object_id=self.pk)
-                           .values_list('language', flat=True)
-                           .distinct()
-                           .order_by('language'))
+                .filter(identifier=self.linguist_identifier, object_id=self.pk)
+                .values_list('language', flat=True)
+                .distinct()
+                .order_by('language'))
 
     @property
     def cached_translations_count(self):
@@ -145,13 +146,14 @@ class ModelMixin(object):
         """
         if not self.pk:
             return Translation.objects.none()
-        return Translation.objects.get_translations(**{'obj': self, 'language': language})
+
+        return Translation.objects.get_translations(obj=self, language=language)
 
     def delete_translations(self, language=None):
         """
         Deletes related translations.
         """
-        return Translation.objects.delete_translations(**{'obj': self, 'language': language})
+        return Translation.objects.delete_translations(obj=self, language=language)
 
     def save(self, *args, **kwargs):
         """
@@ -160,4 +162,5 @@ class ModelMixin(object):
         model).
         """
         super(ModelMixin, self).save(*args, **kwargs)
-        Translation.objects.save_translations([self])
+
+        Translation.objects.save_translations([self, ])
