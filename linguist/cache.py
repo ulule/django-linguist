@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import copy
+
 from django.utils.encoding import python_2_unicode_compatible
 
 
@@ -37,6 +39,15 @@ class CachedTranslation(object):
         Returns Translation attributes to pass as kwargs for creating or updating objects.
         """
         return dict((k, getattr(self, k)) for k in self.fields)
+
+    @property
+    def lookup_get(self):
+        """
+        Returns lookup for get().
+        """
+        lookup = copy.copy(dict((k, getattr(self, k)) for k in self.fields))
+        lookup.pop('field_value')
+        return lookup
 
     @property
     def lookup(self):
