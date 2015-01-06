@@ -14,8 +14,7 @@ def set_instance_cache(instance, translations):
     """
     instance.clear_translations_cache()
     for translation in translations:
-        instance._linguist.get_or_create_cache(instance=instance,
-                                               translation=translation)
+        instance._linguist.set_cache(instance=instance, translation=translation)
     return instance
 
 
@@ -59,7 +58,7 @@ class ManagerMixin(object):
 
             translations = itertools.chain.from_iterable(translations_qs)
         else:
-            lookup['object_id__in'] = [obj.pk for obj in qs.all()]
+            lookup['object_id__in'] = [obj.pk for obj in qs]
             translations = Translation.objects.filter(**lookup)
 
         grouped_translations = defaultdict(list)
