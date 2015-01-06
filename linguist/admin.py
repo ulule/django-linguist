@@ -111,8 +111,11 @@ class ModelTranslationTabbedAdmin(admin.ModelAdmin):
         """
         Add Linguist media files.
         """
-        return super(ModelTranslationAdmin, self).media + Media(css={
-          'all': ('linguist/admin/language_tabs.css',)})
+        return super(ModelTranslationAdmin, self).media + Media(
+            css={
+                'all': ('linguist/admin/language_tabs.css',),
+            }
+        )
 
     def get_language(self, request):
         """

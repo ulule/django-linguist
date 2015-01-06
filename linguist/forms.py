@@ -2,7 +2,6 @@
 from django import forms
 
 from . import utils
-from .models import Translation
 
 __all__ = [
     'ModelTranslationFormMixin',
