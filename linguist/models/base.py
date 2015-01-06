@@ -23,6 +23,7 @@ class TranslationQuerySet(models.query.QuerySet):
 
 
 class TranslationManager(models.Manager):
+
     def get_queryset(self):
         return TranslationQuerySet(self.model)
 
