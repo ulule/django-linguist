@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from contextlib import contextmanager
 import copy
 import itertools
 
@@ -153,6 +154,14 @@ class ModelMixin(object):
         Deletes related translations.
         """
         return Translation.objects.delete_translations(obj=self, language=language)
+
+    @contextmanager
+    def override_language(self, language):
+        """
+        Context manager to override the instance language.
+        """
+        self._linguist.language = language
+        yield
 
     def save(self, *args, **kwargs):
         """
