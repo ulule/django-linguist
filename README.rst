@@ -148,6 +148,11 @@ The ``ModelMixin`` enhance your model with the following properties and methods:
     Remove all cached translations. Be aware, any content you set will be dropped.
     So no translation will be created/updated at saving.
 
+And the context manager:
+
+``instance.override_language()``
+    Override the instance language.
+
 .. code-block:: python
 
     # Let's create a new Post
@@ -173,6 +178,10 @@ The ``ModelMixin`` enhance your model with the following properties and methods:
 
     # Sweet! Save translations!
     >>> post.save()
+
+    # You can bypass the instance language easily
+    >>> with post.override_language('it'):
+    >>>    post.title = 'Buongiorno'
 
 To improve performances, you should prefetch translations:
 
