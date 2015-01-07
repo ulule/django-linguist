@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import copy
-
 from django.utils.encoding import python_2_unicode_compatible
 
 
@@ -45,7 +43,7 @@ class CachedTranslation(object):
         """
         Returns lookup for get().
         """
-        lookup = copy.copy(dict((k, getattr(self, k)) for k in self.fields))
+        lookup = dict((k, getattr(self, k)) for k in self.fields)
         lookup.pop('field_value')
         return lookup
 
