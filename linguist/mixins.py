@@ -154,6 +154,16 @@ class ModelMixin(object):
         """
         self._linguist.language = language
 
+    @contextmanager
+    def override_language(self, language):
+        """
+        Context manager to override the instance language.
+        """
+        previous_language = self._linguist.language
+        self._linguist.language = language
+        yield
+        self._linguist.language = previous_language
+
     def save(self, *args, **kwargs):
         """
         Overwrites model's ``save`` method to save translations after instance

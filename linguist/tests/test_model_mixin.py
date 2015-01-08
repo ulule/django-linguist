@@ -182,3 +182,11 @@ class ModelMixinTest(BaseTestCase):
         self.instance.save()
         self.assertEqual(Translation.objects.count(), 4)
         self.assertEqual(list(Translation.objects.get_languages()), ['de', 'en', 'fr', 'it'])
+
+    def test_override_language(self):
+        self.assertTrue(hasattr(self.instance, 'override_language'))
+        self.instance.activate_language('fr')
+        self.assertEqual(self.instance._linguist.language, 'fr')
+        with self.instance.override_language('de'):
+            self.assertEqual(self.instance._linguist.language, 'de')
+        self.assertEqual(self.instance._linguist.language, 'fr')
