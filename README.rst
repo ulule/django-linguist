@@ -124,10 +124,6 @@ The ``ModelMixin`` enhance your model with the following properties and methods:
     Your model identifier defined in the related translation class.
     Shortcut pointing on ``instance._linguist.identifier``.
 
-``instance.language`` (*read-write* property)
-    The current active language.
-    Shortcut pointing on ``instance._linguist.language``.
-
 ``instance.default_language`` (*read-write* property)
     The default language to use.
     Shortcut pointing on ``instance._linguist.default_language``.
@@ -144,14 +140,12 @@ The ``ModelMixin`` enhance your model with the following properties and methods:
     and set content on translatable fields, a cache is created for each language
     and field. It will be used to create ``Translation`` objets at instance saving.
 
+``instance.active_language()``
+    Set the current active language for the instance.
+
 ``instance.clear_translations_cache()``
     Remove all cached translations. Be aware, any content you set will be dropped.
     So no translation will be created/updated at saving.
-
-And the context manager:
-
-``instance.override_language()``
-    Override the instance language.
 
 .. code-block:: python
 
@@ -159,29 +153,25 @@ And the context manager:
     >>> post = Post()
 
     # Set English content
-    >>> post.language = 'en'
+    >>> post.activate_language('en')
     >>> post.title = 'Hello'
 
     # Now set French content
-    >>> post.language = 'fr'
+    >>> post.activate_language('fr')
     >>> post.title = 'Bonjour'
 
     # Be sure everything works as expected for English
-    >>> post.language = 'en'
+    >>> post.activate_language('en')
     >>> post.title
     Hello
 
     # And now for French
-    >>> post.language = 'fr'
+    >>> post.activate_language('fr')
     >>> post.title
     Bonjour
 
     # Sweet! Save translations!
     >>> post.save()
-
-    # You can bypass the instance language easily
-    >>> with post.override_language('it'):
-    >>>    post.title = 'Buongiorno'
 
 To improve performances, you should prefetch translations:
 

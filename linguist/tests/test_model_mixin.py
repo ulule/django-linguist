@@ -22,11 +22,12 @@ class ModelMixinTest(BaseTestCase):
         self.assertTrue(hasattr(self.instance, 'linguist_identifier'))
         self.assertEqual(self.instance.linguist_identifier, 'foo')
 
-    def test_language(self):
-        self.assertTrue(hasattr(self.instance, 'language'))
-        self.assertEqual(self.instance.language, 'en')
-        self.instance.language = 'fr'
-        self.assertEqual(self.instance.language, 'fr')
+    def test_activate_language(self):
+        self.assertTrue(hasattr(self.instance, 'activate_language'))
+        self.instance.activate_language('en')
+        self.assertEqual(self.instance._linguist.language, 'en')
+        self.instance.activate_language('fr')
+        self.assertEqual(self.instance._linguist.language, 'fr')
 
     def test_default_language(self):
         self.assertTrue(hasattr(self.instance, 'default_language'))
@@ -43,19 +44,19 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(self.instance.translatable_fields, ('title', 'excerpt', 'body'))
 
     def test_cached_translations_count(self):
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
-        self.instance.language = 'fr'
+        self.instance.activate_language('fr')
         self.instance.title = 'Bonjour'
         self.assertEqual(self.instance.cached_translations_count, 2)
-        self.instance.language = 'pt'
+        self.instance.activate_language('pt')
         self.instance.title = "Ola"
         self.assertEqual(self.instance.cached_translations_count, 3)
 
     def test_clear_translations_cache(self):
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
-        self.instance.language = 'fr'
+        self.instance.activate_language('fr')
         self.instance.title = 'Bonjour'
         self.assertEqual(self.instance.cached_translations_count, 2)
         self.instance.clear_translations_cache()
@@ -67,7 +68,7 @@ class ModelMixinTest(BaseTestCase):
             self.assertIn(field_name, dir(self.instance._meta.model))
 
     def test_new_instance_cache(self):
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
         self.assertTrue(self.instance._linguist.translations['title']['en'])
 
@@ -79,7 +80,7 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(cached_obj.identifier, 'foo')
         self.assertEqual(cached_obj.field_name, 'title')
 
-        self.instance.language = 'fr'
+        self.instance.activate_language('fr')
         self.instance.title = 'Bonjour'
         self.assertEqual(self.instance.cached_translations_count, 2)
         self.assertTrue(self.instance._linguist.translations['title']['fr'])
@@ -93,9 +94,9 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(cached_obj.field_name, 'title')
 
     def test_saved_instance_cache(self):
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
-        self.instance.language = 'fr'
+        self.instance.activate_language('fr')
         self.instance.title = 'Bonjour'
         self.instance.save()
 
@@ -151,7 +152,7 @@ class ModelMixinTest(BaseTestCase):
         #
         # Now, switch to English and it should work.
         #
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
         self.instance.save()
 
@@ -169,21 +170,15 @@ class ModelMixinTest(BaseTestCase):
         #
         # Instance language should have been changed too.
         #
-        self.assertEqual(self.instance.language, 'de')
+        self.assertEqual(self.instance._linguist.language, 'de')
         self.assertEqual(Translation.objects.count(), 3)
         self.assertEqual(list(Translation.objects.get_languages()), ['de', 'en', 'fr'])
 
         #
         # Let's change instance language again.
         #
-        self.instance.language = 'it'
+        self.instance.activate_language('it')
         self.instance.title = 'Pronto'
         self.instance.save()
         self.assertEqual(Translation.objects.count(), 4)
         self.assertEqual(list(Translation.objects.get_languages()), ['de', 'en', 'fr', 'it'])
-
-    def test_override_language(self):
-        self.instance.language = 'en'
-        with self.instance.override_language('fr'):
-            self.assertEqual(self.instance.language, 'fr')
-        self.assertEqual(self.instance.language, 'fr')

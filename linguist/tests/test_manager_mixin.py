@@ -19,11 +19,11 @@ class ManagerMixinTest(BaseTestCase):
         self.assertTrue(hasattr(FooModel.objects, 'with_translations'))
 
         # Create English content
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
 
         # Create French content
-        self.instance.language = 'fr'
+        self.instance.activate_language('fr')
         self.instance.title = 'Bonjour'
 
         # Persist!
@@ -37,9 +37,9 @@ class ManagerMixinTest(BaseTestCase):
 
         # Titles are now cached
         with self.assertNumQueries(0):
-            self.instance.language = 'en'
+            self.instance.activate_language('en')
             en_title = '%s' % self.instance.title  # noqa
-            self.instance.language = 'fr'
+            self.instance.activate_language('fr')
             fr_title = '%s' % self.instance.title  # noqa
 
         # Preload translations without clearing the cache
@@ -66,13 +66,13 @@ class ManagerMixinTest(BaseTestCase):
 
     def test_with_translations_args(self):
         # Create English content
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
         self.instance.excerpt = 'This is the excerpt.'
         self.instance.body = 'This is the body.'
 
         # Create French content
-        self.instance.language = 'fr'
+        self.instance.activate_language('fr')
         self.instance.title = 'Bonjour'
         self.instance.excerpt = 'Ceci est la description'
         self.instance.body = 'Corps'
@@ -185,11 +185,11 @@ class ManagerMixinTest(BaseTestCase):
 
     def test_without_prefetching(self):
         # Create English content
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
 
         # Create French content
-        self.instance.language = 'fr'
+        self.instance.activate_language('fr')
         self.instance.title = 'Bonjour'
 
         # Persist!
@@ -211,9 +211,9 @@ class ManagerMixinTest(BaseTestCase):
         # 1 - Fetch title en
         # 2 - Fetch title fr
         with self.assertNumQueries(2):
-            self.instance.language = 'en'
+            self.instance.activate_language('en')
             en_title = '%s' % self.instance.title  # noqa
-            self.instance.language = 'fr'
+            self.instance.activate_language('fr')
             fr_title = '%s' % self.instance.title  # noqa
 
         # Be sure titles are now in cache
@@ -221,7 +221,7 @@ class ManagerMixinTest(BaseTestCase):
 
         # Let's try again. Database should not be hit
         with self.assertNumQueries(0):
-            self.instance.language = 'en'
+            self.instance.activate_language('en')
             en_title = '%s' % self.instance.title  # noqa
-            self.instance.language = 'fr'
+            self.instance.activate_language('fr')
             fr_title = '%s' % self.instance.title  # noqa

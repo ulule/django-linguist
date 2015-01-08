@@ -82,20 +82,6 @@ class ModelMixin(object):
         return self._linguist.identifier
 
     @property
-    def language(self):
-        """
-        Returns Linguist's current language.
-        """
-        return self._linguist.language
-
-    @language.setter
-    def language(self, value):
-        """
-        Sets Linguist's current language.
-        """
-        self._linguist.language = value
-
-    @property
     def default_language(self):
         """
         Returns model default language.
@@ -107,7 +93,7 @@ class ModelMixin(object):
         """
         Sets model default language.
         """
-        self.language = value
+        self._linguist.language = value
         self._linguist.default_language = value
 
     @property
@@ -162,13 +148,11 @@ class ModelMixin(object):
 
         return Translation.objects.delete_translations(obj=self, language=language)
 
-    @contextmanager
-    def override_language(self, language):
+    def activate_language(self, language):
         """
         Context manager to override the instance language.
         """
         self._linguist.language = language
-        yield
 
     def save(self, *args, **kwargs):
         """
