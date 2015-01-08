@@ -6,7 +6,6 @@ import itertools
 from collections import defaultdict
 
 from . import utils
-from .models import Translation
 
 
 def set_instance_cache(instance, translations):
@@ -35,6 +34,8 @@ class ManagerMixin(object):
         * ``chunks_length``: fetches IDs by chunk
 
         """
+        from .models import Translation
+
         qs = self.get_queryset()
 
         chunks_length = kwargs.get('chunks_length', None)
@@ -121,6 +122,8 @@ class ModelMixin(object):
         """
         Returns available languages.
         """
+        from .models import Translation
+
         return (Translation.objects
                 .filter(identifier=self.linguist_identifier, object_id=self.pk)
                 .values_list('language', flat=True)
@@ -144,6 +147,8 @@ class ModelMixin(object):
         """
         Returns available (saved) translations for this instance.
         """
+        from .models import Translation
+
         if not self.pk:
             return Translation.objects.none()
 
@@ -153,6 +158,8 @@ class ModelMixin(object):
         """
         Deletes related translations.
         """
+        from .models import Translation
+
         return Translation.objects.delete_translations(obj=self, language=language)
 
     @contextmanager
@@ -169,6 +176,8 @@ class ModelMixin(object):
         has been saved (required to retrieve the object ID for ``Translation``
         model).
         """
+        from .models import Translation
+
         super(ModelMixin, self).save(*args, **kwargs)
 
         Translation.objects.save_translations([self, ])
