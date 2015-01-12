@@ -21,6 +21,7 @@ class CachedTranslation(object):
         self.__dict__.update(**kwargs)
 
         self.is_new = True
+        self.has_changed = False
 
         if self.instance is not None:
             self.identifier = self.instance.linguist_identifier
@@ -39,25 +40,12 @@ class CachedTranslation(object):
         return dict((k, getattr(self, k)) for k in self.fields)
 
     @property
-    def lookup_get(self):
+    def lookup(self):
         """
-        Returns lookup for get().
+        Returns lookup for get() and filter() methods.
         """
         lookup = dict((k, getattr(self, k)) for k in self.fields)
         lookup.pop('field_value')
-        return lookup
-
-    @property
-    def lookup(self):
-        """
-        Returns Translation lookup to use for filter method.
-        """
-        lookup = {'identifier': self.identifier,
-                  'object_id': self.object_id}
-
-        if self.language is not None:
-            lookup['language'] = self.language
-
         return lookup
 
     @classmethod
