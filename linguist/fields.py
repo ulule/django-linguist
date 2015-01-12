@@ -283,6 +283,14 @@ class TranslationField(object):
         cls._meta.add_field(self)
         cls._meta.virtual_fields.append(self)
 
+    def db_type(self, connection):
+        """
+        Returning None will cause Django to exclude this field from the concrete
+        field list (``_meta.concrete_fields``) resulting in the fact that syncdb
+        will skip this field when creating tables in PostgreSQL.
+        """
+        return None
+
 
 def default_value_getter(field):
     """
