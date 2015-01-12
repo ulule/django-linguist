@@ -18,6 +18,9 @@ class ModelMixinTest(BaseTestCase):
     def setUp(self):
         self.create_registry()
 
+    def tearDown(self):
+        self.instance.clear_translations_cache()
+
     def test_linguist_identifier(self):
         self.assertTrue(hasattr(self.instance, 'linguist_identifier'))
         self.assertEqual(self.instance.linguist_identifier, 'foo')
@@ -41,7 +44,7 @@ class ModelMixinTest(BaseTestCase):
 
     def test_translatable_fields(self):
         self.assertTrue(hasattr(self.instance, 'translatable_fields'))
-        self.assertEqual(self.instance.translatable_fields, ('title', 'excerpt', 'body'))
+        self.assertEqual(self.instance.translatable_fields, ['title', 'excerpt', 'body'])
 
     def test_cached_translations_count(self):
         self.instance.activate_language('en')
@@ -121,6 +124,16 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(title_fr.is_new, False)
         self.assertEqual(title_fr.identifier, 'foo')
         self.assertEqual(title_fr.field_name, 'title')
+
+    def test_instance_cache_has_changed(self):
+        self.instance.activate_language('en')
+        self.instance.title = 'Hello'
+        self.instance.activate_language('fr')
+        self.instance.title = 'Bonjour'
+        self.instance.save()
+
+        with self.assertNumQueries(1):
+            self.instance.save()
 
     def test_default_language_instance(self):
         #
