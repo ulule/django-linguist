@@ -8,7 +8,9 @@ from collections import defaultdict
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
+from django.utils import six
 
+from . import settings
 from .cache import CachedTranslation
 from .models import Translation
 
@@ -45,6 +47,7 @@ class TranslationDescriptor(object):
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
+
         obj = instance._linguist.get_cache(instance=instance,
                                            language=self.language,
                                            field_name=self.translated_field.name)
@@ -117,12 +120,40 @@ class CacheDescriptor(dict):
         self['default_language'] = value
 
     @property
+    def supported_languages(self):
+        return [code.replace('-', '_') for code, name in settings.SUPPORTED_LANGUAGES]
+
+    @property
     def fields(self):
         """
         Returns translatable fields (from related translation class).
         Read-only.
         """
-        return self['fields']
+        return list(self['fields'])
+
+    @property
+    def suffixed_fields(self):
+        suffixed = ['%s_%s' % (field, lang) for field in self.fields
+                                            for lang in self.supported_languages]
+        return self.fields + suffixed
+
+    @property
+    def cached_fields(self):
+        return [k for k, v in six.iteritems(self.translations) if v]
+
+    @property
+    def cached_suffixed_fields(self):
+        suffixed = ['%s_%s' % (field, lang) for field in self.cached_fields
+                                            for lang in self.supported_languages]
+        return self.cached_fields + suffixed
+
+    @property
+    def empty_fields(self):
+        return list(set(self.fields) - set(self.cached_fields))
+
+    @property
+    def empty_suffixed_fields(self):
+        return list(set(self.suffixed_fields) - set(self.cached_suffixed_fields))
 
     @property
     def translation_class(self):
@@ -181,17 +212,18 @@ class CacheDescriptor(dict):
         """
         is_new = bool(instance.pk is None)
 
+        cached_obj = self.get_cached_translation(instance=instance,
+                                                 translation=translation,
+                                                 language=language,
+                                                 field_name=field_name,
+                                                 field_value=field_value)
+
         try:
-            cached_obj = self.translations[field_name][language]
+            cached_obj = self.translations[cached_obj.field_name][cached_obj.language]
         except KeyError:
-            cached_obj = self.get_cached_translation(instance=instance,
-                                                     translation=translation,
-                                                     language=language,
-                                                     field_name=field_name,
-                                                     field_value=field_value)
             if not is_new:
                 try:
-                    obj = Translation.objects.get(**cached_obj.lookup_get)
+                    obj = Translation.objects.get(**cached_obj.lookup)
                     cached_obj = cached_obj.from_object(obj)
                 except Translation.DoesNotExist:
                     pass
@@ -213,10 +245,13 @@ class CacheDescriptor(dict):
                                                      field_value=field_value)
 
         try:
-            cached_obj = self.translations[cached_obj.field_name][cached_obj.language]
-        except KeyError:
+            obj = self.translations[cached_obj.field_name][cached_obj.language]
             if cached_obj.field_value:
+                obj.has_changed = (cached_obj.field_value != obj.field_value)
+        except KeyError:
+            if cached_obj.field_value is not None:
                 self.translations[cached_obj.field_name][cached_obj.language] = cached_obj
+
         return cached_obj
 
 
@@ -272,6 +307,7 @@ def default_value_setter(field):
         language = self._linguist.language or self.default_language
         localized_field = utils.build_localized_field_name(field, language)
         setattr(self, localized_field, value)
+
     return default_value_func_setter
 
 
