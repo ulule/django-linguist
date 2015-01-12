@@ -61,7 +61,7 @@ class TranslationManager(models.Manager):
                 translations.append(obj)
 
             to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new]
-            to_update = [obj for obj in translations if not obj.is_new]
+            to_update = [obj for obj in translations if obj.has_changed and not obj.is_new]
 
             created = True
 
@@ -76,10 +76,12 @@ class TranslationManager(models.Manager):
             if to_update:
                 for obj in to_update:
                     self.filter(**obj.lookup).update(**obj.attrs)
+                    obj.has_changed = False
 
             if created:
                 for cached, obj in to_create:
                     cached.is_new = False
+                    cached.has_changed = False
 
 
 @python_2_unicode_compatible
