@@ -172,6 +172,16 @@ class ModelMixin(object):
         """
         from .models import Translation
 
+        all_fields = self._meta.get_all_field_names()
+        all_fields.remove('id')
+        valued_fields = list(set(all_fields) - set(self._linguist.empty_suffixed_fields))
+
+        if self.pk:
+            update_fields = []
+            if 'update_fields' in kwargs:
+                update_fields = kwargs['update_fields']
+            kwargs['update_fields'] = list(update_fields) + valued_fields
+
         super(ModelMixin, self).save(*args, **kwargs)
 
         Translation.objects.save_translations([self, ])
