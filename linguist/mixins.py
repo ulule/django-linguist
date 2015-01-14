@@ -13,7 +13,6 @@ from django.utils import six
 
 from . import settings
 from . import utils
-from .fields import TranslationField, CacheDescriptor
 
 LANGUAGE_CODE, LANGUAGE_NAME = 0, 1
 
@@ -81,6 +80,8 @@ def field_factory(base_class):
     """
     Takes a field base class and wrap it with ``TranslationField`` class.
     """
+    from .fields import TranslationField
+
     class TranslationFieldField(TranslationField, base_class):
         pass
 
@@ -106,6 +107,8 @@ def create_translation_field(translated_field, language):
 class ModelMeta(models.base.ModelBase):
 
     def __new__(cls, name, bases, attrs):
+
+        from .fields import TranslationField, CacheDescriptor
 
         meta = None
         default_language = utils.get_fallback_language()
@@ -149,6 +152,8 @@ class ModelMeta(models.base.ModelBase):
 
         new_class = super(ModelMeta, cls).__new__(cls, name, bases, attrs)
 
+        setattr(new_class, '_linguist', CacheDescriptor(meta=meta))
+
         for field_name, field in six.iteritems(original_fields):
 
             field.name = field_name
@@ -173,9 +178,8 @@ class ModelMeta(models.base.ModelBase):
 
             setattr(new_class,
                     field_name,
-                    property(default_value_getter(field), default_value_setter(field)))
+                    property(default_value_getter(field_name), default_value_setter(field_name)))
 
-        new_class._linguist = CacheDescriptor(new_class, meta)
         new_class._meta.linguist = meta
 
         return new_class
