@@ -1,19 +1,27 @@
 # -*- coding: utf-8 -*_
 from django.db import models
 
-from ..base import ModelTranslationBase
-from ..mixins import ModelMixin, ManagerMixin
+from ..mixins import ModelMixin, ManagerMixin, ModelMeta
 
 
 class FooManager(ManagerMixin, models.Manager):
+    """
+    Manager of Foo model.
+    """
     pass
 
 
 class BarManager(ManagerMixin, models.Manager):
+    """
+    Manager of Bar model.
+    """
     pass
 
 
 class FooModel(ModelMixin, models.Model):
+    """
+    A foo.
+    """
     title = models.CharField(max_length=255)
     excerpt = models.TextField(null=True, blank=True)
     body = models.TextField(null=True, blank=True)
@@ -28,6 +36,9 @@ class FooModel(ModelMixin, models.Model):
 
 
 class BarModel(ModelMixin, models.Model):
+    """
+    A bar.
+    """
     title = models.CharField(max_length=255, null=True, blank=True)
     objects = BarManager()
 
@@ -36,11 +47,3 @@ class BarModel(ModelMixin, models.Model):
             'identifier': 'bar',
             'fields': ('title', ),
         }
-
-
-class BadTranslation(object):
-    pass
-
-
-class BadModel(object):
-    pass
