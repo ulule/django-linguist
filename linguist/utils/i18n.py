@@ -33,6 +33,16 @@ def get_fallback_language():
     return settings.DEFAULT_LANGUAGE
 
 
+def get_real_field_name(field, lang=None):
+    if lang is None:
+       lang = get_language()
+    return str('%s_%s' % (field, lang.replace('-', '_')))
+
+
+def get_fallback_field_name(field):
+    return get_real_field_name(field, lang=get_fallback_language())
+
+
 def build_localized_field_name(field_name, language=None):
     """
     Build localized field name from ``field_name`` and ``language``.
