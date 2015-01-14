@@ -14,28 +14,28 @@ class BarManager(ManagerMixin, models.Manager):
 
 
 class FooModel(ModelMixin, models.Model):
-    title = models.CharField(max_length=255, null=True, blank=True)
+    title = models.CharField(max_length=255)
     excerpt = models.TextField(null=True, blank=True)
     body = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     objects = FooManager()
 
-
-class FooTranslation(ModelTranslationBase):
-    model = FooModel
-    identifier = 'foo'
-    fields = ('title', 'excerpt', 'body')
+    class Meta:
+        linguist = {
+            'identifier': 'foo',
+            'fields': ('title', 'excerpt', 'body'),
+        }
 
 
 class BarModel(ModelMixin, models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
     objects = BarManager()
 
-
-class BarTranslation(ModelTranslationBase):
-    model = BarModel
-    identifier = 'bar'
-    fields = ('title', )
+    class Meta:
+        linguist = {
+            'identifier': 'bar',
+            'fields': ('title', ),
+        }
 
 
 class BadTranslation(object):
