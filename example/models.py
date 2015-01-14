@@ -32,7 +32,10 @@ class Category(LinguistModelMixin, models.Model):
     class Meta:
         verbose_name = _('category')
         verbose_name_plural = _('categories')
-
+        linguist = {
+            'identifier': 'category',
+            'fields': ('name', ),
+        }
 
 class Post(LinguistModelMixin, models.Model):
     """
@@ -48,3 +51,7 @@ class Post(LinguistModelMixin, models.Model):
     class Meta:
         verbose_name = _('post')
         verbose_name_plural = _('posts')
+        linguist = {
+            'identifier': 'post',
+            'fields': ('title', 'body'),
+        }
