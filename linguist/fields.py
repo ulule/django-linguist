@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from . import settings
 from . import utils
 
 from collections import defaultdict
 
-from django.core.exceptions import ImproperlyConfigured
-from django.db import models
 from django.utils import six
 
 from . import settings
 from .cache import CachedTranslation
 from .models import Translation
-from .utils import build_localized_field_name
 
 
 def instance_only(instance):
