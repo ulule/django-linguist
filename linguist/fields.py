@@ -13,6 +13,7 @@ from django.utils import six
 from . import settings
 from .cache import CachedTranslation
 from .models import Translation
+from .utils import build_localized_field_name
 
 SUPPORTED_FIELDS = (
     models.fields.CharField,
@@ -40,14 +41,10 @@ class TranslationDescriptor(object):
         self.attname = utils.build_localized_field_name(self.field.name, language)
         self.name = self.attname
         self.verbose_name = utils.build_localized_verbose_name(field.verbose_name, language)
-        self.null = True
-        self.blank = True
         self.column = None
-        self.editable = True
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
-
         obj = instance._linguist.get_cache(instance=instance,
                                            language=self.language,
                                            field_name=self.translated_field.name)
@@ -75,11 +72,17 @@ class CacheDescriptor(dict):
     Linguist Cache Descriptor.
     """
 
-    def __init__(self, translation_class):
-        self._translation_class = translation_class
-        self['identifier'] = self._translation_class.identifier
-        self['fields'] = self._translation_class.fields
-        self['default_language'] = self._translation_class.default_language or settings.DEFAULT_LANGUAGE
+    def __init__(self, model, meta):
+
+        self['model'] = model
+        self['identifier'] = meta['identifier']
+        self['fields'] = meta['fields']
+
+        default_language = settings.DEFAULT_LANGUAGE
+        if 'default_language' in meta:
+            default_language = meta['default_language']
+
+        self['default_language'] = default_language
         self['language'] = self['default_language']
         self['translations'] = defaultdict(dict)
 
@@ -124,6 +127,15 @@ class CacheDescriptor(dict):
         return [code.replace('-', '_') for code, name in settings.SUPPORTED_LANGUAGES]
 
     @property
+    def cached_languages(self):
+        langs = []
+        for k, v in six.iteritems(self.translations):
+            for lang in v.keys():
+                if lang not in langs:
+                    langs.append(lang)
+        return langs
+
+    @property
     def fields(self):
         """
         Returns translatable fields (from related translation class).
@@ -133,9 +145,8 @@ class CacheDescriptor(dict):
 
     @property
     def suffixed_fields(self):
-        suffixed = ['%s_%s' % (field, lang) for field in self.fields
-                                            for lang in self.supported_languages]
-        return self.fields + suffixed
+        return ['%s_%s' % (field, lang) for field in self.fields
+                                        for lang in self.supported_languages]
 
     @property
     def cached_fields(self):
@@ -143,9 +154,8 @@ class CacheDescriptor(dict):
 
     @property
     def cached_suffixed_fields(self):
-        suffixed = ['%s_%s' % (field, lang) for field in self.cached_fields
-                                            for lang in self.supported_languages]
-        return self.cached_fields + suffixed
+        return ['%s_%s' % (field, lang) for field in self.cached_fields
+                                        for lang in self.supported_languages]
 
     @property
     def empty_fields(self):
@@ -156,12 +166,11 @@ class CacheDescriptor(dict):
         return list(set(self.suffixed_fields) - set(self.cached_suffixed_fields))
 
     @property
-    def translation_class(self):
-        """
-        Returns related translation class.
-        Read-only.
-        """
-        return self._translation_class
+    def update_fields(self):
+        all_fields = self['model']._meta.get_all_field_names()
+        if 'id' in all_fields:
+            all_fields.remove('id')
+        return list(set(all_fields) - set(self.empty_suffixed_fields))
 
     @property
     def translations(self):
@@ -262,13 +271,9 @@ class TranslationField(object):
 
     def __init__(self, translated_field, language, *args, **kwargs):
         self.__dict__.update(translated_field.__dict__)
+
         self.translated_field = translated_field
         self.language = language
-
-        # All translations are optional
-        if not isinstance(self, models.fields.BooleanField):
-            self.null = True
-        self.blank = True
 
         # Suffix field with '_fr', '_en', etc.
         self.attname = utils.build_localized_field_name(self.translated_field.name, language)
@@ -278,7 +283,12 @@ class TranslationField(object):
         # No concrete field
         self.column = None
 
+        # Optional
+        self.blank = True
+
     def contribute_to_class(self, cls, name):
+        self.model = cls
+        self.name = name
         setattr(cls, self.name, TranslationDescriptor(self, self.translated_field, self.language))
         cls._meta.add_field(self)
         cls._meta.virtual_fields.append(self)
@@ -290,6 +300,12 @@ class TranslationField(object):
         will skip this field when creating tables in PostgreSQL.
         """
         return None
+
+    def deconstruct(self):
+        name, path, args, kwargs = self.translated_field.deconstruct()
+        if self.null is True:
+            kwargs.update({'null': True})
+        return six.text_type(self.name), path, args, kwargs
 
 
 def default_value_getter(field):
