@@ -24,44 +24,6 @@ def instance_only(instance):
         raise AttributeError('Can only be accessed via instance')
 
 
-class TranslationDescriptor(object):
-    """
-    Translation Field Descriptor.
-    """
-
-    def __init__(self, field, translated_field, language):
-        self.field = field
-        self.translated_field = translated_field
-        self.language = language
-        self.attname = utils.build_localized_field_name(self.field.name, language)
-        self.name = self.attname
-        self.verbose_name = utils.build_localized_verbose_name(field.verbose_name, language)
-        self.column = None
-
-    def __get__(self, instance, instance_type=None):
-        instance_only(instance)
-        obj = instance._linguist.get_cache(instance=instance,
-                                           language=self.language,
-                                           field_name=self.translated_field.name)
-        return obj.field_value or None
-
-    def __set__(self, instance, value):
-        instance_only(instance)
-        if value:
-            instance._linguist.set_cache(instance=instance,
-                                         language=self.language,
-                                         field_name=self.translated_field.name,
-                                         field_value=value)
-
-    def db_type(self, connection):
-        """
-        Returning None will cause Django to exclude this field from the concrete
-        field list (``_meta.concrete_fields``) resulting in the fact that syncdb
-        will skip this field when creating tables in PostgreSQL.
-        """
-        return None
-
-
 class CacheDescriptor(dict):
     """
     Linguist Cache Descriptor.
@@ -257,6 +219,44 @@ class CacheDescriptor(dict):
                 self.translations[cached_obj.field_name][cached_obj.language] = cached_obj
 
         return cached_obj
+
+
+class TranslationDescriptor(object):
+    """
+    Translation Field Descriptor.
+    """
+
+    def __init__(self, field, translated_field, language):
+        self.field = field
+        self.translated_field = translated_field
+        self.language = language
+        self.attname = utils.build_localized_field_name(self.field.name, language)
+        self.name = self.attname
+        self.verbose_name = utils.build_localized_verbose_name(field.verbose_name, language)
+        self.column = None
+
+    def __get__(self, instance, instance_type=None):
+        instance_only(instance)
+        obj = instance._linguist.get_cache(instance=instance,
+                                           language=self.language,
+                                           field_name=self.translated_field.name)
+        return obj.field_value or None
+
+    def __set__(self, instance, value):
+        instance_only(instance)
+        if value:
+            instance._linguist.set_cache(instance=instance,
+                                         language=self.language,
+                                         field_name=self.translated_field.name,
+                                         field_value=value)
+
+    def db_type(self, connection):
+        """
+        Returning None will cause Django to exclude this field from the concrete
+        field list (``_meta.concrete_fields``) resulting in the fact that syncdb
+        will skip this field when creating tables in PostgreSQL.
+        """
+        return None
 
 
 class TranslationField(object):
