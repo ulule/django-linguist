@@ -5,7 +5,16 @@ import itertools
 
 from collections import defaultdict
 
+from django.core.exceptions import ImproperlyConfigured
+from django.db import models
+from django.db.models.fields import NOT_PROVIDED
+from django.utils.translation import string_concat
+from django.utils import six
+
+from . import settings
 from . import utils
+
+LANGUAGE_CODE, LANGUAGE_NAME = 0, 1
 
 
 def set_instance_cache(instance, translations):
@@ -16,6 +25,106 @@ def set_instance_cache(instance, translations):
     for translation in translations:
         instance._linguist.set_cache(instance=instance, translation=translation)
     return instance
+
+
+def validate_meta(meta):
+    """
+    Validates Linguist Meta attribute.
+    """
+    if not isinstance(meta, (dict,)):
+        raise TypeError('Model Meta "linguist" must be a dict')
+
+    required_keys = ('identifier', 'fields')
+
+    for key in required_keys:
+        if key not in meta:
+            raise KeyError('Model Meta "linguist" dict requires %s to be defined', key)
+
+    if not isinstance(meta['fields'], (list, tuple)):
+        raise ImproperlyConfigured("Linguist Meta's fields attribute must be a list or tuple")
+
+
+class ModelMeta(models.base.ModelBase):
+
+    def __new__(cls, name, bases, attrs):
+
+        from .fields import default_value_getter, default_value_setter
+        from .fields import create_translation_field
+        from .fields import CacheDescriptor
+        from .base import ModelTranslationBase
+
+        meta = None
+        default_language = utils.get_fallback_language()
+        default_language_field = None
+
+        if 'Meta' in attrs and hasattr(attrs['Meta'], 'linguist'):
+            validate_meta(attrs['Meta'].linguist)
+            meta = attrs['Meta'].linguist
+            delattr(attrs['Meta'], 'linguist')
+        else:
+            return super(ModelMeta, cls).__new__(cls, name, bases, attrs)
+
+        all_fields = dict(
+            (attr_name, attr)
+            for attr_name, attr in attrs.iteritems()
+            if isinstance(attr, models.fields.Field))
+
+        abstract_model_bases = [
+            base
+            for base in bases
+            if hasattr(base, '_meta') and base._meta.abstract
+        ]
+
+        for base in abstract_model_bases:
+            all_fields.update(dict((field.name, field) for field in base._meta.fields))
+
+        original_fields = {}
+
+        for field in meta['fields']:
+
+            if not field in all_fields:
+                raise ImproperlyConfigured(
+                    "There is no field %(field)s in model %(name)s, "\
+                    "as specified in Meta's translate attribute" % \
+                    dict(field=field, name=name))
+
+            original_fields[field] = all_fields[field]
+
+            if field in attrs:
+                del attrs[field]
+
+        new_class = super(ModelMeta, cls).__new__(cls, name, bases, attrs)
+
+        for field_name, field in six.iteritems(original_fields):
+
+            field.name = field_name
+            field.model = new_class
+
+            for lang in settings.SUPPORTED_LANGUAGES:
+
+                lang_code = lang[LANGUAGE_CODE]
+                lang_attr = create_translation_field(field, lang_code)
+                lang_attr_name = utils.get_real_field_name(field_name, lang_code)
+
+                if lang_code != default_language:
+                    if not lang_attr.null and lang_attr.default is NOT_PROVIDED:
+                        lang_attr.null = True
+                    if not lang_attr.blank:
+                        lang_attr.blank = True
+
+                if lang_attr.verbose_name:
+                    lang_attr.verbose_name = string_concat(lang_attr.verbose_name, u' (%s)' % lang_code)
+
+                lang_attr.contribute_to_class(new_class, lang_attr_name)
+
+            setattr(new_class,
+                    field_name,
+                    property(default_value_getter(field), default_value_setter(field)))
+
+        new_class._linguist = CacheDescriptor(new_class, meta)
+        new_class._meta.linguist = meta
+
+        return new_class
 
 
 class ManagerMixin(object):
@@ -73,6 +182,8 @@ class ManagerMixin(object):
 
 
 class ModelMixin(object):
+
+    __metaclass__ = ModelMeta
 
     @property
     def linguist_identifier(self):
@@ -171,16 +282,6 @@ class ModelMixin(object):
         model).
         """
         from .models import Translation
-
-        all_fields = self._meta.get_all_field_names()
-        all_fields.remove('id')
-        valued_fields = list(set(all_fields) - set(self._linguist.empty_suffixed_fields))
-
-        if self.pk:
-            update_fields = []
-            if 'update_fields' in kwargs:
-                update_fields = kwargs['update_fields']
-            kwargs['update_fields'] = list(update_fields) + valued_fields
 
         super(ModelMixin, self).save(*args, **kwargs)
 
