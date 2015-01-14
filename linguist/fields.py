@@ -29,12 +29,13 @@ class CacheDescriptor(dict):
     Linguist Cache Descriptor.
     """
 
-    def __init__(self, model, meta):
+    def __init__(self, meta):
 
         self['identifier'] = meta['identifier']
         self['fields'] = meta['fields']
 
         default_language = settings.DEFAULT_LANGUAGE
+
         if 'default_language' in meta:
             default_language = meta['default_language']
 
