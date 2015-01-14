@@ -15,6 +15,8 @@ __all__ = [
     'get_language_name',
     'get_language',
     'get_fallback_language',
+    'get_real_field_name',
+    'get_fallback_field_name',
     'build_localized_field_name',
     'build_localized_verbose_name',
     'load_class',
