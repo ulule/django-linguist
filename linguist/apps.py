@@ -8,4 +8,3 @@ class LinguistConfig(AppConfig):
 
     def ready(self):
         super(LinguistConfig, self).ready()
-        self.module.autodiscover()
