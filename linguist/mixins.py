@@ -108,11 +108,10 @@ class ModelMeta(models.base.ModelBase):
 
     def __new__(cls, name, bases, attrs):
 
-        from .fields import TranslationField, CacheDescriptor
+        from .fields import CacheDescriptor
 
         meta = None
         default_language = utils.get_fallback_language()
-        default_language_field = None
 
         if 'Meta' in attrs and hasattr(attrs['Meta'], 'linguist'):
             validate_meta(attrs['Meta'].linguist)
@@ -139,10 +138,10 @@ class ModelMeta(models.base.ModelBase):
 
         for field in meta['fields']:
 
-            if not field in all_fields:
+            if field not in all_fields:
                 raise ImproperlyConfigured(
-                    "There is no field %(field)s in model %(name)s, "\
-                    "as specified in Meta's translate attribute" % \
+                    "There is no field %(field)s in model %(name)s, "
+                    "as specified in Meta's translate attribute" %
                     dict(field=field, name=name))
 
             original_fields[field] = all_fields[field]
