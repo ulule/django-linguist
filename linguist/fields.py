@@ -31,7 +31,6 @@ class CacheDescriptor(dict):
 
     def __init__(self, model, meta):
 
-        self['model'] = model
         self['identifier'] = meta['identifier']
         self['fields'] = meta['fields']
 
@@ -121,13 +120,6 @@ class CacheDescriptor(dict):
     @property
     def empty_suffixed_fields(self):
         return list(set(self.suffixed_fields) - set(self.cached_suffixed_fields))
-
-    @property
-    def update_fields(self):
-        all_fields = self['model']._meta.get_all_field_names()
-        if 'id' in all_fields:
-            all_fields.remove('id')
-        return list(set(all_fields) - set(self.empty_suffixed_fields))
 
     @property
     def translations(self):
