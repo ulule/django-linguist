@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 
-from ..registry import LinguistRegistry as Registry
 from ..models import Translation
 
 from . import settings
-from .translations import FooModel, FooTranslation
+from .translations import FooModel
 
 
 class BaseTestCase(TestCase):
@@ -37,7 +36,5 @@ class BaseTestCase(TestCase):
             field_value='bonjour')
         return obj
 
-    def create_registry(self):
-        self.registry = Registry()
-        self.registry.register(FooTranslation)
+    def setup_models(self):
         self.instance = FooModel()
