@@ -13,8 +13,14 @@ from django.utils import six
 
 from . import settings
 from . import utils
+from .fields import TranslationField, CacheDescriptor
 
 LANGUAGE_CODE, LANGUAGE_NAME = 0, 1
+
+SUPPORTED_FIELDS = (
+    models.fields.CharField,
+    models.fields.TextField,
+)
 
 
 def set_instance_cache(instance, translations):
@@ -44,14 +50,62 @@ def validate_meta(meta):
         raise ImproperlyConfigured("Linguist Meta's fields attribute must be a list or tuple")
 
 
+def default_value_getter(field):
+    """
+    When accessing to the name of the field itself, the value
+    in the current language will be returned. Unless it's set,
+    the value in the default language will be returned.
+    """
+    def default_value_func_getter(self):
+        language = self._linguist.language or self.default_language
+        localized_field = utils.build_localized_field_name(field, language)
+        return getattr(self, localized_field)
+
+    return default_value_func_getter
+
+
+def default_value_setter(field):
+    """
+    When setting to the name of the field itself, the value
+    in the current language will be set.
+    """
+    def default_value_func_setter(self, value):
+        language = self._linguist.language or self.default_language
+        localized_field = utils.build_localized_field_name(field, language)
+        setattr(self, localized_field, value)
+
+    return default_value_func_setter
+
+
+def field_factory(base_class):
+    """
+    Takes a field base class and wrap it with ``TranslationField`` class.
+    """
+    class TranslationFieldField(TranslationField, base_class):
+        pass
+
+    TranslationFieldField.__name__ = b'Translation%s' % base_class.__name__
+
+    return TranslationFieldField
+
+
+def create_translation_field(translated_field, language):
+    """
+    Takes the original field, a given language and return a Field class for model.
+    """
+    cls_name = translated_field.__class__.__name__
+
+    if not isinstance(translated_field, SUPPORTED_FIELDS):
+        raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
+
+    translation_class = field_factory(translated_field.__class__)
+
+    return translation_class(translated_field=translated_field, language=language)
+
+
 class ModelMeta(models.base.ModelBase):
 
     def __new__(cls, name, bases, attrs):
-
-        from .fields import default_value_getter, default_value_setter
-        from .fields import create_translation_field
-        from .fields import CacheDescriptor
-        from .base import ModelTranslationBase
 
         meta = None
         default_language = utils.get_fallback_language()

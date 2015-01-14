@@ -15,11 +15,6 @@ from .cache import CachedTranslation
 from .models import Translation
 from .utils import build_localized_field_name
 
-SUPPORTED_FIELDS = (
-    models.fields.CharField,
-    models.fields.TextField,
-)
-
 
 def instance_only(instance):
     """
@@ -306,51 +301,3 @@ class TranslationField(object):
         if self.null is True:
             kwargs.update({'null': True})
         return six.text_type(self.name), path, args, kwargs
-
-
-def default_value_getter(field):
-    """
-    When accessing to the name of the field itself, the value
-    in the current language will be returned. Unless it's set,
-    the value in the default language will be returned.
-    """
-    def default_value_func_getter(self):
-        language = self._linguist.language or self.default_language
-        localized_field = utils.build_localized_field_name(field, language)
-        return getattr(self, localized_field)
-
-    return default_value_func_getter
-
-
-def default_value_setter(field):
-    """
-    When setting to the name of the field itself, the value
-    in the current language will be set.
-    """
-    def default_value_func_setter(self, value):
-        language = self._linguist.language or self.default_language
-        localized_field = utils.build_localized_field_name(field, language)
-        setattr(self, localized_field, value)
-
-    return default_value_func_setter
-
-
-def field_factory(base_class):
-    class TranslationFieldField(TranslationField, base_class):
-        pass
-    TranslationFieldField.__name__ = b'Translation%s' % base_class.__name__
-    return TranslationFieldField
-
-
-def create_translation_field(translated_field, language):
-    """
-    Takes the original field, a given language and return a Field class for model.
-    """
-    cls_name = translated_field.__class__.__name__
-
-    if not isinstance(translated_field, SUPPORTED_FIELDS):
-        raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
-
-    translation_class = field_factory(translated_field.__class__)
-
-    return translation_class(translated_field=translated_field, language=language)
