@@ -35,7 +35,7 @@ def get_fallback_language():
 
 def get_real_field_name(field, lang=None):
     if lang is None:
-       lang = get_language()
+        lang = get_language()
     return str('%s_%s' % (field, lang.replace('-', '_')))
 
 
