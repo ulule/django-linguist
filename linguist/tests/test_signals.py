@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from ..models import Translation
 
 from .base import BaseTestCase
-from .translations import BarModel
+from .models import BarModel
 
 
 class SignalsTest(BaseTestCase):
@@ -13,7 +13,7 @@ class SignalsTest(BaseTestCase):
     """
 
     def setUp(self):
-        self.create_registry()
+        self.setup_models()
 
     def test_post_delete(self):
         self.instance.activate_language('en')
