@@ -56,6 +56,6 @@ def _build_localized_verbose_name(verbose_name, language):
     """
     Build localized verbose name from ``verbose_name`` and ``language``.
     """
-    return force_text('%s [%s]') % (force_text(verbose_name), language)
+    return force_text('%s (%s)') % (force_text(verbose_name), language)
 
 build_localized_verbose_name = lazy(_build_localized_verbose_name, six.text_type)

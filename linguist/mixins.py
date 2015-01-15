@@ -170,9 +170,6 @@ class ModelMeta(models.base.ModelBase):
                     if not lang_attr.blank:
                         lang_attr.blank = True
 
-                if lang_attr.verbose_name:
-                    lang_attr.verbose_name = string_concat(lang_attr.verbose_name, u' (%s)' % lang_code)
-
                 lang_attr.contribute_to_class(new_class, lang_attr_name)
 
             setattr(new_class,
