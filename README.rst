@@ -208,7 +208,7 @@ Development
     $ sudo easy_install pip
 
     # Don't already have virtualenv?
-    $ sudo pip install virtualenv autoenv
+    $ sudo pip install virtualenv
 
     # Don't have Bower? Install Node.js for your OS then...
     $ sudo npm install -g bower
