@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
+from ..models import Translation
 from ..cache import CachedTranslation
 
 from .base import BaseTestCase
-from .translations import FooModel
+from .models import FooModel
 
 
 class CachedTranslationTest(BaseTestCase):
     """
     Tests CachedTranslation class.
     """
-
     def setUp(self):
-        self.create_registry()
+        self.setup_models()
+        self.instance.clear_translations_cache()
+
+    def tearDown(self):
+        self.instance.clear_translations_cache()
 
     def test_attributes(self):
-        from ..models import Translation
-
         fields = Translation._meta.get_all_field_names()
         fields.remove('id')
 
@@ -31,9 +33,7 @@ class CachedTranslationTest(BaseTestCase):
             self.assertIsNone(getattr(obj, attr))
 
     def test_instance_and_translation(self):
-        from ..models import Translation
-
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
         self.instance.save()
 
@@ -49,9 +49,7 @@ class CachedTranslationTest(BaseTestCase):
         self.assertEqual(obj.field_value, translation.field_value)
 
     def test_from_object(self):
-        from ..models import Translation
-
-        self.instance.language = 'en'
+        self.instance.activate_language('en')
         self.instance.title = 'Hello'
         self.instance.save()
 
