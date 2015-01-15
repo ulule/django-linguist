@@ -19,5 +19,8 @@ serve: .venv
 	. .venv/bin/activate && ENV=example python manage.py syncdb
 	. .venv/bin/activate && ENV=example python manage.py runserver
 
+delpyc:
+	find . -name '*.pyc' -delete
+
 release:
 	python setup.py sdist register upload -s
