@@ -7,11 +7,15 @@ from django.utils.translation import ugettext_lazy as _
 from .models import Translation as LinguistTranslationModel
 
 __all__ = [
+    'ModelTranslationAdminMixin',
     'ModelTranslationAdmin',
 ]
 
 
-class ModelTranslationAdmin(admin.ModelAdmin):
+class ModelTranslationAdminMixin(object):
+    """
+    Admin class mixin for translatable models.
+    """
 
     def get_available_languages(self, obj):
         """
@@ -28,6 +32,13 @@ class ModelTranslationAdmin(admin.ModelAdmin):
 
     languages_column.allow_tags = True
     languages_column.short_description = _('Languages')
+
+
+class ModelTranslationAdmin(ModelTranslationAdminMixin, admin.ModelAdmin):
+    """
+    Admin class for translatable models.
+    """
+    pass
 
 
 class LinguistTranslationModelAdmin(admin.ModelAdmin):
