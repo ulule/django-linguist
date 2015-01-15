@@ -28,6 +28,9 @@ That's all.
 Configuration
 -------------
 
+Models
+~~~~~~
+
 In three steps:
 
 1. Add ``linguist.mixins.ModelMixin`` to your model
@@ -75,6 +78,41 @@ And optionally requires:
 * ``default_language``: the default language to use
 
 That's all. You're ready.
+
+django.contrib.admin
+~~~~~~~~~~~~~~~~~~~~
+
+Simply use ``linguist.admin.ModelTranslationAdmin`` class:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from linguist.admin import ModelTranslationAdmin
+    from .models import Post
+
+
+    class PostAdmin(ModelTranslationAdmin):
+        list_display = ('title', 'body', 'created_at')
+
+
+    admin.site.register(Post, PostAdmin)
+
+
+Bonus! You can display instance's languages in ``list_display`` via the
+``languages_column`` property provided by the admin class:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from linguist.admin import ModelTranslationAdmin
+    from .models import Post
+
+
+    class PostAdmin(ModelTranslationAdmin):
+        list_display = ('title', 'body', 'languages_column', 'created_at')
+
+
+    admin.site.register(Post, PostAdmin)
 
 How it works
 ------------
