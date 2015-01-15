@@ -8,16 +8,6 @@ from collections import defaultdict
 from . import utils
 
 
-def set_instance_cache(instance, translations):
-    """
-    Sets Linguist cache for the given instance.
-    """
-    instance.clear_translations_cache()
-    for translation in translations:
-        instance._linguist.set_cache(instance=instance, translation=translation)
-    return instance
-
-
 class ManagerMixin(object):
     """
     Linguist Manager Mixin.
@@ -35,6 +25,7 @@ class ManagerMixin(object):
 
         """
         from .models import Translation
+        from .cache import set_instance_cache
 
         qs = self.get_queryset()
 

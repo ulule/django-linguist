@@ -7,3 +7,10 @@ version = (0, 1, 0)
 __version__ = '.'.join(map(str, version))
 
 default_app_config = 'linguist.apps.LinguistConfig'
+
+__all__ = [
+    'LinguistMeta',
+    'LinguistManagerMixin',
+    'default_app_config',
+    'version',
+]

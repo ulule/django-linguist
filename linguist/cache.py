@@ -15,6 +15,16 @@ def _get_translation_field_names():
 get_translation_field_names = memoize(_get_translation_field_names, {}, None)
 
 
+def set_instance_cache(instance, translations):
+    """
+    Sets Linguist cache for the given instance.
+    """
+    instance.clear_translations_cache()
+    for translation in translations:
+        instance._linguist.set_cache(instance=instance, translation=translation)
+    return instance
+
+
 @python_2_unicode_compatible
 class CachedTranslation(object):
 
