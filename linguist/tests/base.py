@@ -4,7 +4,7 @@ from django.test import TestCase
 from ..models import Translation
 
 from . import settings
-from .translations import FooModel
+from .models import FooModel
 
 
 class BaseTestCase(TestCase):
