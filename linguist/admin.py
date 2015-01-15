@@ -19,7 +19,6 @@ from django.utils import six
 
 from . import utils
 
-from .forms import ModelTranslationForm
 from .models import Translation as LinguistTranslationModel
 
 __all__ = [
