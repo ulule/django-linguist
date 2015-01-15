@@ -4,10 +4,7 @@ from __future__ import unicode_literals
 from .base import BaseTestCase
 
 from .. import settings
-from ..base import ModelTranslationBase
 from ..models import Translation
-
-from .translations import FooModel
 
 
 class ModelMixinTest(BaseTestCase):
@@ -16,7 +13,7 @@ class ModelMixinTest(BaseTestCase):
     """
 
     def setUp(self):
-        self.create_registry()
+        self.setup_models()
 
     def tearDown(self):
         self.instance.clear_translations_cache()
@@ -139,18 +136,7 @@ class ModelMixinTest(BaseTestCase):
         #
         # Let's define a default language in translation class.
         #
-        class FooTranslationDefaultLanguage(ModelTranslationBase):
-            model = FooModel
-            identifier = 'foo'
-            fields = ('title', 'excerpt', 'body')
-            default_language = 'fr'
-
-        #
-        # Re-register translation class and re-create new model instance.
-        #
-        self.registry.unregister('foo')
-        self.registry.register(FooTranslationDefaultLanguage)
-        self.instance = FooModel()
+        self.instance.default_language = 'fr'
 
         #
         # The default language must be the one defined in translation class.
