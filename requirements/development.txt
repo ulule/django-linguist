@@ -5,3 +5,4 @@ Sphinx
 coverage==3.6
 flake8
 django-debug-toolbar
+exam

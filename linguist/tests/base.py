@@ -6,8 +6,11 @@ from ..models import Translation
 from . import settings
 from .models import FooModel
 
+from exam.cases import Exam
+from exam.decorators import fixture
 
-class BaseTestCase(TestCase):
+
+class BaseTestCase(Exam, TestCase):
     """
     Base test class mixin.
     """
@@ -16,25 +19,21 @@ class BaseTestCase(TestCase):
     def languages(self):
         return [language[0] for language in settings.LANGUAGES]
 
-    @property
+    @fixture
     def translation_en(self):
-        obj, created = Translation.objects.get_or_create(
-            identifier='foo',
-            object_id=self.instance.pk,
-            language='en',
-            field_name='title',
-            field_value='Hello')
-        return obj
+        return Translation.objects.create(identifier='foo',
+                                          object_id=self.instance.pk,
+                                          language='en',
+                                          field_name='title',
+                                          field_value='Hello')
 
-    @property
+    @fixture
     def translation_fr(self):
-        obj, created = Translation.objects.get_or_create(
-            identifier='foo',
-            object_id=self.instance.pk,
-            language='fr',
-            field_name='title',
-            field_value='bonjour')
-        return obj
+        return Translation.objects.create(identifier='foo',
+                                          object_id=self.instance.pk,
+                                          language='fr',
+                                          field_name='title',
+                                          field_value='bonjour')
 
     def setup_models(self):
         self.instance = FooModel()
