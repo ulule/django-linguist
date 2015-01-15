@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils.functional import memoize
+from django.utils.functional import memoize, cached_property
 
 
 def _get_translation_field_names():
@@ -40,14 +40,14 @@ class CachedTranslation(object):
             for attr in ('language', 'field_name', 'field_value'):
                 setattr(self, attr, getattr(self.translation, attr))
 
-    @property
+    @cached_property
     def attrs(self):
         """
         Returns Translation attributes to pass as kwargs for creating or updating objects.
         """
         return dict((k, getattr(self, k)) for k in self.fields)
 
-    @property
+    @cached_property
     def lookup(self):
         """
         Returns lookup for get() and filter() methods.
@@ -61,7 +61,8 @@ class CachedTranslation(object):
         """
         Updates values from the given object.
         """
-        return cls(**dict((field, getattr(obj, field)) for field in get_translation_field_names()))
+        return cls(**dict((field, getattr(obj, field))
+                          for field in get_translation_field_names()))
 
     def __str__(self):
         return '%s:%s:%s:%s' % (
