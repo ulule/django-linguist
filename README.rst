@@ -202,39 +202,24 @@ All translations will be cached in instances. Database won't be hit anymore.
 Development
 -----------
 
-Installation
-~~~~~~~~~~~~
-
 .. code-block:: bash
 
-    $ git clone https://github.com/ulule/django-devbox.git
-    $ cd django-devbox
-    $ vagrant up
-    $ vagrant package --base ulule_django_devbox --output ulule-django-devbox.box
-    $ mkdir ~/vboxes
-    $ mv ulule-django-devbox.box ~/vboxes/django_linguist.box
-    $ vagrant up && vagrant ssh
-    $ cd /vagrant
+    # Don't have pip?
+    $ sudo easy_install pip
+
+    # Don't already have virtualenv?
+    $ sudo pip install virtualenv autoenv
+
+    # Don't have Bower? Install Node.js for your OS then...
+    $ sudo npm install -g bower
+
+    # Clone and install dependencies
+    $ git clone https://github.com/ulule/django-linguist.git
+    $ cd django-linguist
     $ make install
-    $ source .venv/bin/activate
 
-Tests
-~~~~~
-
-.. code-block:: bash
-
-    $ vagrant up && vagrant ssh
-    $ cd /vagrant
+    # Launch tests
     $ make test
 
-Example Project
----------------
-
-.. code-block:: bash
-
-    $ vagrant up && vagrant ssh
-    $ cd /vagrant
-    $ ENV=example python manage.py syncdb
-    $ ENV=example python manage.py runserver [::]:8000
-
-Go to http://127.0.0.1:1337.
+    # Launch example project
+    $ make serve
