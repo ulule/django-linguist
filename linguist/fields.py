@@ -269,9 +269,6 @@ class TranslationField(object):
         # No concrete field
         self.column = None
 
-        # Optional
-        self.blank = True
-
     def contribute_to_class(self, cls, name):
         self.model = cls
         self.name = name
