@@ -28,57 +28,19 @@ That's all.
 Configuration
 -------------
 
-Create a module named ``linguist_registry.py`` in your app :
+In three steps:
 
-.. code-block:: bash
+1. Add ``linguist.mixins.ModelMixin`` to your model
+2. Add ``linguist.mixins.ManagerMixin`` to your model manager
+3. Add ``linguist`` settings in your model's Meta
 
-    $ cd /path/to/your/django/app
-    $ touch linguist_registry.py
-
-Create a ``ModelTranslationBase`` class for each model you want to translate
-then register them like this:
-
-.. code-block:: python
-
-    import linguist
-    from .models import Post
-
-
-    class PostTranslation(linguist.ModelTranslationBase):
-        model = Post
-        identifier = 'post_or_anything_else'
-        fields = ('title', 'body')
-        default_language = 'en'
-
-    linguist.register(PostTranslation)
-
-Translation classes are dead simple. You just have to define four class attributes:
-
-* ``model``: the model to translate
-* ``identifier``: a unique identifier for your model (can be anything you want)
-* ``fields``: list or tuple of model fields to translate
-* ``default_language``: the default language to use
-
-And of course, you need to register them. Unregistered classes will be simply skipped.
-
-Finally, add ``linguist.mixins.ModelMixin`` to your models:
+Don't worry, it's fairly simple:
 
 .. code-block:: python
 
     from django.db import models
-    from linguist.mixins import ModelMixin as LinguistModelMixin
+    from django.utils.translation import ugettext_lazy as _
 
-
-    class Post(LinguistModelMixin, models.Model):
-        title = models.CharField(max_length=255)
-        body = models.TextField()
-
-
-Then add ``linguist.mixins.ManagerMixin`` to your managers:
-
-.. code-block:: python
-
-    from django.db import models
     from linguist.mixins import ModelMixin as LinguistModelMixin
     from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
@@ -90,11 +52,29 @@ Then add ``linguist.mixins.ManagerMixin`` to your managers:
     class Post(LinguistModelMixin, models.Model):
         title = models.CharField(max_length=255)
         body = models.TextField()
+        created_at = models.DateTimeField(auto_now_add=True)
 
         objects = PostManager()
 
+        class Meta:
+            verbose_name = _('post')
+            verbose_name_plural = _('posts')
+            linguist = {
+                'identifier': 'can-be-anything-you-want',
+                'fields': ('title', 'body'),
+                'default_language': 'fr',
+            }
 
-Nothing more. You're ready.
+The ``linguist`` meta requires:
+
+* ``identifier``: a unique identifier for your model (can be anything you want)
+* ``fields``: list or tuple of model fields to translate
+
+And optionally requires:
+
+* ``default_language``: the default language to use
+
+That's all. You're ready.
 
 How it works
 ------------
