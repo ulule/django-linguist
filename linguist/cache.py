@@ -8,12 +8,10 @@ class CachedTranslation(object):
     def __init__(self, **kwargs):
         from .models import Translation
 
-        self.instances = ['instance', 'translation']
-
         self.fields = Translation._meta.get_all_field_names()
         self.fields.remove('id')
 
-        attrs = self.fields + self.instances
+        attrs = self.fields + ['instance', 'translation']
 
         for attr in attrs:
             setattr(self, attr, None)
