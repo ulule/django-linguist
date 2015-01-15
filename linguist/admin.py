@@ -1,19 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import django
-from django.conf.urls import patterns, url
 from django.contrib import admin
-from django.contrib.admin.options import csrf_protect_m
-from django.contrib.admin.util import unquote
-from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
-from django.core.urlresolvers import reverse
 from django.forms import Media
-from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
-from django.utils.encoding import iri_to_uri, force_text
 from django.utils.functional import lazy
-from django.utils.http import urlencode
 from django.utils.translation import ugettext_lazy as _
 from django.utils import six
 
