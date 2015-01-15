@@ -10,9 +10,6 @@ class ManagerMixinTest(BaseTestCase):
     Tests the Linguist's manager mixin.
     """
 
-    def setUp(self):
-        self.setup_models()
-
     def test_with_translations(self):
         # Be sure we have the method
         self.assertTrue(hasattr(FooModel.objects, 'with_translations'))

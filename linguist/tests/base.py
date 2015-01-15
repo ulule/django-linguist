@@ -7,7 +7,7 @@ from . import settings
 from .models import FooModel
 
 from exam.cases import Exam
-from exam.decorators import fixture
+from exam.decorators import fixture, before, after
 
 
 class BaseTestCase(Exam, TestCase):
@@ -35,5 +35,12 @@ class BaseTestCase(Exam, TestCase):
                                           field_name='title',
                                           field_value='bonjour')
 
+    @before
     def setup_models(self):
         self.instance = FooModel()
+
+        self.instance.clear_translations_cache()
+
+    @after
+    def clear_cache(self):
+        self.instance.clear_translations_cache()

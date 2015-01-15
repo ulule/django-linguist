@@ -12,9 +12,6 @@ class SignalsTest(BaseTestCase):
     Tests Linguist Signals.
     """
 
-    def setUp(self):
-        self.setup_models()
-
     def test_post_delete(self):
         self.instance.activate_language('en')
         self.instance.title = 'Hello'

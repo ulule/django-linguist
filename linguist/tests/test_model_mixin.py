@@ -12,12 +12,6 @@ class ModelMixinTest(BaseTestCase):
     Tests Linguist mixin.
     """
 
-    def setUp(self):
-        self.setup_models()
-
-    def tearDown(self):
-        self.instance.clear_translations_cache()
-
     def test_linguist_identifier(self):
         self.assertTrue(hasattr(self.instance, 'linguist_identifier'))
         self.assertEqual(self.instance.linguist_identifier, 'foo')

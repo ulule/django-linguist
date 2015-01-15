@@ -10,13 +10,6 @@ class CachedTranslationTest(BaseTestCase):
     """
     Tests CachedTranslation class.
     """
-    def setUp(self):
-        self.setup_models()
-        self.instance.clear_translations_cache()
-
-    def tearDown(self):
-        self.instance.clear_translations_cache()
-
     def test_attributes(self):
         fields = Translation._meta.get_all_field_names()
         fields.remove('id')
