@@ -98,8 +98,9 @@ class CacheDescriptor(dict):
 
     @property
     def suffixed_fields(self):
-        return ['%s_%s' % (field, lang) for field in self.fields
-                                        for lang in self.supported_languages]
+        return ['%s_%s' % (field, lang)
+                for field in self.fields
+                for lang in self.supported_languages]
 
     @property
     def cached_fields(self):
@@ -107,8 +108,9 @@ class CacheDescriptor(dict):
 
     @property
     def cached_suffixed_fields(self):
-        return ['%s_%s' % (field, lang) for field in self.cached_fields
-                                        for lang in self.supported_languages]
+        return ['%s_%s' % (field, lang)
+                for field in self.cached_fields
+                for lang in self.supported_languages]
 
     @property
     def empty_fields(self):
