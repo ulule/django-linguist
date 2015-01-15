@@ -1,15 +1,25 @@
 # -*- coding: utf-8 -*-
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.functional import memoize
+
+
+def _get_translation_field_names():
+    from .models import Translation
+
+    fields = Translation._meta.get_all_field_names()
+    fields.remove('id')
+
+    return fields
+
+
+get_translation_field_names = memoize(_get_translation_field_names, {}, None)
 
 
 @python_2_unicode_compatible
 class CachedTranslation(object):
 
     def __init__(self, **kwargs):
-        from .models import Translation
-
-        self.fields = Translation._meta.get_all_field_names()
-        self.fields.remove('id')
+        self.fields = get_translation_field_names()
 
         attrs = self.fields + ['instance', 'translation']
 
@@ -51,12 +61,7 @@ class CachedTranslation(object):
         """
         Updates values from the given object.
         """
-        from .models import Translation
-
-        fields = Translation._meta.get_all_field_names()
-        fields.remove('id')
-
-        return cls(**dict((field, getattr(obj, field)) for field in fields))
+        return cls(**dict((field, getattr(obj, field)) for field in get_translation_field_names()))
 
     def __str__(self):
         return '%s:%s:%s:%s' % (
