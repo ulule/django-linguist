@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 
+from exam.cases import Exam
+from exam.decorators import fixture, before, after
+
 from ..models import Translation
 
 from . import settings
 from .models import FooModel
-
-from exam.cases import Exam
-from exam.decorators import fixture, before, after
 
 
 class BaseTestCase(Exam, TestCase):

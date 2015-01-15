@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from ..models import Translation
 from ..cache import CachedTranslation
+from ..models import Translation
 
 from .base import BaseTestCase
 from .models import FooModel

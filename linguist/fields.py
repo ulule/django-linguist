@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from . import utils
-
 from collections import defaultdict
 
 from django.utils import six
 
 from . import settings
+from . import utils
 from .cache import CachedTranslation
 from .models import Translation
 

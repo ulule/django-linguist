@@ -2,8 +2,8 @@
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
-from .mixins import ModelMixin
 from .models import Translation
+from .mixins import ModelMixin
 
 
 @receiver(post_delete)
