@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from .base import BaseTestCase
-
-from .translations import FooModel
+from .models import FooModel
 
 
 class ManagerMixinTest(BaseTestCase):
@@ -12,7 +11,7 @@ class ManagerMixinTest(BaseTestCase):
     """
 
     def setUp(self):
-        self.create_registry()
+        self.setup_models()
 
     def test_with_translations(self):
         # Be sure we have the method
