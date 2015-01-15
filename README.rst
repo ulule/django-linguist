@@ -33,8 +33,8 @@ Models
 
 In three steps:
 
-1. Add ``linguist.mixins.ModelMixin`` to your model
-2. Add ``linguist.mixins.ManagerMixin`` to your model manager
+1. Add ``linguist.LinguistMeta`` to your model as metaclass
+2. Add ``linguist.LinguistManagerMixin`` to your model manager
 3. Add ``linguist`` settings in your model's Meta
 
 Don't worry, it's fairly simple:
@@ -44,15 +44,17 @@ Don't worry, it's fairly simple:
     from django.db import models
     from django.utils.translation import ugettext_lazy as _
 
-    from linguist.mixins import ModelMixin as LinguistModelMixin
-    from linguist.mixins import ManagerMixin as LinguistManagerMixin
+    from linguist import LinguistMeta, LinguistManagerMixin
 
 
     class PostManager(LinguistManagerMixin, models.Manager):
         pass
 
 
-    class Post(LinguistModelMixin, models.Model):
+    class Post(models.Model):
+
+        __metaclass__ = LinguistMeta
+
         title = models.CharField(max_length=255)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)

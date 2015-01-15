@@ -1,31 +1,34 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
-from ..mixins import ModelMixin, ManagerMixin
+from .. import LinguistMeta, LinguistManagerMixin
 
 
-class FooManager(ManagerMixin, models.Manager):
+class FooManager(LinguistManagerMixin, models.Manager):
     """
     Manager of Foo model.
     """
     pass
 
 
-class BarManager(ManagerMixin, models.Manager):
+class BarManager(LinguistManagerMixin, models.Manager):
     """
     Manager of Bar model.
     """
     pass
 
 
-class FooModel(ModelMixin, models.Model):
+class FooModel(models.Model):
     """
     A foo.
     """
+    __metaclass__ = LinguistMeta
+
     title = models.CharField(max_length=255)
     excerpt = models.TextField(null=True, blank=True)
     body = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
     objects = FooManager()
 
     class Meta:
@@ -35,11 +38,14 @@ class FooModel(ModelMixin, models.Model):
         }
 
 
-class BarModel(ModelMixin, models.Model):
+class BarModel(models.Model):
     """
     A bar.
     """
+    __metaclass__ = LinguistMeta
+
     title = models.CharField(max_length=255, null=True, blank=True)
+
     objects = BarManager()
 
     class Meta:
