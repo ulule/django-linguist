@@ -8,7 +8,6 @@ from collections import defaultdict
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.fields import NOT_PROVIDED
-from django.utils.translation import string_concat
 from django.utils import six
 
 from . import settings
@@ -113,12 +112,12 @@ class ModelMeta(models.base.ModelBase):
         meta = None
         default_language = utils.get_fallback_language()
 
-        if 'Meta' in attrs and hasattr(attrs['Meta'], 'linguist'):
-            validate_meta(attrs['Meta'].linguist)
-            meta = attrs['Meta'].linguist
-            delattr(attrs['Meta'], 'linguist')
-        else:
+        if 'Meta' not in attrs or not hasattr(attrs['Meta'], 'linguist'):
             return super(ModelMeta, cls).__new__(cls, name, bases, attrs)
+
+        validate_meta(attrs['Meta'].linguist)
+        meta = attrs['Meta'].linguist
+        delattr(attrs['Meta'], 'linguist')
 
         all_fields = dict(
             (attr_name, attr)
