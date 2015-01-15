@@ -8,6 +8,7 @@ from collections import defaultdict
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.fields import NOT_PROVIDED
+from django.forms.forms import pretty_name
 from django.utils import six
 
 from . import settings
@@ -156,6 +157,9 @@ class ModelMeta(models.base.ModelBase):
 
             field.name = field_name
             field.model = new_class
+
+            if not field.verbose_name:
+                field.verbose_name = pretty_name(field_name)
 
             for lang in settings.SUPPORTED_LANGUAGES:
 
