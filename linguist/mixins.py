@@ -61,6 +61,8 @@ class ManagerMixin(object):
         for instance in qs:
             set_instance_cache(instance, grouped_translations[instance.pk])
 
+        return qs
+
 
 class ModelMixin(object):
 
