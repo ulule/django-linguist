@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from .base import BaseTestCase
-
 from .. import settings
 from ..models import Translation
+
+from .base import BaseTestCase
+from .models import FooModel
 
 
 class ModelMixinTest(BaseTestCase):

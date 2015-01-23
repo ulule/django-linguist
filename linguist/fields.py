@@ -19,60 +19,14 @@ def instance_only(instance):
         raise AttributeError('Can only be accessed via instance')
 
 
-class CacheDescriptor(dict):
-    """
-    Linguist Cache Descriptor.
-    """
+class Linguist(object):
 
-    def __init__(self, meta):
-
-        self['identifier'] = meta['identifier']
-        self['fields'] = meta['fields']
-
-        default_language = settings.DEFAULT_LANGUAGE
-
-        if 'default_language' in meta:
-            default_language = meta['default_language']
-
-        self['default_language'] = default_language
-        self['language'] = self['default_language']
-        self['translations'] = defaultdict(dict)
-
-    @property
-    def identifier(self):
-        """
-        Returns model identifier (from related translation class).
-        Read-only.
-        """
-        return self['identifier']
-
-    @property
-    def language(self):
-        """
-        Returns current language.
-        """
-        return self['language']
-
-    @language.setter
-    def language(self, value):
-        """
-        Sets current language.
-        """
-        self['language'] = value
-
-    @property
-    def default_language(self):
-        """
-        Returns default language.
-        """
-        return self['default_language']
-
-    @default_language.setter
-    def default_language(self, value):
-        """
-        Sets default language.
-        """
-        self['default_language'] = value
+    def __init__(self, instance, identifier, language, default_language, fields):
+        self.instance = instance
+        self.identifier = identifier
+        self.language = language
+        self.default_language = default_language
+        self.fields = list(fields)
 
     @property
     def supported_languages(self):
@@ -81,19 +35,11 @@ class CacheDescriptor(dict):
     @property
     def cached_languages(self):
         langs = []
-        for k, v in six.iteritems(self.translations):
+        for k, v in six.iteritems(self.instance._linguist_translations):
             for lang in v.keys():
                 if lang not in langs:
                     langs.append(lang)
         return langs
-
-    @property
-    def fields(self):
-        """
-        Returns translatable fields (from related translation class).
-        Read-only.
-        """
-        return list(self['fields'])
 
     @property
     def suffixed_fields(self):
@@ -103,7 +49,7 @@ class CacheDescriptor(dict):
 
     @property
     def cached_fields(self):
-        return [k for k, v in six.iteritems(self.translations) if v]
+        return [k for k, v in six.iteritems(self.instance._linguist_translations) if v]
 
     @property
     def cached_suffixed_fields(self):
@@ -124,7 +70,7 @@ class CacheDescriptor(dict):
         """
         Returns translations dictionary.
         """
-        return self['translations']
+        return self.instance._linguist_translations
 
     @property
     def translation_instances(self):
@@ -132,7 +78,7 @@ class CacheDescriptor(dict):
         Returns translation instances.
         """
         return [instance
-                for k, v in self.translations.items()
+                for k, v in self.instance._linguist_translations.items()
                 for instance in v.values()]
 
     @property
@@ -175,7 +121,7 @@ class CacheDescriptor(dict):
                                                  field_value=field_value)
 
         try:
-            cached_obj = self.translations[cached_obj.field_name][cached_obj.language]
+            cached_obj = instance._linguist_translations[cached_obj.field_name][cached_obj.language]
         except KeyError:
             if not is_new:
                 try:
@@ -193,22 +139,58 @@ class CacheDescriptor(dict):
         """
         Add a new translation into the cache.
         """
+        if instance is None:
+            instance = self.instance
+
         if cached_obj is None:
             cached_obj = self.get_cached_translation(instance=instance,
                                                      translation=translation,
                                                      language=language,
                                                      field_name=field_name,
                                                      field_value=field_value)
-
         try:
-            obj = self.translations[cached_obj.field_name][cached_obj.language]
+            obj = instance._linguist_translations[cached_obj.field_name][cached_obj.language]
             if cached_obj.field_value:
                 obj.has_changed = (cached_obj.field_value != obj.field_value)
         except KeyError:
             if cached_obj.field_value is not None:
-                self.translations[cached_obj.field_name][cached_obj.language] = cached_obj
+                instance._linguist_translations[cached_obj.field_name][cached_obj.language] = cached_obj
 
         return cached_obj
+
+
+class CacheDescriptor(object):
+    """
+    Cache Descriptor.
+    """
+
+    def __init__(self, meta):
+        self.identifier = meta['identifier']
+        self.fields = meta['fields']
+        self.default_language = settings.DEFAULT_LANGUAGE
+
+        if 'default_language' in meta:
+            self.default_language = meta['default_language']
+
+        self.language = self.default_language
+
+    def __get__(self, instance, instance_type=None):
+        if instance is None:
+            return self
+
+        try:
+            return getattr(instance, '_linguist_cache')
+        except AttributeError:
+            linguist = Linguist(instance=instance,
+                                identifier=self.identifier,
+                                language=self.language,
+                                default_language=self.default_language,
+                                fields=self.fields)
+
+            setattr(instance, '_linguist_cache', linguist)
+            setattr(instance, '_linguist_translations', defaultdict(dict))
+
+        return instance._linguist_cache
 
 
 class TranslationDescriptor(object):
@@ -227,6 +209,7 @@ class TranslationDescriptor(object):
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
+
         obj = instance._linguist.get_cache(instance=instance,
                                            language=self.language,
                                            field_name=self.translated_field.name)
@@ -234,6 +217,7 @@ class TranslationDescriptor(object):
 
     def __set__(self, instance, value):
         instance_only(instance)
+
         if value:
             instance._linguist.set_cache(instance=instance,
                                          language=self.language,

@@ -24,13 +24,12 @@ class ManagerMixin(object):
 
         """
         from .models import Translation
-        from .cache import set_instance_cache
 
         qs = self.get_queryset()
 
         chunks_length = kwargs.get('chunks_length', None)
 
-        lookup = dict(identifier=self.model._linguist.identifier)
+        lookup = dict(identifier=self.model._meta.linguist['identifier'])
 
         for kwarg in ('field_names', 'languages'):
             value = kwargs.get(kwarg, None)
@@ -59,7 +58,11 @@ class ManagerMixin(object):
             grouped_translations[obj.object_id].append(obj)
 
         for instance in qs:
-            set_instance_cache(instance, grouped_translations[instance.pk])
+
+            instance.clear_translations_cache()
+
+            for translation in grouped_translations[instance.pk]:
+                instance._linguist.set_cache(instance=instance, translation=translation)
 
         return qs
 

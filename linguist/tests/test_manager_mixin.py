@@ -54,11 +54,13 @@ class ManagerMixinTest(BaseTestCase):
         # 1 - SELECT ALL foomodel
         # 2 - SELECT IN translation
         with self.assertNumQueries(2):
-            FooModel.objects.with_translations()
+            instances = FooModel.objects.with_translations()
+
+        instance = instances[0]
 
         # Database should be not hit
         with self.assertNumQueries(0):
-            self.assertEqual(self.instance.cached_translations_count, 2)
+            self.assertEqual(instance.cached_translations_count, 2)
 
     def test_with_translations_args(self):
         # Create English content
@@ -98,7 +100,9 @@ class ManagerMixinTest(BaseTestCase):
         # 1 - SELECT ALL foomodel
         # 2 - SELECT IN translation
         with self.assertNumQueries(2):
-            FooModel.objects.with_translations(field_names=('title',))
+            instances = FooModel.objects.with_translations(field_names=('title',))
+
+        self.instance = instances[0]
 
         # Cache has been cleared and we got now the two titles
         self.assertEqual(self.instance.cached_translations_count, 2)
@@ -117,7 +121,9 @@ class ManagerMixinTest(BaseTestCase):
         # 1 - SELECT ALL foomodel
         # 2 - SELECT IN translation
         with self.assertNumQueries(2):
-            FooModel.objects.with_translations(field_names=('title', 'body'))
+            instances = FooModel.objects.with_translations(field_names=('title', 'body'))
+
+        self.instance = instances[0]
 
         # Cached has been cleared. We should have title/body for each language
         self.assertEqual(self.instance.cached_translations_count, 4)
@@ -137,7 +143,9 @@ class ManagerMixinTest(BaseTestCase):
         # 1 - SELECT ALL foomodel
         # 2 - SELECT IN translation
         with self.assertNumQueries(2):
-            FooModel.objects.with_translations(field_names=('title', 'excerpt'), languages=('en',))
+            instances = FooModel.objects.with_translations(field_names=('title', 'excerpt'), languages=('en',))
+
+        self.instance = instances[0]
 
         # Cache has been cleared. We should have title/excerpt for English only.
         self.assertEqual(self.instance.cached_translations_count, 2)
@@ -155,7 +163,9 @@ class ManagerMixinTest(BaseTestCase):
         # 1 - SELECT ALL foomodel
         # 2 - SELECT IN translation
         with self.assertNumQueries(2):
-            FooModel.objects.with_translations(field_names=('title', 'excerpt', 'body'), languages=('fr',))
+            instances = FooModel.objects.with_translations(field_names=('title', 'excerpt', 'body'), languages=('fr',))
+
+        self.instance = instances[0]
 
         # Cache has been cleared. We should have title/excerpt/body for French only
         self.assertEqual(self.instance.cached_translations_count, 3)
@@ -170,7 +180,9 @@ class ManagerMixinTest(BaseTestCase):
         # 1 - SELECT ALL foomodel
         # 2 - SELECT IN translation
         with self.assertNumQueries(2):
-            FooModel.objects.with_translations(field_names=('title',), languages=('fr', 'en'))
+            instances = FooModel.objects.with_translations(field_names=('title',), languages=('fr', 'en'))
+
+        self.instance = instances[0]
 
         # Cache has been cleared. We should have titles for French and English
         self.assertEqual(self.instance.cached_translations_count, 2)
@@ -221,3 +233,10 @@ class ManagerMixinTest(BaseTestCase):
             en_title = '%s' % self.instance.title  # noqa
             self.instance.activate_language('fr')
             fr_title = '%s' % self.instance.title  # noqa
+
+    def test_instance_cache(self):
+        self.instance.title = 'hello'
+        self.instance.save()
+
+        self.assertTrue(self.instance._linguist)
+        self.assertRaises(TypeError, FooModel._linguist)
