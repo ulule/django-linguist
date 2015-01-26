@@ -18,6 +18,13 @@ class BarManager(LinguistManagerMixin, models.Manager):
     pass
 
 
+class DefaultLanguageFieldManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of DefaultLanguageFieldModel.
+    """
+    pass
+
+
 class FooModel(models.Model):
     """
     A foo.
@@ -52,4 +59,23 @@ class BarModel(models.Model):
         linguist = {
             'identifier': 'bar',
             'fields': ('title', ),
+        }
+
+
+class DefaultLanguageFieldModel(models.Model):
+    """
+    A bar.
+    """
+    __metaclass__ = LinguistMeta
+
+    title = models.CharField(max_length=255, null=True, blank=True)
+    lang = models.CharField(max_length=2, default='fr')
+
+    objects = DefaultLanguageFieldManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'default_language_field_model',
+            'fields': ('title', ),
+            'default_language_field': 'lang',
         }
