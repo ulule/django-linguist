@@ -21,12 +21,22 @@ def instance_only(instance):
 
 class Linguist(object):
 
-    def __init__(self, instance, identifier, language, default_language, fields):
+    def __init__(self, instance, identifier, default_language, default_language_field, fields):
         self.instance = instance
         self.identifier = identifier
-        self.language = language
         self.default_language = default_language
+        self.default_language_field = default_language_field
         self.fields = list(fields)
+
+        self._language = None
+
+    @property
+    def language(self):
+        return self._language or self.instance.default_language
+
+    @language.setter
+    def language(self, value):
+        self._language = value
 
     @property
     def supported_languages(self):
@@ -159,6 +169,37 @@ class Linguist(object):
         return cached_obj
 
 
+class DefaultLanguageDescriptor(object):
+    """
+    Default language descriptor.
+    """
+
+    def __get__(self, instance, instance_type=None):
+        instance_only(instance)
+
+        if instance._linguist.default_language_field is None:
+            return instance._linguist.default_language
+
+        try:
+            default_language = getattr(instance, instance._linguist.default_language_field)
+            if not default_language:
+                raise
+        except:
+            default_language = instance._linguist.default_language
+
+        return default_language
+
+
+    def __set__(self, instance, value):
+        instance_only(instance)
+
+        if instance._linguist.default_language_field is not None:
+            setattr(instance, instance._linguist.default_language_field, value)
+        else:
+            instance._linguist.language = value
+            instance._linguist.default_language = value
+
+
 class CacheDescriptor(object):
     """
     Cache Descriptor.
@@ -167,12 +208,8 @@ class CacheDescriptor(object):
     def __init__(self, meta):
         self.identifier = meta['identifier']
         self.fields = meta['fields']
-        self.default_language = settings.DEFAULT_LANGUAGE
-
-        if 'default_language' in meta:
-            self.default_language = meta['default_language']
-
-        self.language = self.default_language
+        self.default_language = meta.get('default_language', settings.DEFAULT_LANGUAGE)
+        self.default_language_field = meta.get('default_language_field', None)
 
     def __get__(self, instance, instance_type=None):
         if instance is None:
@@ -183,8 +220,8 @@ class CacheDescriptor(object):
         except AttributeError:
             linguist = Linguist(instance=instance,
                                 identifier=self.identifier,
-                                language=self.language,
                                 default_language=self.default_language,
+                                default_language_field=self.default_language_field,
                                 fields=self.fields)
 
             setattr(instance, '_linguist_cache', linguist)
