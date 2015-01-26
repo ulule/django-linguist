@@ -41,7 +41,7 @@ def default_value_getter(field):
     the value in the default language will be returned.
     """
     def default_value_func_getter(self):
-        language = self._linguist.language or self.default_language
+        language = self._linguist.language
         localized_field = utils.build_localized_field_name(field, language)
         return getattr(self, localized_field)
 
@@ -54,7 +54,7 @@ def default_value_setter(field):
     in the current language will be set.
     """
     def default_value_func_setter(self, value):
-        language = self._linguist.language or self.default_language
+        language = self._linguist.language
         localized_field = utils.build_localized_field_name(field, language)
         setattr(self, localized_field, value)
 
@@ -93,7 +93,7 @@ class ModelMeta(models.base.ModelBase):
 
     def __new__(cls, name, bases, attrs):
 
-        from .fields import CacheDescriptor
+        from .fields import CacheDescriptor, DefaultLanguageDescriptor
         from .mixins import ModelMixin
 
         meta = None
@@ -140,6 +140,7 @@ class ModelMeta(models.base.ModelBase):
         new_class = super(ModelMeta, cls).__new__(cls, name, bases, attrs)
 
         setattr(new_class, '_linguist', CacheDescriptor(meta=meta))
+        setattr(new_class, 'default_language', DefaultLanguageDescriptor())
 
         for field_name, field in six.iteritems(original_fields):
 
