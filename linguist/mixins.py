@@ -77,19 +77,8 @@ class ModelMixin(object):
         return self._linguist.identifier
 
     @property
-    def default_language(self):
-        """
-        Returns model default language.
-        """
-        return self._linguist.default_language
-
-    @default_language.setter
-    def default_language(self, value):
-        """
-        Sets model default language.
-        """
-        self._linguist.language = value
-        self._linguist.default_language = value
+    def active_language(self):
+        return self._linguist.language
 
     @property
     def translatable_fields(self):
