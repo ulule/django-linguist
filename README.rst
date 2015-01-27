@@ -78,8 +78,111 @@ The ``linguist`` meta requires:
 And optionally requires:
 
 * ``default_language``: the default language to use
+* ``default_language_field``: the field that contains the default language to use (see below)
+* ``decider``: the translation model to use instead of the default one (see below)
 
 That's all. You're ready.
+
+Default language per instance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes, you need to define default language at instance level. Linguist
+supports this feature via the ``default_language_field`` option. Add a field
+in your model that will store the default language then simply give the field
+name to Linguist.
+
+Let's take an example:
+
+.. code-block:: python
+
+    from django.db import models
+    from django.utils.translation import ugettext_lazy as _
+
+    from linguist import LinguistMeta, LinguistManagerMixin
+
+
+    class PostManager(LinguistManagerMixin, models.Manager):
+        pass
+
+
+    class Post(models.Model):
+
+        __metaclass__ = LinguistMeta
+
+        title = models.CharField(max_length=255)
+        body = models.TextField()
+        created_at = models.DateTimeField(auto_now_add=True)
+
+        lang = models.CharField(max_length=5, default='en')
+
+        objects = PostManager()
+
+        class Meta:
+            verbose_name = _('post')
+            verbose_name_plural = _('posts')
+            linguist = {
+                'identifier': 'can-be-anything-you-want',
+                'fields': ('title', 'body'),
+                'default_language': 'en',
+                'default_language_field': 'lang',
+            }
+
+Custom table for translations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, Linguist stores translations into ``linguist.models.Translation``
+table. So in a single one table. If you need to use another table for a specific
+model, Linguist provides a way to override this behavior: use *deciders*.
+
+That's really easy to implement.
+
+You can do it in three steps:
+
+* Create a model that inherits from ``linguist.models.base.Translation``
+* Don't forget to define it as concrete (``abstract = False`` in Meta)
+* Give this model to Linguist meta ``decider`` option
+
+This example will show you the light:
+
+.. code-block:: python
+
+
+    from django.db import models
+    from django.utils.translation import ugettext_lazy as _
+
+    from linguist import LinguistMeta, LinguistManagerMixin
+    from linguist.models.base import Translation
+
+
+    # Our Post model decider
+    class PostTranslation(Translation):
+        class Meta:
+            abstract = False
+
+
+    class PostManager(LinguistManagerMixin, models.Manager):
+        pass
+
+
+    class Post(models.Model):
+
+        __metaclass__ = LinguistMeta
+
+        title = models.CharField(max_length=255)
+        body = models.TextField()
+        created_at = models.DateTimeField(auto_now_add=True)
+
+        objects = PostManager()
+
+        class Meta:
+            verbose_name = _('post')
+            verbose_name_plural = _('posts')
+            linguist = {
+                'identifier': 'can-be-anything-you-want',
+                'fields': ('title', 'body'),
+                'default_language': 'fr',
+                'decider': PostTranslation,
+            }
 
 django.contrib.admin
 ~~~~~~~~~~~~~~~~~~~~
