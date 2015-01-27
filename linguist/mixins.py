@@ -154,8 +154,6 @@ class ModelMixin(object):
         has been saved (required to retrieve the object ID for ``Translation``
         model).
         """
-        from .models import Translation
-
         super(ModelMixin, self).save(*args, **kwargs)
 
-        Translation.objects.save_translations([self, ])
+        self._linguist.decider.objects.save_translations([self, ])
