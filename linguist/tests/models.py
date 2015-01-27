@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
+from linguist.models.base import Translation
+
 from .. import LinguistMeta, LinguistManagerMixin
 
+
+# Managers
+# ------------------------------------------------------------------------------
 
 class FooManager(LinguistManagerMixin, models.Manager):
     """
@@ -24,6 +29,16 @@ class DefaultLanguageFieldManager(LinguistManagerMixin, models.Manager):
     """
     pass
 
+
+class DeciderManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of DeciderModel
+    """
+    pass
+
+
+# Models
+# ------------------------------------------------------------------------------
 
 class FooModel(models.Model):
     """
@@ -102,3 +117,26 @@ class DefaultLanguageFieldModelWithCallable(models.Model):
 
     def language(self):
         return 'fr'
+
+
+class CustomTranslationModel(Translation):
+    class Meta:
+        abstract = False
+
+
+class DeciderModel(models.Model):
+    """
+    Example of a model using decider feature.
+    """
+    __metaclass__ = LinguistMeta
+
+    title = models.CharField(max_length=255, null=True, blank=True)
+
+    objects = DeciderManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'default_language_field_model',
+            'fields': ('title', ),
+            'decider': CustomTranslationModel,
+        }
