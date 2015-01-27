@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 
+from django.db import models
+from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 
 from . import settings
@@ -21,14 +23,35 @@ def instance_only(instance):
 
 class Linguist(object):
 
-    def __init__(self, instance, identifier, default_language, default_language_field, fields):
-        self.instance = instance
-        self.identifier = identifier
-        self.default_language = default_language
-        self.default_language_field = default_language_field
-        self.fields = list(fields)
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.get('instance', None)
+        self.identifier = kwargs.get('identifier', None)
+        self.default_language = kwargs.get('default_language', None)
+        self.default_language_field = kwargs.get('default_language_field', None)
+        self.fields = kwargs.get('fields', None)
+        self.decider = kwargs.get('decider', Translation)
+
+        self.validate_args()
+
+        self.fields = list(self.fields)
 
         self._language = None
+
+    def validate_args(self):
+        """
+        Validates arguments.
+        """
+        from .mixins import ModelMixin
+
+        for arg in ('instance', 'decider', 'identifier', 'fields'):
+            if getattr(self, arg) is None:
+                raise AttributeError('%s must not be None' % arg)
+
+        if not isinstance(self.instance, (ModelMixin,)):
+            raise ImproperlyConfigured('"instance" argument must be a Linguist model')
+
+        if not issubclass(self.decider, (models.Model,)):
+            raise ImproperlyConfigured('"decider" argument must be a valid Django model')
 
     @property
     def language(self):
@@ -129,10 +152,10 @@ class Linguist(object):
         except KeyError:
             if not is_new:
                 try:
-                    obj = Translation.objects.get(identifier=self.instance.linguist_identifier,
-                                                  object_id=self.instance.pk,
-                                                  language=language,
-                                                  field_name=field_name)
+                    obj = self.decider.objects.get(identifier=self.instance.linguist_identifier,
+                                                   object_id=self.instance.pk,
+                                                   language=language,
+                                                   field_name=field_name)
                     cached_obj = CachedTranslation.from_object(obj)
                 except Translation.DoesNotExist:
                     pass
@@ -205,6 +228,7 @@ class CacheDescriptor(object):
         self.fields = meta['fields']
         self.default_language = meta.get('default_language', settings.DEFAULT_LANGUAGE)
         self.default_language_field = meta.get('default_language_field', None)
+        self.decider = meta.get('decider', Translation)
 
     def __get__(self, instance, instance_type=None):
         if instance is None:
@@ -217,7 +241,8 @@ class CacheDescriptor(object):
                                 identifier=self.identifier,
                                 default_language=self.default_language,
                                 default_language_field=self.default_language_field,
-                                fields=self.fields)
+                                fields=self.fields,
+                                decider=self.decider)
 
             setattr(instance, '_linguist_cache', linguist)
             setattr(instance, '_linguist_translations', defaultdict(dict))
