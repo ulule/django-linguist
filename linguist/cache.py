@@ -4,6 +4,9 @@ from django.utils.functional import memoize, cached_property
 
 
 def _get_translation_field_names():
+    """
+    Returns Translation base model field names (excepted "id" field).
+    """
     from .models import Translation
 
     fields = Translation._meta.get_all_field_names()
