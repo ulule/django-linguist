@@ -5,7 +5,12 @@ from .. import settings
 from ..models import Translation
 
 from .base import BaseTestCase
-from .models import FooModel, DefaultLanguageFieldModel, DefaultLanguageFieldModelWithCallable
+
+from .models import (FooModel,
+                     DefaultLanguageFieldModel,
+                     DefaultLanguageFieldModelWithCallable,
+                     CustomTranslationModel,
+                     DeciderModel)
 
 
 class ModelMixinTest(BaseTestCase):
@@ -223,3 +228,11 @@ class ModelMixinTest(BaseTestCase):
         m.save()
 
         self.assertEqual(m.cached_translations_count, 2)
+
+    def test_decider(self):
+        m = DeciderModel()
+        m.title = 'bonjour'
+        m.save()
+
+        self.assertEqual(Translation.objects.count(), 0)
+        self.assertEqual(CustomTranslationModel.objects.count(), 1)
