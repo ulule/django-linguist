@@ -79,3 +79,26 @@ class DefaultLanguageFieldModel(models.Model):
             'fields': ('title', ),
             'default_language_field': 'lang',
         }
+
+
+class DefaultLanguageFieldModelWithCallable(models.Model):
+    """
+    A bar.
+    """
+    __metaclass__ = LinguistMeta
+
+    title = models.CharField(max_length=255, null=True, blank=True)
+    lang = models.CharField(max_length=2, default='fr')
+
+    objects = DefaultLanguageFieldManager()
+
+    class Meta:
+        verbose_name = 'default_language_with_callable'
+        linguist = {
+            'identifier': 'default_language_field_model',
+            'fields': ('title', ),
+            'default_language_field': 'language',
+        }
+
+    def language(self):
+        return 'fr'

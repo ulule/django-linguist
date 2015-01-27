@@ -5,7 +5,7 @@ from .. import settings
 from ..models import Translation
 
 from .base import BaseTestCase
-from .models import FooModel, DefaultLanguageFieldModel
+from .models import FooModel, DefaultLanguageFieldModel, DefaultLanguageFieldModelWithCallable
 
 
 class ModelMixinTest(BaseTestCase):
@@ -198,6 +198,20 @@ class ModelMixinTest(BaseTestCase):
 
     def test_default_language_descriptor(self):
         m = DefaultLanguageFieldModel()
+
+        self.assertEqual(m.lang, 'fr')
+        self.assertEqual(m.default_language, 'fr')
+
+        m.title = 'Bonjour'
+
+        m.activate_language('en')
+        m.title = 'hello'
+        m.save()
+
+        self.assertEqual(m.cached_translations_count, 2)
+
+    def test_default_language_descriptor_with_callable(self):
+        m = DefaultLanguageFieldModelWithCallable()
 
         self.assertEqual(m.lang, 'fr')
         self.assertEqual(m.default_language, 'fr')

@@ -180,15 +180,12 @@ class DefaultLanguageDescriptor(object):
         if instance._linguist.default_language_field is None:
             return instance._linguist.default_language
 
-        try:
-            default_language = getattr(instance, instance._linguist.default_language_field)
-            if not default_language:
-                raise
-        except:
-            default_language = instance._linguist.default_language
+        default_language = getattr(instance, instance._linguist.default_language_field)
+
+        if callable(default_language):
+            return default_language()
 
         return default_language
-
 
     def __set__(self, instance, value):
         instance_only(instance)
