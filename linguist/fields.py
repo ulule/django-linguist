@@ -124,23 +124,20 @@ class Linguist(object):
         """
         is_new = bool(instance.pk is None)
 
-        cached_obj = self.get_cached_translation(instance=instance,
-                                                 translation=translation,
-                                                 language=language,
-                                                 field_name=field_name,
-                                                 field_value=field_value)
-
         try:
-            cached_obj = instance._linguist_translations[cached_obj.field_name][cached_obj.language]
+            cached_obj = instance._linguist_translations[field_name][language]
         except KeyError:
             if not is_new:
                 try:
-                    obj = Translation.objects.get(**cached_obj.lookup)
-                    cached_obj = cached_obj.from_object(obj)
+                    obj = Translation.objects.get(identifier=self.instance.linguist_identifier,
+                                                  object_id=self.instance.pk,
+                                                  language=language,
+                                                  field_name=field_name)
+                    cached_obj = CachedTranslation.from_object(obj)
                 except Translation.DoesNotExist:
                     pass
 
-            self.set_cache(cached_obj=cached_obj)
+            cached_obj = self.set_cache(cached_obj=cached_obj)
 
         return cached_obj
 
@@ -160,6 +157,7 @@ class Linguist(object):
                                                      field_value=field_value)
         try:
             obj = instance._linguist_translations[cached_obj.field_name][cached_obj.language]
+
             if cached_obj.field_value:
                 obj.has_changed = (cached_obj.field_value != obj.field_value)
         except KeyError:
