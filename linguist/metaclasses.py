@@ -77,7 +77,8 @@ def field_factory(base_class):
 
 def create_translation_field(translated_field, language):
     """
-    Takes the original field, a given language and return a Field class for model.
+    Takes the original field, a given language, a decider model and return a
+    Field class for model.
     """
     cls_name = translated_field.__class__.__name__
 
@@ -86,7 +87,8 @@ def create_translation_field(translated_field, language):
 
     translation_class = field_factory(translated_field.__class__)
 
-    return translation_class(translated_field=translated_field, language=language)
+    return translation_class(translated_field=translated_field,
+                             language=language)
 
 
 class ModelMeta(models.base.ModelBase):
@@ -95,6 +97,7 @@ class ModelMeta(models.base.ModelBase):
 
         from .fields import CacheDescriptor, DefaultLanguageDescriptor
         from .mixins import ModelMixin
+        from .models import Translation
 
         meta = None
         default_language = utils.get_fallback_language()
@@ -120,6 +123,10 @@ class ModelMeta(models.base.ModelBase):
         for base in abstract_model_bases:
             all_fields.update(dict((field.name, field) for field in base._meta.fields))
 
+        #
+        # Save original fields, then delete them.
+        #
+
         original_fields = {}
 
         for field in meta['fields']:
@@ -135,12 +142,39 @@ class ModelMeta(models.base.ModelBase):
             if field in attrs:
                 del attrs[field]
 
+        #
+        # Auto-add Mixins
+        #
+
         bases = (ModelMixin, ) + bases
+
+        #
+        # Let's create class
+        #
 
         new_class = super(ModelMeta, cls).__new__(cls, name, bases, attrs)
 
+        #
+        # instance._linguist / instance.default_language descriptors
+        #
+
         setattr(new_class, '_linguist', CacheDescriptor(meta=meta))
         setattr(new_class, 'default_language', DefaultLanguageDescriptor())
+
+        #
+        # Decider
+        #
+
+        decider = meta.get('decider', Translation)
+
+        if not hasattr(decider, 'linguist_models'):
+            decider.linguist_models = []
+
+        decider.linguist_models.append(new_class)
+
+        #
+        # Language fields
+        #
 
         for field_name, field in six.iteritems(original_fields):
 
@@ -167,6 +201,10 @@ class ModelMeta(models.base.ModelBase):
             setattr(new_class,
                     field_name,
                     property(default_value_getter(field_name), default_value_setter(field_name)))
+
+        #
+        # Linguist Meta
+        #
 
         new_class._meta.linguist = meta
 
