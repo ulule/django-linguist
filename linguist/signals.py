@@ -2,7 +2,6 @@
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
-from .models import Translation
 from .mixins import ModelMixin
 
 
@@ -12,5 +11,5 @@ def delete_translations(sender, instance, **kwargs):
     Deletes related instance's translations when instance is deleted.
     """
     if issubclass(sender, (ModelMixin, )):
-        Translation.objects.filter(identifier=instance.linguist_identifier,
-                                   object_id=instance.pk).delete()
+        instance._linguist.decider.objects.filter(identifier=instance.linguist_identifier,
+                                                  object_id=instance.pk).delete()
