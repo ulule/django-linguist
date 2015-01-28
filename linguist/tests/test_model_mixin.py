@@ -132,56 +132,6 @@ class ModelMixinTest(BaseTestCase):
         with self.assertNumQueries(1):
             self.instance.save()
 
-    def test_default_language_instance(self):
-        #
-        # Let's define a default language in translation class.
-        #
-        self.instance.default_language = 'fr'
-
-        #
-        # The default language must be the one defined in translation class.
-        #
-        self.assertEqual(self.instance.default_language, 'fr')
-        self.instance.title = 'Bonjour'
-        self.instance.save()
-
-        self.assertEqual(Translation.objects.count(), 1)
-        self.assertEqual(Translation.objects.first().language, 'fr')
-
-        #
-        # Now, switch to English and it should work.
-        #
-        self.instance.activate_language('en')
-        self.instance.title = 'Hello'
-        self.instance.save()
-
-        self.assertEqual(Translation.objects.count(), 2)
-
-        self.assertEqual(list(Translation.objects.get_languages()), ['en', 'fr'])
-
-        #
-        # Let's change the default language for the instance.
-        #
-        self.instance.default_language = 'de'
-        self.instance.title = 'Hello'
-        self.instance.save()
-
-        #
-        # Instance language should have been changed too.
-        #
-        self.assertEqual(self.instance._linguist.language, 'de')
-        self.assertEqual(Translation.objects.count(), 3)
-        self.assertEqual(list(Translation.objects.get_languages()), ['de', 'en', 'fr'])
-
-        #
-        # Let's change instance language again.
-        #
-        self.instance.activate_language('it')
-        self.instance.title = 'Pronto'
-        self.instance.save()
-        self.assertEqual(Translation.objects.count(), 4)
-        self.assertEqual(list(Translation.objects.get_languages()), ['de', 'en', 'fr', 'it'])
-
     def test_override_language(self):
         self.assertTrue(hasattr(self.instance, 'override_language'))
         self.instance.activate_language('fr')

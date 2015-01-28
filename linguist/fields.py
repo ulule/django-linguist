@@ -213,15 +213,6 @@ class DefaultLanguageDescriptor(object):
 
         return default_language
 
-    def __set__(self, instance, value):
-        instance_only(instance)
-
-        if instance._linguist.default_language_field is not None:
-            setattr(instance, instance._linguist.default_language_field, value)
-        else:
-            instance._linguist.language = value
-            instance._linguist.default_language = value
-
 
 class CacheDescriptor(object):
     """
