@@ -150,6 +150,11 @@ class Linguist(object):
         try:
             cached_obj = instance._linguist_translations[field_name][language]
         except KeyError:
+            cached_obj = self.get_cached_translation(instance=instance,
+                                                     translation=translation,
+                                                     language=language,
+                                                     field_name=field_name,
+                                                     field_value=field_value)
             if not is_new:
                 try:
                     obj = self.decider.objects.get(identifier=self.instance.linguist_identifier,
