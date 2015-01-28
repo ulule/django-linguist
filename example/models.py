@@ -2,8 +2,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from linguist.mixins import ModelMixin as LinguistModelMixin
-from linguist.mixins import ManagerMixin as LinguistManagerMixin
+from linguist import LinguistMeta, LinguistManagerMixin
+from linguist.models.base import Translation as BaseTranslation
 
 
 class CategoryManager(LinguistManagerMixin, models.Manager):
@@ -13,19 +13,14 @@ class CategoryManager(LinguistManagerMixin, models.Manager):
     pass
 
 
-class PostManager(LinguistManagerMixin, models.Manager):
-    """
-    Post Manager
-    """
-    pass
-
-
-class Category(LinguistModelMixin, models.Model):
+class Category(models.Model):
     """
     A Category.
     """
-    created_at = models.DateTimeField(auto_now_add=True)
+    __metaclass__ = LinguistMeta
+
     name = models.CharField(_('title'), max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     objects = CategoryManager()
 
@@ -37,14 +32,24 @@ class Category(LinguistModelMixin, models.Model):
             'fields': ('name', ),
         }
 
-class Post(LinguistModelMixin, models.Model):
+
+class PostManager(LinguistManagerMixin, models.Manager):
+    """
+    Post Manager
+    """
+    pass
+
+
+class Post(models.Model):
     """
     A Post.
     """
-    created_at = models.DateTimeField(auto_now_add=True)
+    __metaclass__ = LinguistMeta
+
     title = models.CharField(_('title'), max_length=255)
-    body = models.TextField(null=True, blank=True)
+    body = models.TextField(blank=True)
     category = models.ForeignKey(Category, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     objects = PostManager()
 
@@ -54,4 +59,44 @@ class Post(LinguistModelMixin, models.Model):
         linguist = {
             'identifier': 'post',
             'fields': ('title', 'body'),
+        }
+
+
+class BookmarkManager(LinguistManagerMixin, models.Manager):
+    """
+    Bookmark Manager
+    """
+    pass
+
+
+class BookmarkTranslation(BaseTranslation):
+    """
+    Bookmark translations.
+    """
+    class Meta:
+        abstract = False
+        verbose_name = _('bookmark translation')
+        verbose_name_plural = _('bookmark translations')
+
+
+class Bookmark(models.Model):
+    """
+    A Bookmark
+    """
+    __metaclass__ = LinguistMeta
+
+    title = models.CharField(_('title'), max_length=255)
+    url = models.URLField(_('URL'))
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = BookmarkManager()
+
+    class Meta:
+        verbose_name = _('bookmark')
+        verbose_name_plural = _('bookmarks')
+        linguist = {
+            'identifier': 'bookmark',
+            'fields': ('description', ),
+            'decider': BookmarkTranslation,
         }
