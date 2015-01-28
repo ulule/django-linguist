@@ -162,7 +162,7 @@ class Linguist(object):
                                                    language=language,
                                                    field_name=field_name)
                     cached_obj = CachedTranslation.from_object(obj)
-                except Translation.DoesNotExist:
+                except self.decider.DoesNotExist:
                     pass
 
             cached_obj = self.set_cache(cached_obj=cached_obj)
