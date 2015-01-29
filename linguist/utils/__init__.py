@@ -4,6 +4,8 @@ from .i18n import (get_language_name,
                    get_fallback_language,
                    get_real_field_name,
                    get_fallback_field_name,
+                   get_supported_languages,
+                   get_language_fields,
                    build_localized_field_name,
                    build_localized_verbose_name)
 
@@ -17,6 +19,8 @@ __all__ = [
     'get_fallback_language',
     'get_real_field_name',
     'get_fallback_field_name',
+    'get_supported_languages',
+    'get_language_fields',
     'build_localized_field_name',
     'build_localized_verbose_name',
     'load_class',

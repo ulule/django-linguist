@@ -63,7 +63,7 @@ class Linguist(object):
 
     @property
     def supported_languages(self):
-        return [code.replace('-', '_') for code, name in settings.SUPPORTED_LANGUAGES]
+        return utils.get_supported_languages()
 
     @property
     def cached_languages(self):
@@ -76,9 +76,7 @@ class Linguist(object):
 
     @property
     def suffixed_fields(self):
-        return ['%s_%s' % (field, lang)
-                for field in self.fields
-                for lang in self.supported_languages]
+        return utils.get_language_fields(self.fields)
 
     @property
     def cached_fields(self):

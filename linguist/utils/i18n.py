@@ -43,6 +43,21 @@ def get_fallback_field_name(field):
     return get_real_field_name(field, lang=get_fallback_language())
 
 
+def get_supported_languages():
+    """
+    Returns supported languages list.
+    """
+    return [code.replace('-', '_') for code, name in settings.SUPPORTED_LANGUAGES]
+
+
+def get_language_fields(fields):
+    """
+    Takes a list of fields and returns related language fields.
+    """
+    return ['%s_%s' % (field, lang) for field in fields
+                                    for lang in get_supported_languages()]
+
+
 def build_localized_field_name(field_name, language=None):
     """
     Build localized field name from ``field_name`` and ``language``.
