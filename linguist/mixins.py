@@ -26,17 +26,20 @@ class ManagerMixin(object):
         from .models import Translation
 
         qs = self.get_queryset()
-
+        decider = self.model._meta.linguist.get('decider', Translation)
+        identifier = self.model._meta.linguist.get('identifier', None)
         chunks_length = kwargs.get('chunks_length', None)
 
-        lookup = dict(identifier=self.model._meta.linguist['identifier'])
+        if identifier is None:
+            raise Exception('You must define Linguist "identifier" meta option')
+
+        lookup = dict(identifier=identifier)
 
         for kwarg in ('field_names', 'languages'):
             value = kwargs.get(kwarg, None)
             if value is not None:
                 if not isinstance(value, (list, tuple)):
                     value = [value]
-
                 lookup['%s__in' % kwarg[:-1]] = value
 
         if chunks_length is not None:
@@ -45,12 +48,12 @@ class ManagerMixin(object):
             for ids in utils.chunks(qs.values_list('id', flat=True), chunks_length):
                 ids_lookup = copy.copy(lookup)
                 ids_lookup['object_id__in'] = ids
-                translations_qs.append(Translation.objects.filter(**ids_lookup))
+                translations_qs.append(decider.objects.filter(**ids_lookup))
 
             translations = itertools.chain.from_iterable(translations_qs)
         else:
             lookup['object_id__in'] = [obj.pk for obj in qs]
-            translations = Translation.objects.filter(**lookup)
+            translations = decider.objects.filter(**lookup)
 
         grouped_translations = defaultdict(list)
 
@@ -58,9 +61,7 @@ class ManagerMixin(object):
             grouped_translations[obj.object_id].append(obj)
 
         for instance in qs:
-
             instance.clear_translations_cache()
-
             for translation in grouped_translations[instance.pk]:
                 instance._linguist.set_cache(instance=instance, translation=translation)
 
