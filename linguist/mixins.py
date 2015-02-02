@@ -7,9 +7,9 @@ import itertools
 from . import utils
 
 
-class ManagerMixin(object):
+class QuerySetMixin(object):
     """
-    Linguist Manager Mixin.
+    Linguist QuerySet Mixin.
     """
 
     def with_translations(self, **kwargs):
@@ -21,11 +21,9 @@ class ManagerMixin(object):
         * ``field_names``: ``field_name`` values for SELECT IN
         * ``languages``: ``language`` values for SELECT IN
         * ``chunks_length``: fetches IDs by chunk
-
         """
         from .models import Translation
 
-        qs = self.get_queryset()
         decider = self.model._meta.linguist.get('decider', Translation)
         identifier = self.model._meta.linguist.get('identifier', None)
         chunks_length = kwargs.get('chunks_length', None)
@@ -45,14 +43,14 @@ class ManagerMixin(object):
         if chunks_length is not None:
             translations_qs = []
 
-            for ids in utils.chunks(qs.values_list('id', flat=True), chunks_length):
+            for ids in utils.chunks(self.values_list('id', flat=True), chunks_length):
                 ids_lookup = copy.copy(lookup)
                 ids_lookup['object_id__in'] = ids
                 translations_qs.append(decider.objects.filter(**ids_lookup))
 
             translations = itertools.chain.from_iterable(translations_qs)
         else:
-            lookup['object_id__in'] = [obj.pk for obj in qs]
+            lookup['object_id__in'] = [obj.pk for obj in self]
             translations = decider.objects.filter(**lookup)
 
         grouped_translations = defaultdict(list)
@@ -60,12 +58,26 @@ class ManagerMixin(object):
         for obj in translations:
             grouped_translations[obj.object_id].append(obj)
 
-        for instance in qs:
+        for instance in self:
             instance.clear_translations_cache()
             for translation in grouped_translations[instance.pk]:
                 instance._linguist.set_cache(instance=instance, translation=translation)
 
-        return qs
+        return self
+
+
+class ManagerMixin(object):
+    """
+    Linguist Manager Mixin.
+    """
+
+    def get_queryset(self):
+        from django.db import models
+        QuerySet = type('QuerySet', (QuerySetMixin, models.QuerySet), {})
+        return QuerySet(self.model)
+
+    def with_translations(self, **kwargs):
+        return self.get_queryset().with_translations(**kwargs)
 
 
 class ModelMixin(object):

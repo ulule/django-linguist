@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .metaclasses import ModelMeta as LinguistMeta
 from .mixins import ManagerMixin as LinguistManagerMixin
+from .mixins import QuerySetMixin as LinguistQuerySetMixin
 
 version = (0, 1, 0)
 
