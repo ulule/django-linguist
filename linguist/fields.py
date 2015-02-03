@@ -62,10 +62,6 @@ class Linguist(object):
         self._language = value
 
     @property
-    def supported_languages(self):
-        return utils.get_supported_languages()
-
-    @property
     def cached_languages(self):
         langs = []
         for k, v in six.iteritems(self.instance._linguist_translations):
@@ -146,7 +142,7 @@ class Linguist(object):
         is_new = bool(instance.pk is None)
 
         try:
-            cached_obj = instance._linguist_translations[field_name][language]
+            cached_obj = instance._linguist_translations[field_name][self.language]
         except KeyError:
             cached_obj = self.get_cached_translation(instance=instance,
                                                      translation=translation,
