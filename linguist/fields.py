@@ -6,6 +6,7 @@ from collections import defaultdict
 from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
+from django.utils.functional import cached_property
 
 from . import settings
 from . import utils
@@ -60,6 +61,10 @@ class Linguist(object):
     @language.setter
     def language(self, value):
         self._language = value
+
+    @cached_property
+    def supported_languages(self):
+        return utils.get_supported_languages()
 
     @property
     def cached_languages(self):
