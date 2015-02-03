@@ -59,7 +59,9 @@ class QuerySetMixin(object):
             grouped_translations[obj.object_id].append(obj)
 
         for instance in self:
+
             instance.clear_translations_cache()
+
             for translation in grouped_translations[instance.pk]:
                 instance._linguist.set_cache(instance=instance, translation=translation)
 
@@ -78,6 +80,9 @@ class ManagerMixin(object):
 
     def with_translations(self, **kwargs):
         return self.get_queryset().with_translations(**kwargs)
+
+    def activate_language(self, language):
+        activate_language(self.get_queryset(), language)
 
 
 class ModelMixin(object):

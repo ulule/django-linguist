@@ -58,6 +58,15 @@ def get_language_fields(fields):
                                     for lang in get_supported_languages()]
 
 
+def activate_language(instances, language):
+    """
+    Activates the given language for the given instances.
+    """
+    language = language if language in get_supported_languages() else get_fallback_language()
+    for instance in instances:
+        instance.activate_language(language)
+
+
 def build_localized_field_name(field_name, language=None):
     """
     Build localized field name from ``field_name`` and ``language``.
