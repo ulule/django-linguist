@@ -67,6 +67,13 @@ class QuerySetMixin(object):
 
         return self
 
+    def activate_language(self, language):
+        """
+        Activates the given ``language`` for the QuerySet instances.
+        """
+        utils.activate_language(self, language)
+        return self
+
 
 class ManagerMixin(object):
     """
@@ -79,10 +86,16 @@ class ManagerMixin(object):
         return QuerySet(self.model)
 
     def with_translations(self, **kwargs):
+        """
+        Proxy for ``QuerySetMixin.with_translations()`` method.
+        """
         return self.get_queryset().with_translations(**kwargs)
 
     def activate_language(self, language):
-        activate_language(self.get_queryset(), language)
+        """
+        Proxy for ``QuerySetMixin.activate_language()`` method.
+        """
+        self.get_queryset().active_language(language)
 
 
 class ModelMixin(object):
