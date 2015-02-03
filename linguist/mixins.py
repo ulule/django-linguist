@@ -73,7 +73,7 @@ class ManagerMixin(object):
 
     def get_queryset(self):
         from django.db import models
-        QuerySet = type('QuerySet', (QuerySetMixin, models.QuerySet), {})
+        QuerySet = type('LinguistQuerySet', (QuerySetMixin, models.query.QuerySet), {})
         return QuerySet(self.model)
 
     def with_translations(self, **kwargs):
