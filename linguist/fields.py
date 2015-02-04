@@ -265,7 +265,7 @@ class TranslationDescriptor(object):
         obj = instance._linguist.get_cache(instance=instance,
                                            language=self.language,
                                            field_name=self.translated_field.name)
-        return obj.field_value or None
+        return obj.field_value or ''
 
     def __set__(self, instance, value):
         instance_only(instance)
