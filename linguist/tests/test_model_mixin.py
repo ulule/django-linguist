@@ -179,6 +179,42 @@ class ModelMixinTest(BaseTestCase):
 
         self.assertEqual(m.cached_translations_count, 2)
 
+    def test_default_language_descriptor_with_multiple_languages(self):
+        m = DefaultLanguageFieldModel(title='hello',     # title_en
+                                      title_en='hello',
+                                      title_fr='bonjour',
+                                      lang='en')
+        m.save()
+
+        # As we explicitly set title_en and title_fr, we should have 2
+        # translations saved
+        self.assertEqual(Translation.objects.count(), 2)
+
+        # Let's reset
+        Translation.objects.all().delete()
+
+        # If we don't set title field, it should work too.
+        m = DefaultLanguageFieldModel(title_en='hello',
+                                      title_fr='bonjour',
+                                      lang='en')
+        m.save()
+
+        self.assertEqual(Translation.objects.count(), 2)
+
+        # Let's reset
+        Translation.objects.all().delete()
+
+        # Now, let's set title_fr which is the default language, title should
+        # be title_fr, so we should have only one translation but "hello" should
+        # NOT override "bonjour".
+        m = DefaultLanguageFieldModel(title='hello',  # title_en
+                                      title_fr='bonjour',
+                                      lang='fr')
+
+        m.save()
+
+        self.assertEqual(Translation.objects.count(), 1)
+
     def test_decider(self):
         m = DeciderModel()
         m.title = 'bonjour'

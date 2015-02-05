@@ -44,7 +44,7 @@ class Linguist(object):
         """
         from .mixins import ModelMixin
 
-        for arg in ('instance', 'decider', 'identifier', 'fields'):
+        for arg in ('instance', 'decider', 'identifier', 'fields', 'default_language'):
             if getattr(self, arg) is None:
                 raise AttributeError('%s must not be None' % arg)
 
@@ -219,8 +219,8 @@ class CacheDescriptor(object):
     """
 
     def __init__(self, meta):
-        self.identifier = meta['identifier']
-        self.fields = meta['fields']
+        self.identifier = meta.get('identifier', None)
+        self.fields = meta.get('fields', None)
         self.default_language = meta.get('default_language', settings.DEFAULT_LANGUAGE)
         self.default_language_field = meta.get('default_language_field', None)
         self.decider = meta.get('decider', Translation)
