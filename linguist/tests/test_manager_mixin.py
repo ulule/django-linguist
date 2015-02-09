@@ -270,3 +270,37 @@ class ManagerMixinTest(BaseTestCase):
         instance = FooModel.objects.with_translations().first()
         self.assertEqual(instance.active_language, 'en')
         self.assertEqual(instance.title, 'hello')
+
+    def test_with_translation_with_translation_activate(self):
+        # Let's define available languages
+        languages = ('en', 'fr', 'it', 'de', 'pt')
+
+        # Let's create multiple instances
+        for i in range(20):
+            m = FooModel()
+            for language in languages:
+                m.activate_language(language)
+                m.title = 'Title in %s' % language
+            m.save()
+
+        self.assertEqual(FooModel.objects.count(), 20)
+        self.assertEqual(Translation.objects.count(), 100)  # 20 objects x 5 languages
+
+        # Default to "en" (settings.LANGUAGE_CODE)
+        self.assertEqual(translation.get_language(), 'en')
+
+        # Without prefetch
+        qs = FooModel.objects.all()
+        with self.assertNumQueries(101):
+            for language in languages:
+                translation.activate(language)
+                for obj in qs:
+                    string = '%s' % obj.title  # noqa
+
+        # With prefetch
+        qs = FooModel.objects.with_translations()
+        with self.assertNumQueries(0):
+            for language in languages:
+                translation.activate(language)
+                for obj in qs:
+                    string = '%s' % obj.title  # noqa
