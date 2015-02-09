@@ -12,6 +12,7 @@ default_app_config = 'linguist.apps.LinguistConfig'
 __all__ = [
     'LinguistMeta',
     'LinguistManagerMixin',
+    'LinguistQuerySetMixin',
     'default_app_config',
     'version',
 ]
