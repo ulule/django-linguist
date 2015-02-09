@@ -55,8 +55,35 @@ class Linguist(object):
             raise ImproperlyConfigured('"decider" argument must be a valid Django model')
 
     @property
+    def active_language(self):
+        """
+        Returns active language.
+
+        Priorities:
+
+        1. current instance language (if user uses activate_language() method)
+        2. default language field (if user defines default language at instance level)
+        3. current site language (translation.get_language())
+        4. Model._meta.linguist['default_language']
+        5. settings.LANGUAGE_CODE
+
+        """
+        if self._language is not None:
+            return self._language
+
+        if self.default_language_field is not None:
+            return self.instance.default_language
+
+        current_language = utils.get_language()
+
+        if current_language in self.supported_languages:
+            return current_language
+
+        return self.instance.default_language
+
+    @property
     def language(self):
-        return self._language or self.instance.default_language
+        return self.active_language
 
     @language.setter
     def language(self, value):
@@ -147,7 +174,7 @@ class Linguist(object):
         is_new = bool(instance.pk is None)
 
         try:
-            cached_obj = instance._linguist_translations[field_name][self.language]
+            cached_obj = instance._linguist_translations[field_name][language]
         except KeyError:
             cached_obj = self.get_cached_translation(instance=instance,
                                                      translation=translation,

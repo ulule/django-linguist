@@ -215,6 +215,25 @@ class ModelMixinTest(BaseTestCase):
 
         self.assertEqual(Translation.objects.count(), 1)
 
+    def test_language_fields(self):
+        # default language
+        m = FooModel(title_en='hello', title_fr='bonjour')
+        m.save()
+        self.assertEqual(m.title_en, 'hello')
+        self.assertEqual(m.title_fr, 'bonjour')
+
+        # language field
+        m = DefaultLanguageFieldModel(title_en='hello', title_fr='bonjour', lang='en')
+        m.save()
+        self.assertEqual(m.title_en, 'hello')
+        self.assertEqual(m.title_fr, 'bonjour')
+
+        # language field callable
+        m = DefaultLanguageFieldModelWithCallable(title_en='hello', title_fr='bonjour')
+        m.save()
+        self.assertEqual(m.title_en, 'hello')
+        self.assertEqual(m.title_fr, 'bonjour')
+
     def test_decider(self):
         m = DeciderModel()
         m.title = 'bonjour'

@@ -41,7 +41,7 @@ def default_value_getter(field):
     the value in the default language will be returned.
     """
     def default_value_func_getter(self):
-        localized_field = utils.build_localized_field_name(field, self._linguist.language)
+        localized_field = utils.build_localized_field_name(field, self._linguist.active_language)
         return getattr(self, localized_field)
 
     return default_value_func_getter
@@ -53,7 +53,7 @@ def default_value_setter(field):
     in the current language will be set.
     """
     def default_value_func_setter(self, value):
-        localized_field = utils.build_localized_field_name(field, self._linguist.language)
+        localized_field = utils.build_localized_field_name(field, self._linguist.active_language)
         setattr(self, localized_field, value)
 
     return default_value_func_setter

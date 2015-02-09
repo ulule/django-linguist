@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.utils import translation
+
+from ..models import Translation
+
 from .base import BaseTestCase
 from .models import FooModel
 
@@ -240,3 +244,29 @@ class ManagerMixinTest(BaseTestCase):
 
         self.assertTrue(self.instance._linguist)
         self.assertRaises(TypeError, FooModel._linguist)
+
+    def test_language_activation(self):
+        # Default to "en" (settings.LANGUAGE_CODE)
+        self.assertEqual(translation.get_language(), 'en')
+
+        self.instance.activate_language('en')
+        self.instance.title = 'hello'
+        self.instance.activate_language('fr')
+        self.instance.title = 'bonjour'
+        self.instance.save()
+        self.assertEqual(Translation.objects.count(), 2)
+        self.assertEqual(FooModel.objects.with_translations().first().active_language, 'en')
+
+        # Switch to "fr"
+        translation.activate('fr')
+        self.assertEqual(translation.get_language(), 'fr')
+        instance = FooModel.objects.with_translations().first()
+        self.assertEqual(instance.active_language, 'fr')
+        self.assertEqual(instance.title, 'bonjour')
+
+        # Switch to "en"
+        translation.activate('en')
+        self.assertEqual(translation.get_language(), 'en')
+        instance = FooModel.objects.with_translations().first()
+        self.assertEqual(instance.active_language, 'en')
+        self.assertEqual(instance.title, 'hello')
