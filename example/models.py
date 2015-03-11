@@ -2,7 +2,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from linguist import LinguistMeta, LinguistManagerMixin
+from linguist.metaclasses import ModelMeta as LinguistMeta
+from linguist.mixins import ManagerMixin as LinguistManagerMixin
 from linguist.models.base import Translation as BaseTranslation
 
 
