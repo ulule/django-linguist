@@ -1,6 +1,5 @@
 -r base.txt
 
-Django >= 1.7
 Sphinx
 coverage==3.6
 flake8
