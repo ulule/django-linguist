@@ -2,8 +2,8 @@
 from django.db import models
 
 from linguist.models.base import Translation
-
-from .. import LinguistMeta, LinguistManagerMixin
+from linguist.metaclasses import ModelMeta as LinguistMeta
+from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
 
 # Managers

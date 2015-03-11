@@ -1,6 +1,10 @@
 django-linguist
 ===============
 
+.. image:: https://secure.travis-ci.org/ulule/django-linguist.png?branch=master
+    :alt: Build Status
+    :target: http://travis-ci.org/ulule/django-linguist
+
 Installation
 ------------
 
@@ -44,7 +48,8 @@ Don't worry, it's fairly simple:
     from django.db import models
     from django.utils.translation import ugettext_lazy as _
 
-    from linguist import LinguistMeta, LinguistManagerMixin
+    from linguist.metaclasses import ModelMeta as LinguistMeta
+    from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
 
     class PostManager(LinguistManagerMixin, models.Manager):
@@ -98,7 +103,8 @@ Let's take an example:
     from django.db import models
     from django.utils.translation import ugettext_lazy as _
 
-    from linguist import LinguistMeta, LinguistManagerMixin
+    from linguist.metaclasses import ModelMeta as LinguistMeta
+    from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
 
     class PostManager(LinguistManagerMixin, models.Manager):
@@ -150,7 +156,8 @@ This example will show you the light:
     from django.db import models
     from django.utils.translation import ugettext_lazy as _
 
-    from linguist import LinguistMeta, LinguistManagerMixin
+    from linguist.metaclasses import ModelMeta as LinguistMeta
+    from linguist.mixins import ManagerMixin as LinguistManagerMixin
     from linguist.models.base import Translation
 
 
