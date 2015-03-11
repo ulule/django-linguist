@@ -7,12 +7,14 @@ django-linguist
 
 `django-linguist`_ is a Django_ application for flexible model translations.
 
-* Translations are stored in single one table (you can also use a different one per model)
-* No "one i18n table per model" (goodbye nightmares)
-* No migrations (no more pain)
-* Not tied to model class names (feel free to use your own identifiers)
-* No ORM query hacks (does not patch anything)
-* No magic (uses metaclasses and mixins)
+Here a few principles that define this application in comparaison to others applications:
+
+* Translations are stored in single one table and you can also use a different one per model
+* No "one i18n table per model", say "goodbye" to nightmares :)
+* No more painful migrations
+* Not tied to model class names, you are free to use your own identifiers
+* No ORM query hacks, it does not patch anything and it will be easier for you to upgrade your Django
+* No magic, it uses metaclasses and mixins and everything is explicit
 * Dead simple to plug in an existing project
 * Django admin ready
 
