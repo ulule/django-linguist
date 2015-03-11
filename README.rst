@@ -5,6 +5,20 @@ django-linguist
     :alt: Build Status
     :target: http://travis-ci.org/ulule/django-linguist
 
+`django-linguist`_ is a Django_ application for flexible model translations.
+
+* Translations are stored in single one table (you can also use a different one per model)
+* No "one i18n table per model" (goodbye nightmares)
+* No migrations (no more pain)
+* Not tied to model class names (feel free to use your own identifiers)
+* No ORM query hacks (does not patch anything)
+* No magic (uses metaclasses and mixins)
+* Dead simple to plug in an existing project
+* Django admin ready
+
+If you are looking for a "one-i18n-table-per-model" way, `django-parler`_ is
+an awesome alternative.
+
 Installation
 ------------
 
@@ -17,7 +31,7 @@ In your ``settings.py``, add ``linguist`` to ``INSTALLED_APPS``:
 .. code-block:: python
 
     INSTALLED_APPS = (
-        # other apps
+        # Your other apps here
         'linguist',
     )
 
@@ -25,6 +39,10 @@ Then synchronize database:
 
 .. code-block:: bash
 
+    # >= Django 1.7
+    $ python manage.py migrate linguist
+
+    # < Django 1.7
     $ python manage.py syncdb
 
 That's all.
@@ -335,3 +353,7 @@ Development
 
     # Launch example project
     $ make serve
+
+.. _django-linguist: https://github.com/ulule/django-linguist
+.. _Django: http://djangoproject.com
+.. _django-parler: https://github.com/edoburu/django-parler
