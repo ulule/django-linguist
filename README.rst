@@ -57,8 +57,8 @@ Models
 
 In three steps:
 
-1. Add ``linguist.LinguistMeta`` to your model as metaclass
-2. Add ``linguist.LinguistManagerMixin`` to your model manager
+1. Add ``linguist.metaclasses.ModelMeta`` to your model as metaclass
+2. Add ``linguist.mixins.ManagerMixin`` to your model manager
 3. Add ``linguist`` settings in your model's Meta
 
 Don't worry, it's fairly simple:
