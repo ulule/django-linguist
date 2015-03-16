@@ -66,6 +66,7 @@ Don't worry, it's fairly simple:
 .. code-block:: python
 
     from django.db import models
+    from django.utils.six import with_metaclass
     from django.utils.translation import ugettext_lazy as _
 
     from linguist.metaclasses import ModelMeta as LinguistMeta
@@ -76,14 +77,10 @@ Don't worry, it's fairly simple:
         pass
 
 
-    class Post(models.Model):
-
-        __metaclass__ = LinguistMeta
-
+    class Post(with_metaclass(LinguistMeta, models.Model)):
         title = models.CharField(max_length=255)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
-
         objects = PostManager()
 
         class Meta:
@@ -121,6 +118,7 @@ Let's take an example:
 .. code-block:: python
 
     from django.db import models
+    from django.utils.six import with_metaclass
     from django.utils.translation import ugettext_lazy as _
 
     from linguist.metaclasses import ModelMeta as LinguistMeta
@@ -131,16 +129,11 @@ Let's take an example:
         pass
 
 
-    class Post(models.Model):
-
-        __metaclass__ = LinguistMeta
-
+    class Post(with_metaclass(LinguistMeta, models.Model)):
         title = models.CharField(max_length=255)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
-
         lang = models.CharField(max_length=5, default='en')
-
         objects = PostManager()
 
         class Meta:
@@ -174,6 +167,7 @@ This example will show you the light:
 
 
     from django.db import models
+    from django.utils.six import with_metaclass
     from django.utils.translation import ugettext_lazy as _
 
     from linguist.metaclasses import ModelMeta as LinguistMeta
@@ -191,14 +185,10 @@ This example will show you the light:
         pass
 
 
-    class Post(models.Model):
-
-        __metaclass__ = LinguistMeta
-
+    class Post(with_metaclass(LinguistMeta, models.Model)):
         title = models.CharField(max_length=255)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
-
         objects = PostManager()
 
         class Meta:
