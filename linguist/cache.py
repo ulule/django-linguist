@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils.functional import memoize, cached_property
+from django.utils.functional import cached_property
+
+try:
+    from django.utils.lru_cache import lru_cache as memoize
+except ImportError:
+    from django.utils.functional import memoize
 
 
-def _get_translation_field_names():
+@memoize()
+def get_translation_field_names():
     """
     Returns Translation base model field names (excepted "id" field).
     """
@@ -13,9 +19,6 @@ def _get_translation_field_names():
     fields.remove('id')
 
     return fields
-
-
-get_translation_field_names = memoize(_get_translation_field_names, {}, None)
 
 
 @python_2_unicode_compatible
