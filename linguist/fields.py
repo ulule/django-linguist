@@ -328,8 +328,11 @@ class TranslationField(object):
         self.name = self.attname
         self.verbose_name = utils.build_localized_verbose_name(translated_field.verbose_name, language)
 
-        # No concrete field
+        # No concrete field Django < 1.8
         self.column = None
+
+        # No concret field Django >= 1.8
+        self.concrete = False
 
     def contribute_to_class(self, cls, name):
         self.model = cls
