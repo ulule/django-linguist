@@ -11,8 +11,6 @@ from .i18n import (get_language_name,
                    build_localized_verbose_name)
 
 from .models import load_class, get_model_string
-from .template import select_template_name
-from .views import get_language_parameter, get_language_tabs
 
 __all__ = [
     'get_language_name',
@@ -27,9 +25,6 @@ __all__ = [
     'build_localized_verbose_name',
     'load_class',
     'get_model_string',
-    'select_template_name',
-    'get_language_parameter',
-    'get_language_tabs',
     'chunks',
 ]
 
