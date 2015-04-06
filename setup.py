@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 from setuptools import setup, find_packages
 
 version = __import__('linguist').__version__
@@ -8,6 +9,10 @@ root = os.path.abspath(os.path.dirname(__file__))
 
 with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
+
+extra = {}
+if sys.version_info >= (3,):
+    extra['use_2to3'] = True
 
 setup(
     name='django-linguist',
@@ -20,6 +25,8 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
+    use_2to3 = True,
+    convert_2to3_doctests = ['README.rst'],
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',

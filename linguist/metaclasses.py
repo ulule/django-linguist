@@ -68,7 +68,7 @@ def field_factory(base_class):
     class TranslationFieldField(TranslationField, base_class):
         pass
 
-    TranslationFieldField.__name__ = b'Translation%s' % base_class.__name__
+    TranslationFieldField.__name__ = 'Translation%s' % base_class.__name__
 
     return TranslationFieldField
 
