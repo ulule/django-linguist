@@ -10,10 +10,6 @@ root = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
 
-extra = {}
-if sys.version_info >= (3,):
-    extra['use_2to3'] = True
-
 setup(
     name='django-linguist',
     version=version,
