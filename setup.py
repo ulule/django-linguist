@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 from setuptools import setup, find_packages
 
 version = __import__('linguist').__version__
@@ -20,6 +21,8 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
+    use_2to3=True,
+    convert_2to3_doctests=['README.rst'],
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
@@ -30,6 +33,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
         'Topic :: Software Development :: Internationalization',
     ]
 )
