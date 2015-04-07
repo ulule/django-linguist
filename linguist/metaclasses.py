@@ -109,7 +109,7 @@ class ModelMeta(models.base.ModelBase):
 
         all_fields = dict(
             (attr_name, attr)
-            for attr_name, attr in attrs.iteritems()
+            for attr_name, attr in six.iteritems(attrs)
             if isinstance(attr, models.fields.Field))
 
         abstract_model_bases = [
