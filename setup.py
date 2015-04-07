@@ -21,8 +21,6 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
-    use_2to3=True,
-    convert_2to3_doctests=['README.rst'],
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
