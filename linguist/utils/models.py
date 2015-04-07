@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.core import exceptions
 
+import six
+
 try:
     # py27 / py3 only
     from importlib import import_module
@@ -21,7 +23,7 @@ def load_class(class_path, setting_name=None):
     tuple. The setting_name parameter is only there for pretty error output, and
     therefore is optional.
     """
-    if not isinstance(class_path, basestring):
+    if not isinstance(class_path, six.string_types):
         try:
             class_path, app_label = class_path
         except:
@@ -44,7 +46,7 @@ def load_class(class_path, setting_name=None):
 
     try:
         mod = import_module(class_module)
-    except ImportError, e:
+    except ImportError as e:
         if setting_name:
             txt = 'Error importing backend %s: "%s". Check your %s setting' % (
                 class_module, e, setting_name)
