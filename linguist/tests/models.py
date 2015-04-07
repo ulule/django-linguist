@@ -5,6 +5,8 @@ from linguist.models.base import Translation
 from linguist.metaclasses import ModelMeta as LinguistMeta
 from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
+import six
+
 
 # Managers
 # ------------------------------------------------------------------------------
@@ -40,12 +42,10 @@ class DeciderManager(LinguistManagerMixin, models.Manager):
 # Models
 # ------------------------------------------------------------------------------
 
-class FooModel(models.Model):
+class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A foo.
     """
-    __metaclass__ = LinguistMeta
-
     title = models.CharField(max_length=255)
     excerpt = models.TextField(null=True, blank=True)
     body = models.TextField(null=True, blank=True)
@@ -60,12 +60,10 @@ class FooModel(models.Model):
         }
 
 
-class BarModel(models.Model):
+class BarModel(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A bar.
     """
-    __metaclass__ = LinguistMeta
-
     title = models.CharField(max_length=255, null=True, blank=True)
 
     objects = BarManager()
@@ -77,12 +75,10 @@ class BarModel(models.Model):
         }
 
 
-class DefaultLanguageFieldModel(models.Model):
+class DefaultLanguageFieldModel(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A bar.
     """
-    __metaclass__ = LinguistMeta
-
     title = models.CharField(max_length=255, null=True, blank=True)
     lang = models.CharField(max_length=2, default='fr')
 
@@ -96,12 +92,10 @@ class DefaultLanguageFieldModel(models.Model):
         }
 
 
-class DefaultLanguageFieldModelWithCallable(models.Model):
+class DefaultLanguageFieldModelWithCallable(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A bar.
     """
-    __metaclass__ = LinguistMeta
-
     title = models.CharField(max_length=255, null=True, blank=True)
     lang = models.CharField(max_length=2, default='fr')
 
@@ -124,12 +118,10 @@ class CustomTranslationModel(Translation):
         abstract = False
 
 
-class DeciderModel(models.Model):
+class DeciderModel(six.with_metaclass(LinguistMeta, models.Model)):
     """
     Example of a model using decider feature.
     """
-    __metaclass__ = LinguistMeta
-
     title = models.CharField(max_length=255, null=True, blank=True)
 
     objects = DeciderManager()
