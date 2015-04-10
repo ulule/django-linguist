@@ -54,6 +54,7 @@ def default_value_setter(field):
     """
     def default_value_func_setter(self, value):
         localized_field = utils.build_localized_field_name(field, self._linguist.active_language)
+
         setattr(self, localized_field, value)
 
     return default_value_func_setter

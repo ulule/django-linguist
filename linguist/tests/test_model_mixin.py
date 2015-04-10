@@ -136,12 +136,15 @@ class ModelMixinTest(BaseTestCase):
         instance.activate_language('en')
         instance.title_en = 'Hi'
         instance.title_fr = 'Salut'
+
         instance.save()
+
         self.assertEqual(instance.title, 'Hi')
         self.assertEqual(instance.title_en, 'Hi')
         self.assertEqual(instance.title_fr, 'Salut')
 
         instance = FooModel.objects.get(pk=self.instance.pk)
+
         instance.activate_language('en')
         self.assertEqual(instance.title, 'Hi')
         self.assertEqual(instance.title_en, 'Hi')
@@ -157,6 +160,7 @@ class ModelMixinTest(BaseTestCase):
         instance.activate_language('en')
         instance.title = 'Plop'
         instance.save()
+
         self.assertEqual(instance.title, 'Plop')
         self.assertEqual(instance.title_en, 'Plop')
         self.assertEqual(instance.title_fr, 'Salut')
