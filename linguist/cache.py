@@ -70,8 +70,12 @@ class CachedTranslation(object):
         """
         Updates values from the given object.
         """
-        return cls(**dict((field, getattr(obj, field))
-                          for field in get_translation_field_names()))
+        instance = cls(**dict((field, getattr(obj, field))
+                              for field in get_translation_field_names()))
+
+        instance.is_new = False
+
+        return instance
 
     def __str__(self):
         return '%s:%s:%s:%s' % (

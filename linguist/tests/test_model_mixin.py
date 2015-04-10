@@ -132,6 +132,18 @@ class ModelMixinTest(BaseTestCase):
         with self.assertNumQueries(1):
             self.instance.save()
 
+        instance = FooModel.objects.get(pk=self.instance.pk)
+
+        assert instance.title_en == 'Hello'
+        assert instance.title_fr == 'Bonjour'
+
+        instance.title_en = 'Hi'
+        instance.save()
+
+        instance = FooModel.objects.get(pk=self.instance.pk)
+
+        assert instance.title_en == 'Hi'
+
     def test_override_language(self):
         self.assertTrue(hasattr(self.instance, 'override_language'))
         self.instance.activate_language('fr')

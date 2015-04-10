@@ -209,11 +209,15 @@ class Linguist(object):
                                                      language=language,
                                                      field_name=field_name,
                                                      field_value=field_value)
+
         try:
             obj = instance._linguist_translations[cached_obj.field_name][cached_obj.language]
 
             if cached_obj.field_value:
                 obj.has_changed = (cached_obj.field_value != obj.field_value)
+
+                if obj.has_changed:
+                    obj.field_value = cached_obj.field_value
         except KeyError:
             if cached_obj.field_value is not None:
                 instance._linguist_translations[cached_obj.field_name][cached_obj.language] = cached_obj
