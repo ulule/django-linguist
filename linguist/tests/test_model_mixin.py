@@ -133,16 +133,39 @@ class ModelMixinTest(BaseTestCase):
             self.instance.save()
 
         instance = FooModel.objects.get(pk=self.instance.pk)
-
-        assert instance.title_en == 'Hello'
-        assert instance.title_fr == 'Bonjour'
-
+        instance.activate_language('en')
         instance.title_en = 'Hi'
+        instance.title_fr = 'Salut'
         instance.save()
+        self.assertEqual(instance.title, 'Hi')
+        self.assertEqual(instance.title_en, 'Hi')
+        self.assertEqual(instance.title_fr, 'Salut')
 
         instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        self.assertEqual(instance.title, 'Hi')
+        self.assertEqual(instance.title_en, 'Hi')
+        self.assertEqual(instance.title_fr, 'Salut')
 
-        assert instance.title_en == 'Hi'
+        instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        instance.title = 'Howdy'
+        instance.save()
+        self.assertEqual(instance.title_en, 'Howdy')
+        self.assertEqual(instance.title_fr, 'Salut')
+
+        instance.activate_language('en')
+        instance.title = 'Plop'
+        instance.save()
+        self.assertEqual(instance.title, 'Plop')
+        self.assertEqual(instance.title_en, 'Plop')
+        self.assertEqual(instance.title_fr, 'Salut')
+
+        instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        self.assertEqual(instance.title, 'Plop')
+        self.assertEqual(instance.title_en, 'Plop')
+        self.assertEqual(instance.title_fr, 'Salut')
 
     def test_override_language(self):
         self.assertTrue(hasattr(self.instance, 'override_language'))
