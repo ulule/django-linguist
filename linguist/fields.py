@@ -147,26 +147,8 @@ class Linguist(object):
         """
         return len(self.translation_instances)
 
-    def get_cached_translation(self, instance, translation=None, language=None,
-                               field_name=None, field_value=None):
-        """
-        Returns CachedTranslation instance.
-        """
-        if translation is None:
-            if not (language and field_name):
-                raise Exception("You must set language and field name")
-
-        if translation is not None:
-            language = translation.language
-            field_name = translation.field_name
-            field_value = translation.field_value
-
-        return CachedTranslation(instance=instance,
-                                 language=language,
-                                 field_name=field_name,
-                                 field_value=field_value)
-
-    def get_cache(self, instance, translation=None, language=None, field_name=None,
+    def get_cache(self, instance, translation=None,
+                  language=None, field_name=None,
                   field_value=None):
         """
         Returns translation from cache.
@@ -176,51 +158,49 @@ class Linguist(object):
         try:
             cached_obj = instance._linguist_translations[field_name][language]
         except KeyError:
-            cached_obj = self.get_cached_translation(instance=instance,
-                                                     translation=translation,
-                                                     language=language,
-                                                     field_name=field_name,
-                                                     field_value=field_value)
-            if not is_new:
-                try:
-                    obj = self.decider.objects.get(identifier=self.instance.linguist_identifier,
-                                                   object_id=self.instance.pk,
-                                                   language=language,
-                                                   field_name=field_name)
-                    cached_obj = CachedTranslation.from_object(obj)
-                except self.decider.DoesNotExist:
-                    pass
+            cached_obj = None
 
-            cached_obj = self.set_cache(cached_obj=cached_obj)
+            if not is_new:
+                if translation is None:
+                    try:
+                        translation = self.decider.objects.get(identifier=self.instance.linguist_identifier,
+                                                               object_id=self.instance.pk,
+                                                               language=language,
+                                                               field_name=field_name)
+                    except self.decider.DoesNotExist:
+                        pass
+
+            if cached_obj is None:
+                if translation is not None:
+                    cached_obj = CachedTranslation.from_object(translation)
+                else:
+                    cached_obj = CachedTranslation(instance=instance,
+                                                   language=language,
+                                                   field_name=field_name,
+                                                   field_value=field_value)
+
+            instance._linguist_translations[cached_obj.field_name][cached_obj.language] = cached_obj
 
         return cached_obj
 
-    def set_cache(self, instance=None, translation=None, language=None, field_name=None,
-                  field_value=None, cached_obj=None):
+    def set_cache(self, instance=None, translation=None,
+                  language=None, field_name=None,
+                  field_value=None):
         """
         Add a new translation into the cache.
         """
         if instance is None:
             instance = self.instance
 
-        if cached_obj is None:
-            cached_obj = self.get_cached_translation(instance=instance,
-                                                     translation=translation,
-                                                     language=language,
-                                                     field_name=field_name,
-                                                     field_value=field_value)
+        cached_obj = self.get_cache(instance,
+                                    translation=translation,
+                                    field_value=field_value,
+                                    language=language,
+                                    field_name=field_name)
 
-        try:
-            obj = instance._linguist_translations[cached_obj.field_name][cached_obj.language]
-
-            if cached_obj.field_value:
-                obj.has_changed = (cached_obj.field_value != obj.field_value)
-
-                if obj.has_changed:
-                    obj.field_value = cached_obj.field_value
-        except KeyError:
-            if cached_obj.field_value is not None:
-                instance._linguist_translations[cached_obj.field_name][cached_obj.language] = cached_obj
+        if field_value != cached_obj.field_value:
+            cached_obj.has_changed = True
+            cached_obj.field_value = field_value
 
         return cached_obj
 

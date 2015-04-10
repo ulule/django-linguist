@@ -75,7 +75,7 @@ class TranslationManager(models.Manager):
 
             if to_update:
                 for obj in to_update:
-                    self.filter(**obj.lookup).update(**obj.attrs)
+                    self.filter(**obj.lookup).update(field_value=obj.field_value)
                     obj.has_changed = False
 
             if created:
