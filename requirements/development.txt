@@ -5,3 +5,4 @@ flake8
 django-debug-toolbar
 exam
 six
+tox
