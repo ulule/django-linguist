@@ -3,7 +3,7 @@ devenv:
 	. .venv/bin/activate && pip install -r requirements/development.txt
 
 clean:
-	rm -rvf .venv .tox .coverage build example/static/vendor django-linguist* *.egg-info
+	rm -rvf .venv .tox .coverage build django-linguist* *.egg-info
 
 pep8:
 	flake8 linguist --ignore=E501,E127,E128,E124
