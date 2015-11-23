@@ -13,8 +13,7 @@ test:
 	coverage report --omit=linguist/test*
 
 serve:
-	ENV=example python manage.py migrate
-	ENV=example python manage.py runserver
+	ENV=example python manage.py migrate && python manage.py runserver
 
 delpyc:
 	find . -name '*.pyc' -delete
