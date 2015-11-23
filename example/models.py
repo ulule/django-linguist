@@ -2,6 +2,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+import six
+
 from linguist.metaclasses import ModelMeta as LinguistMeta
 from linguist.mixins import ManagerMixin as LinguistManagerMixin
 from linguist.models.base import Translation as BaseTranslation
@@ -14,12 +16,10 @@ class CategoryManager(LinguistManagerMixin, models.Manager):
     pass
 
 
-class Category(models.Model):
+class Category(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A Category.
     """
-    __metaclass__ = LinguistMeta
-
     name = models.CharField(_('title'), max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -41,12 +41,10 @@ class PostManager(LinguistManagerMixin, models.Manager):
     pass
 
 
-class Post(models.Model):
+class Post(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A Post.
     """
-    __metaclass__ = LinguistMeta
-
     title = models.CharField(_('title'), max_length=255)
     body = models.TextField(blank=True)
     category = models.ForeignKey(Category, blank=True, null=True)
@@ -80,12 +78,10 @@ class BookmarkTranslation(BaseTranslation):
         verbose_name_plural = _('bookmark translations')
 
 
-class Bookmark(models.Model):
+class Bookmark(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A Bookmark
     """
-    __metaclass__ = LinguistMeta
-
     title = models.CharField(_('title'), max_length=255)
     url = models.URLField(_('URL'))
     description = models.TextField(blank=True)
