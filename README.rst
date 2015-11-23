@@ -338,7 +338,10 @@ Development
     # Clone and install dependencies
     $ git clone https://github.com/ulule/django-linguist.git
     $ cd django-linguist
-    $ make install
+    $ make devenv
+
+    # Enable virtual environment.
+    $ source .venv/bin/activate
 
     # Launch tests
     $ make test
