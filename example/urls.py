@@ -2,10 +2,13 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-from  django.views.generic import TemplateView
+from django.http import JsonResponse
+
+def home(request):
+    return JsonResponse({"message": "hello"})
 
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^$', TemplateView.as_view(template_name='home.html'), name='home')
+    url(r'^$',  home, name='home')
 )
