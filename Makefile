@@ -1,5 +1,9 @@
+devenv:
+	virtualenv -p python2.7 `pwd`/.venv
+	. .venv/bin/activate && pip install -r requirements/development.txt
+
 clean:
-	rm -rvf .env .venv .tox .coverage build example/static/vendor django-linguist* *.egg-info
+	rm -rvf .venv .tox .coverage build django-linguist* *.egg-info
 
 pep8:
 	flake8 linguist --ignore=E501,E127,E128,E124
@@ -9,8 +13,7 @@ test:
 	coverage report --omit=linguist/test*
 
 serve:
-	ENV=example python manage.py syncdb
-	ENV=example python manage.py runserver
+	ENV=example python manage.py migrate && python manage.py runserver
 
 delpyc:
 	find . -name '*.pyc' -delete

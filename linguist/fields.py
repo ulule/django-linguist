@@ -137,7 +137,7 @@ class Linguist(object):
         Returns translation instances.
         """
         return [instance
-                for k, v in self.instance._linguist_translations.items()
+                for k, v in six.iteritems(self.instance._linguist_translations)
                 for instance in v.values()]
 
     @property

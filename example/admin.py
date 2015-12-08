@@ -3,10 +3,12 @@ from django.contrib import admin
 
 from linguist.admin import ModelTranslationAdmin
 
-from .models import (Post,
-                     Category,
-                     Bookmark,
-                     BookmarkTranslation)
+from .models import (
+    Post,
+    Category,
+    Bookmark,
+    BookmarkTranslation,
+)
 
 
 class PostAdmin(ModelTranslationAdmin):
