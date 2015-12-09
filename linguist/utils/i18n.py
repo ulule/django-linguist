@@ -39,6 +39,19 @@ def get_real_field_name(field, lang=None):
     return str('%s_%s' % (field, lang.replace('-', '_')))
 
 
+def is_translatable_field(field):
+    supported_languages = get_supported_languages()
+    for language in supported_languages:
+        if field.endswith('_%s' % language):
+            return True
+    return False
+
+
+def get_translatable_field_name_language(field):
+    parts = field.split('_')
+    return '_'.join(field.split('_')[:-1]), parts[-1]
+
+
 def get_fallback_field_name(field):
     return get_real_field_name(field, lang=get_fallback_language())
 
