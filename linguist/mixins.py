@@ -3,6 +3,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 import copy
 import itertools
+import six
 
 from . import utils
 
@@ -11,6 +12,62 @@ class QuerySetMixin(object):
     """
     Linguist QuerySet Mixin.
     """
+
+    def _filter_or_exclude(self, negate, *args, **kwargs):
+        concrete_fields = [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
+        linguist_fields = self.model._linguist.fields
+        language_fields = utils.get_language_fields(linguist_fields)
+
+        translatable_fields = []
+
+        for k, v in kwargs.items():
+            # To keep default behavior with "FieldError: Cannot resolve keyword".
+            if k not in concrete_fields and k in language_fields:
+                translatable_fields.append((k, v))
+                del kwargs[k]
+
+        lookups = []
+        for k, v in translatable_fields:
+            if utils.is_translatable_field(k):
+                field_name, language = utils.get_translatable_field_name_language(k)
+                if field_name in self.model._linguist.fields:
+                    lookups.append({
+                        'field_name': field_name,
+                        'language': language,
+                        'field_value': v,
+                    })
+
+        # Fetch related translations based on lookup fields
+        if lookups:
+            from .models import Translation
+
+            qs = Translation.objects.filter(identifier=self.model._linguist.identifier)
+            for lookup in lookups:
+                qs = qs.filter(**lookup)
+
+            # Only retrives object IDs
+            ids = list(set(qs.values_list('object_id', flat=True)))
+
+            # Then select in if ids is not empty
+            if ids:
+                kwargs['id__in'] = ids
+
+        # Model.objects.filter(**{}) will always returns all instances.
+        # It's equivalent to Model.objects.all(). So here, we are dealing
+        # with virtual fields and so the behavior is a bit different.
+        #
+        # Example, if we have a virtual field "title_fr" with an incorrect
+        # value. Let's imagine we stored "banana" instead of "foobar".
+        #
+        # This: Model.objects.filter(title_fr="foobar")
+        # Equals this: Model.objects.filter(**{}) -- so all()
+        #
+        # So we need to check kwargs and return en empty queryset if
+        # kwargs is empty to avoid all() behavior.
+        if not kwargs:
+            return self._clone().none()
+
+        return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **kwargs)
 
     def with_translations(self, **kwargs):
         """
