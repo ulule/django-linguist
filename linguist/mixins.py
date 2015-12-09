@@ -15,33 +15,32 @@ class QuerySetMixin(object):
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         concrete_fields = [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
-        linguist_fields = self.model._linguist.fields
-        language_fields = utils.get_language_fields(linguist_fields)
+        translatable_fields = self.model._linguist.fields
+        identifier = self.model._linguist.identifier
+        language_fields = utils.get_language_fields(translatable_fields)
 
         translatable_fields = []
-
         for k, v in kwargs.items():
+            # Without transformers
+            field_name = k.split('__')[0]
             # To keep default behavior with "FieldError: Cannot resolve keyword".
-            if k not in concrete_fields and k in language_fields:
-                translatable_fields.append((k, v))
+            if (field_name not in concrete_fields) and (field_name in language_fields):
+                translatable_fields.append((field_name, k, v))
                 del kwargs[k]
 
         lookups = []
-        for k, v in translatable_fields:
-            if utils.is_translatable_field(k):
-                field_name, language = utils.get_translatable_field_name_language(k)
-                if field_name in self.model._linguist.fields:
-                    lookups.append({
-                        'field_name': field_name,
-                        'language': language,
-                        'field_value': v,
-                    })
+        for field_name, field_lookup, value in translatable_fields:
+            if utils.is_translatable_field(field_name):
+                lookups.append(utils.get_translation_lookup(
+                    identifier,
+                    field_lookup,
+                    value))
 
         # Fetch related translations based on lookup fields
         if lookups:
             from .models import Translation
 
-            qs = Translation.objects.filter(identifier=self.model._linguist.identifier)
+            qs = Translation.objects.all()
             for lookup in lookups:
                 qs = qs.filter(**lookup)
 

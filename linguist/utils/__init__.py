@@ -4,7 +4,6 @@ from .i18n import (get_language_name,
                    get_fallback_language,
                    get_real_field_name,
                    is_translatable_field,
-                   get_translatable_field_name_language,
                    get_fallback_field_name,
                    get_supported_languages,
                    get_language_fields,
@@ -12,7 +11,9 @@ from .i18n import (get_language_name,
                    build_localized_field_name,
                    build_localized_verbose_name)
 
-from .models import load_class, get_model_string
+from .models import (load_class,
+                     get_model_string,
+                     get_translation_lookup)
 
 __all__ = [
     'get_language_name',
@@ -20,7 +21,6 @@ __all__ = [
     'get_fallback_language',
     'get_real_field_name',
     'is_translatable_field',
-    'get_translatable_field_name_language',
     'get_fallback_field_name',
     'get_supported_languages',
     'get_language_fields',
@@ -30,6 +30,7 @@ __all__ = [
     'load_class',
     'get_model_string',
     'chunks',
+    'get_translation_lookup',
 ]
 
 

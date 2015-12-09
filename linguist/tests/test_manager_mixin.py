@@ -316,9 +316,16 @@ class ManagerMixinTest(BaseTestCase):
             m.title = 'Title in %s' % language
             m.save()
 
+        # Exact
         self.assertEqual(FooModel.objects.filter(title_en="Title in en").count(), 1)
         self.assertEqual(FooModel.objects.filter(title_fr='Different value').count(), 0)
         self.assertEqual(FooModel.objects.filter(title_it='Title in it').count(), 1)
         self.assertEqual(FooModel.objects.filter(title_de='Title in de').count(), 1)
         self.assertEqual(FooModel.objects.filter(title_pt='Title in pt').count(), 1)
+
+        # Unknown field
         self.assertRaises(FieldError, FooModel.objects.filter, **{'title_ru': 'Title in ru'})
+
+        # Transformers
+        self.assertEqual(FooModel.objects.filter(title_fr__contains='fr').count(), 1)
+        self.assertEqual(FooModel.objects.filter(title_en__startswith='Ti').count(), 1)

@@ -94,3 +94,31 @@ def get_model_string(model_name):
             raise exceptions.ImproperlyConfigured(CLASS_PATH_ERROR % (
                 setting_name, setting_name))
     return '%s.%s' % (app_label, model_name)
+
+
+def get_translation_lookup(identifier, field, value):
+    """
+    Mapper that takes a language field, its value and returns the
+    related lookup for Translation model.
+    """
+    # Split by transformers
+    parts = field.split('__')
+
+    # Store transformers
+    transformers = parts[1:] if len(parts) > 1 else None
+
+    # Guess name / language (title[_fr])
+    field_name = parts[0][:-3]
+    language = parts[0][-2:]
+
+    value_lookup = 'field_value' if transformers is None else 'field_value__%s' % '__'.join(transformers)
+
+    lookup = {
+        'field_name': field_name,
+        'identifier': identifier,
+        'language': language,
+    }
+
+    lookup[value_lookup] = value
+
+    return lookup
