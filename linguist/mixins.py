@@ -14,12 +14,13 @@ class QuerySetMixin(object):
     """
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
-        concrete_fields = [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
-        translatable_fields = self.model._linguist.fields
-        identifier = self.model._linguist.identifier
-        language_fields = utils.get_language_fields(translatable_fields)
-
         new_kwargs = kwargs.copy()
+        identifier = self.model._linguist.identifier
+        concrete_fields = [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
+
+        # title and title_fr
+        linguist_fields = (list(self.model._linguist.fields) +
+                           list(utils.get_language_fields(self.model._linguist.fields)))
 
         translatable_fields = []
         for k, v in six.iteritems(kwargs):
@@ -27,17 +28,16 @@ class QuerySetMixin(object):
             field_name = k.split('__')[0]
 
             # To keep default behavior with "FieldError: Cannot resolve keyword".
-            if (field_name not in concrete_fields) and (field_name in language_fields):
+            if (field_name not in concrete_fields) and (field_name in linguist_fields):
                 translatable_fields.append((field_name, k, v))
                 del new_kwargs[k]
 
         lookups = []
         for field_name, field_lookup, value in translatable_fields:
-            if utils.is_translatable_field(field_name):
-                lookups.append(utils.get_translation_lookup(
-                    identifier,
-                    field_lookup,
-                    value))
+            lookups.append(utils.get_translation_lookup(
+                identifier,
+                field_lookup,
+                value))
 
         # Fetch related translations based on lookup fields
         if lookups:

@@ -10,6 +10,7 @@ except ImportError:
     from django.utils.importlib import import_module
 
 from .. import settings
+from .i18n import get_supported_languages, get_language
 
 
 CLASS_PATH_ERROR = 'django-linguist is unable to interpret settings value for %s. '\
@@ -107,9 +108,22 @@ def get_translation_lookup(identifier, field, value):
     # Store transformers
     transformers = parts[1:] if len(parts) > 1 else None
 
-    # Guess name / language (title[_fr])
-    field_name = parts[0][:-3]
-    language = parts[0][-2:]
+    # defaults to "title" and active current language
+    field_name = parts[0]
+    language = get_language()
+
+    name_parts = parts[0].split('_')
+    if len(name_parts) > 1:
+        supported_languages = get_supported_languages()
+        last_part = name_parts[-1]
+        if last_part in supported_languages:
+            # title_with_underscore_fr?
+            field_name = '_'.join(name_parts[:-1])
+            language = last_part
+        else:
+            # title_with_underscore?
+            # Let's use default language
+            field_name = '_'.join(name_parts)
 
     value_lookup = 'field_value' if transformers is None else 'field_value__%s' % '__'.join(transformers)
 

@@ -3,8 +3,9 @@ from __future__ import unicode_literals
 
 import json
 
-from .. import utils
+from django.utils import translation
 
+from .. import utils
 from .base import BaseTestCase
 
 
@@ -15,6 +16,13 @@ class UtilsTest(BaseTestCase):
 
     def test_get_translation_lookup(self):
         expected = {
+            # default language
+            'title': {
+                'field_name': 'title',
+                'field_value': 'value',
+                'identifier': 'foo',
+                'language': 'en',
+            },
             'title_fr': {
                 'field_name': 'title',
                 'field_value': 'value',
@@ -35,6 +43,7 @@ class UtilsTest(BaseTestCase):
             },
         }
 
+        translation.activate('en')
         for k, v in expected.items():
             lookup = utils.get_translation_lookup('foo', k, 'value')
             lookup = json.loads(json.dumps(lookup, sort_keys=True))

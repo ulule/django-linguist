@@ -19,10 +19,13 @@ def get_language():
     """
     lang = _get_language()
     langs = [l[0] for l in settings.SUPPORTED_LANGUAGES]
-    if lang not in langs and '-' in lang:
+
+    if '-' in lang:
         lang = lang.split('-')[0]
+
     if lang in langs:
         return lang
+
     return settings.DEFAULT_LANGUAGE
 
 
@@ -37,14 +40,6 @@ def get_real_field_name(field, lang=None):
     if lang is None:
         lang = get_language()
     return str('%s_%s' % (field, lang.replace('-', '_')))
-
-
-def is_translatable_field(field):
-    supported_languages = get_supported_languages()
-    for language in supported_languages:
-        if field.endswith('_%s' % language):
-            return True
-    return False
 
 
 def get_fallback_field_name(field):

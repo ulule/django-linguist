@@ -287,6 +287,7 @@ class ManagerMixinTest(BaseTestCase):
         self.assertEqual(Translation.objects.count(), 100)  # 20 objects x 5 languages
 
         # Default to "en" (settings.LANGUAGE_CODE)
+        translation.activate('en')
         self.assertEqual(translation.get_language(), 'en')
 
         # Without prefetch
@@ -329,3 +330,10 @@ class ManagerMixinTest(BaseTestCase):
         # Transformers
         self.assertEqual(FooModel.objects.filter(title_fr__contains='fr').count(), 1)
         self.assertEqual(FooModel.objects.filter(title_en__startswith='Ti').count(), 1)
+
+        # Default language
+        translation.activate('fr')
+        self.assertEqual(FooModel.objects.filter(title="Title in fr").count(), 1)
+
+        translation.activate('en')
+        self.assertEqual(FooModel.objects.filter(title="Title in en").count(), 1)
