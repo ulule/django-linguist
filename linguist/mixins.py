@@ -19,14 +19,17 @@ class QuerySetMixin(object):
         identifier = self.model._linguist.identifier
         language_fields = utils.get_language_fields(translatable_fields)
 
+        new_kwargs = kwargs.copy()
+
         translatable_fields = []
-        for k, v in kwargs.items():
+        for k, v in six.iteritems(kwargs):
             # Without transformers
             field_name = k.split('__')[0]
+
             # To keep default behavior with "FieldError: Cannot resolve keyword".
             if (field_name not in concrete_fields) and (field_name in language_fields):
                 translatable_fields.append((field_name, k, v))
-                del kwargs[k]
+                del new_kwargs[k]
 
         lookups = []
         for field_name, field_lookup, value in translatable_fields:
@@ -49,7 +52,7 @@ class QuerySetMixin(object):
 
             # Then select in if ids is not empty
             if ids:
-                kwargs['id__in'] = ids
+                new_kwargs['id__in'] = ids
 
         # Model.objects.filter(**{}) will always returns all instances.
         # It's equivalent to Model.objects.all(). So here, we are dealing
@@ -63,10 +66,10 @@ class QuerySetMixin(object):
         #
         # So we need to check kwargs and return en empty queryset if
         # kwargs is empty to avoid all() behavior.
-        if not kwargs:
+        if not new_kwargs:
             return self._clone().none()
 
-        return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **kwargs)
+        return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **new_kwargs)
 
     def with_translations(self, **kwargs):
         """
