@@ -304,3 +304,21 @@ class ManagerMixinTest(BaseTestCase):
                 translation.activate(language)
                 for obj in qs:
                     string = '%s' % obj.title  # noqa
+
+    def test_lookup(self):
+        from django.core.exceptions import FieldError
+
+        languages = ('en', 'fr', 'it', 'de', 'pt')
+
+        for language in languages:
+            m = FooModel()
+            m.activate_language(language)
+            m.title = 'Title in %s' % language
+            m.save()
+
+        self.assertEqual(FooModel.objects.filter(title_en="Title in en").count(), 1)
+        self.assertEqual(FooModel.objects.filter(title_fr='Different value').count(), 0)
+        self.assertEqual(FooModel.objects.filter(title_it='Title in it').count(), 1)
+        self.assertEqual(FooModel.objects.filter(title_de='Title in de').count(), 1)
+        self.assertEqual(FooModel.objects.filter(title_pt='Title in pt').count(), 1)
+        self.assertRaises(FieldError, FooModel.objects.filter, **{'title_ru': 'Title in ru'})
