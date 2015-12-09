@@ -4,10 +4,8 @@ from __future__ import unicode_literals
 import json
 
 from .. import utils
-from ..models import Translation
 
 from .base import BaseTestCase
-from .models import BarModel
 
 
 class UtilsTest(BaseTestCase):
@@ -39,5 +37,5 @@ class UtilsTest(BaseTestCase):
 
         for k, v in expected.items():
             lookup = utils.get_translation_lookup('foo', k, 'value')
-            lookup = json.loads(json.dumps(lookup,sort_keys=True))
+            lookup = json.loads(json.dumps(lookup, sort_keys=True))
             self.assertEqual(lookup, expected[k])
