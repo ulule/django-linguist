@@ -34,7 +34,7 @@ def get_language():
     lang = _get_language()
     langs = [l[0] for l in settings.SUPPORTED_LANGUAGES]
 
-    if '-' in lang:
+    if lang not in langs and '-' in lang:
         lang = lang.split('-')[0]
 
     if lang in langs:
