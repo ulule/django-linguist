@@ -13,31 +13,80 @@ class QuerySetMixin(object):
     Linguist QuerySet Mixin.
     """
 
-    def _filter_or_exclude(self, negate, *args, **kwargs):
-        new_kwargs = kwargs.copy()
-        identifier = self.model._linguist.identifier
-        concrete_fields = [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
+    def _is_linguist_lookup(self, lookup):
+        field = utils.get_field_name_from_lookup(lookup)
+        concrete_fields = self._get_concrete_field_names()
+        linguist_fields = self._get_linguist_field_names()
 
+        # To keep default behavior with "FieldError: Cannot resolve keyword".
+        if (field not in concrete_fields and field in linguist_fields):
+            return True
+
+        return False
+
+    def _get_concrete_field_names(self):
+        return [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
+
+    def _get_linguist_field_names(self):
         # title and title_fr
-        linguist_fields = (list(self.model._linguist.fields) +
-                           list(utils.get_language_fields(self.model._linguist.fields)))
+        return (list(self.model._linguist.fields) +
+                list(utils.get_language_fields(self.model._linguist.fields)))
 
-        translatable_fields = []
-        for k, v in six.iteritems(kwargs):
-            # Without transformers
-            field_name = k.split('__')[0]
+    def _get_model_lookups(self, args=None, kwargs=None):
+        new_args, new_kwargs = [], {}
 
-            # To keep default behavior with "FieldError: Cannot resolve keyword".
-            if (field_name not in concrete_fields) and (field_name in linguist_fields):
-                translatable_fields.append((field_name, k, v))
-                del new_kwargs[k]
+        if args is not None:
+            new_args = list(new_args)
+
+        if kwargs is not None:
+            new_kwargs = kwargs.copy()
+
+        if args:
+            # Q conditions
+            for arg in args:
+                # (field_name, field_value)
+                for k, v in arg:
+                    if self._is_linguist_lookup(k):
+                        new_args.pop(args.index(arg))
+
+        if kwargs is not None:
+            # {'field_name': 'field_value'}
+            for k in kwargs:
+                if self._is_linguist_lookup(k):
+                    del new_kwargs[k]
+
+        return new_args, new_kwargs
+
+    def _get_linguist_lookups(self, lookups):
+        """
+        Returns translation lookups for the given list of
+        lookups like this: [(field, value), (field, value)].
+        """
+        if isinstance(lookups, dict):
+            lookups = [(k, v) for k, v in six.iteritems(lookups)]
+
+        linguist_lookups = []
+        for k, v in lookups:
+            if self._is_linguist_lookup(k):
+                linguist_lookups.append({
+                    'identifier': self.model._linguist.identifier,
+                    'field_name': utils.get_field_name_from_lookup(k),
+                    'lookup': k,
+                    'value': v,
+                })
+
+        return linguist_lookups
+
+    def _filter_or_exclude(self, negate, *args, **kwargs):
+        linguist_lookups = self._get_linguist_lookups(kwargs)
+        new_args, new_kwargs = self._get_model_lookups(args, kwargs)
 
         lookups = []
-        for field_name, field_lookup, value in translatable_fields:
+        for lookup in linguist_lookups:
             lookups.append(utils.get_translation_lookup(
-                identifier,
-                field_lookup,
-                value))
+                lookup['identifier'],
+                lookup['lookup'],
+                lookup['value']))
 
         # Fetch related translations based on lookup fields
         if lookups:

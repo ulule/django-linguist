@@ -232,3 +232,10 @@ def get_translation_lookup(identifier, field, value):
     lookup[value_lookup] = value
 
     return lookup
+
+
+def get_field_name_from_lookup(lookup):
+    """
+    Returns field name from query lookup.
+    """
+    return lookup.split('__')[0]
