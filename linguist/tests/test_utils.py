@@ -37,7 +37,6 @@ class UtilsTest(BaseTestCase):
 
         # Deactivating all should returns fallback one
         translation.deactivate_all()
-        self.assertEqual(translation.get_language(), None)
         self.assertEqual(utils.get_fallback_language(), 'en')
         self.assertEqual(utils.get_language(), utils.get_fallback_language())
 
