@@ -54,19 +54,8 @@ class QuerySetMixin(object):
             if ids:
                 new_kwargs['id__in'] = ids
 
-        # Model.objects.filter(**{}) will always returns all instances.
-        # It's equivalent to Model.objects.all(). So here, we are dealing
-        # with virtual fields and so the behavior is a bit different.
-        #
-        # Example, if we have a virtual field "title_fr" with an incorrect
-        # value. Let's imagine we stored "banana" instead of "foobar".
-        #
-        # This: Model.objects.filter(title_fr="foobar")
-        # Equals this: Model.objects.filter(**{}) -- so all()
-        #
-        # So we need to check kwargs and return en empty queryset if
-        # kwargs is empty to avoid all() behavior.
-        if not new_kwargs:
+        # No translations found? Empty queryset.
+        if lookups and not new_kwargs:
             return self._clone().none()
 
         return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **new_kwargs)
