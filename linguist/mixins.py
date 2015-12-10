@@ -19,7 +19,7 @@ class QuerySetMixin(object):
         Q complex queries are not yet supported.
         """
         linguist_lookups = self._get_linguist_lookups(kwargs)
-        new_args, new_kwargs = self._get_model_lookups(args, kwargs)
+        new_kwargs = self._get_model_lookups(kwargs)
 
         lookups = []
         for lookup in linguist_lookups:
@@ -69,22 +69,8 @@ class QuerySetMixin(object):
         return (list(self.model._linguist.fields) +
                 list(utils.get_language_fields(self.model._linguist.fields)))
 
-    def _get_model_lookups(self, args=None, kwargs=None):
-        new_args, new_kwargs = [], {}
-
-        if args is not None:
-            new_args = list(new_args)
-
-        if kwargs is not None:
-            new_kwargs = kwargs.copy()
-
-        if args:
-            # Q conditions
-            for arg in args:
-                # (field_name, field_value)
-                for k, v in arg:
-                    if self._is_linguist_lookup(k):
-                        new_args.pop(args.index(arg))
+    def _get_model_lookups(self, kwargs):
+        new_kwargs = kwargs.copy()
 
         if kwargs is not None:
             # {'field_name': 'field_value'}
@@ -92,7 +78,7 @@ class QuerySetMixin(object):
                 if self._is_linguist_lookup(k):
                     del new_kwargs[k]
 
-        return new_args, new_kwargs
+        return new_kwargs
 
     def _get_linguist_lookups(self, lookups):
         """
