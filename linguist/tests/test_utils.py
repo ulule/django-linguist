@@ -105,7 +105,6 @@ class UtilsTest(BaseTestCase):
             },
         }
 
-        translation.activate('en')
         for k, v in expected.items():
             lookup = utils.get_translation_lookup('foo', k, 'value')
             lookup = json.loads(json.dumps(lookup, sort_keys=True))

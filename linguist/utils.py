@@ -204,9 +204,9 @@ def get_translation_lookup(identifier, field, value):
     # Store transformers
     transformers = parts[1:] if len(parts) > 1 else None
 
-    # defaults to "title" and active current language
+    # defaults to "title" and default language
     field_name = parts[0]
-    language = get_language()
+    language = get_fallback_language()
 
     name_parts = parts[0].split('_')
     if len(name_parts) > 1:
