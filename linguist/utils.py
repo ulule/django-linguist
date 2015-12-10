@@ -32,8 +32,11 @@ def get_language():
     settings.SUPPORTED_LANGUAGES.
     """
     lang = _get_language()
-    langs = [l[0] for l in settings.SUPPORTED_LANGUAGES]
 
+    if not lang:
+        return get_fallback_language()
+
+    langs = [l[0] for l in settings.SUPPORTED_LANGUAGES]
     if lang not in langs and '-' in lang:
         lang = lang.split('-')[0]
 
@@ -90,6 +93,7 @@ def build_localized_field_name(field_name, language=None):
     """
     if language is None:
         language = get_language()
+
     return '%s_%s' % (field_name, language.replace('-', '_'))
 
 
