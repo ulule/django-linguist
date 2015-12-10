@@ -334,3 +334,7 @@ class ManagerMixinTest(BaseTestCase):
         # Default language
         self.assertEqual(FooModel.objects.filter(title="Title in en").count(), 1)
         self.assertEqual(FooModel.objects.filter(title="Title in fr").count(), 0)
+
+        # Exclude
+        self.assertEqual((FooModel.objects.exclude(title_en="Title in en")
+                                          .exclude(title_it="Title in it").count()), 3)

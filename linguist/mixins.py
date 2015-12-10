@@ -13,6 +13,43 @@ class QuerySetMixin(object):
     Linguist QuerySet Mixin.
     """
 
+    def _filter_or_exclude(self, negate, *args, **kwargs):
+        """
+        Overrides default behavior to handle linguist fields.
+        Q complex queries are not yet supported.
+        """
+        linguist_lookups = self._get_linguist_lookups(kwargs)
+        new_args, new_kwargs = self._get_model_lookups(args, kwargs)
+
+        lookups = []
+        for lookup in linguist_lookups:
+            lookups.append(utils.get_translation_lookup(
+                lookup['identifier'],
+                lookup['lookup'],
+                lookup['value']))
+
+        # Fetch related translations based on lookup fields
+        if lookups:
+            from .models import Translation
+
+            qs = Translation.objects.all()
+            for lookup in lookups:
+                qs = qs.filter(**lookup)
+
+            # Only retrives object IDs
+            ids = list(set(qs.values_list('object_id', flat=True)))
+
+            # Then select in if ids is not empty
+            if ids:
+                new_kwargs['id__in'] = ids
+
+        # No translations found? Empty queryset.
+        if lookups and not new_kwargs:
+            return self._clone().none()
+
+        return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **new_kwargs)
+
+
     def _is_linguist_lookup(self, lookup):
         field = utils.get_field_name_from_lookup(lookup)
         concrete_fields = self._get_concrete_field_names()
@@ -76,38 +113,6 @@ class QuerySetMixin(object):
                 })
 
         return linguist_lookups
-
-    def _filter_or_exclude(self, negate, *args, **kwargs):
-        linguist_lookups = self._get_linguist_lookups(kwargs)
-        new_args, new_kwargs = self._get_model_lookups(args, kwargs)
-
-        lookups = []
-        for lookup in linguist_lookups:
-            lookups.append(utils.get_translation_lookup(
-                lookup['identifier'],
-                lookup['lookup'],
-                lookup['value']))
-
-        # Fetch related translations based on lookup fields
-        if lookups:
-            from .models import Translation
-
-            qs = Translation.objects.all()
-            for lookup in lookups:
-                qs = qs.filter(**lookup)
-
-            # Only retrives object IDs
-            ids = list(set(qs.values_list('object_id', flat=True)))
-
-            # Then select in if ids is not empty
-            if ids:
-                new_kwargs['id__in'] = ids
-
-        # No translations found? Empty queryset.
-        if lookups and not new_kwargs:
-            return self._clone().none()
-
-        return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **new_kwargs)
 
     def with_translations(self, **kwargs):
         """
