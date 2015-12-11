@@ -5,51 +5,120 @@ import copy
 import itertools
 import six
 
+from django.db.models import Q
 from django.utils.functional import cached_property
 
 from . import utils
 
 
-class QueryBuilder(object):
+class Query(object):
+    """
+    Query is a query builder for Linguist related models.
+    """
 
     def __init__(self, model, args, kwargs):
+        # The related model class.
         self.model = model
+
+        # Linguist model identifier
+        self.identifier = model._linguist.identifier
+
+        # Lookups as positional arguments (typically Q instances).
+        # Model.objects.filter(Q(title='foo') | Q(title='bar'))
         self.args = args
+
+        # Lookups as keyword arguments.
+        # Model.objects.filter(title='foo')
         self.kwargs = kwargs
-        self.has_lookups = False
+
+        # This is to check if we have concrete lookups
+        # AND linguist lookups to return empty queryset
+        # if we have related translations but empty
+        # kwargs lookups.
+        self.has_linguist_kwargs = False
+
+        # The same as above for positional arguments.
+        self.has_linguist_args = False
 
     @cached_property
     def concrete_field_names(self):
+        """
+        Returns model concrete field names.
+        """
         return [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
 
     @cached_property
     def linguist_field_names(self):
+        """
+        Returns linguist field names (example: "title" and "title_fr").
+        """
         return (list(self.model._linguist.fields) +
                 list(utils.get_language_fields(self.model._linguist.fields)))
 
-    def get_model_lookups(self):
-        new_kwargs = self.kwargs.copy()
+    def get_concrete_lookups(self):
+        """
+        Returns concrete field lookups.
+        """
+        lookups = self.kwargs.copy()
 
         if self.kwargs is not None:
             for k in self.kwargs:
                 if self.is_linguist_lookup(k):
-                    del new_kwargs[k]
+                    del lookups[k]
 
-        return new_kwargs
+        return lookups
 
-    def get_translation_lookups(self, lookups):
+    def get_linguist_args(self):
+        """
+        Returns linguist args from model args.
+        """
+        args = []
+
+        for arg in self.args:
+            if not isinstance(arg, Q):
+                continue
+
+            children = []
+            for k, v in arg.children:
+                if self.is_linguist_lookup(k):
+                    children.append(Q(**utils.get_translation_lookup(self.identifier, k, v)))
+                    if not self.has_linguist_args:
+                        self.has_linguist_args = True
+
+            q = copy.deepcopy(arg)
+            q.children = children
+            args.append(q)
+
+        return args
+
+    def get_linguist_kwargs(self, lookups):
+        """
+        Returns linguist lookup kwargs (related to Translation model).
+        """
         if isinstance(lookups, dict):
             lookups = [(k, v) for k, v in six.iteritems(lookups)]
 
-        translation_lookups = []
+        lks = []
         for k, v in lookups:
             if self.is_linguist_lookup(k):
-                translation_lookups.append(utils.get_translation_lookup(
+                lks.append(utils.get_translation_lookup(
                     self.model._linguist.identifier, k, v))
 
-        return translation_lookups
+        kwargs = {}
+        for lk in lks:
+            for k, v in six.iteritems(lk):
+                if k not in kwargs:
+                    kwargs[k] = v
+
+        if kwargs:
+            self.has_linguist_kwargs = True
+
+        return kwargs
 
     def is_linguist_lookup(self, lookup):
+        """
+        Returns true if the given lookup is a valid linguist lookup.
+        """
         field = utils.get_field_name_from_lookup(lookup)
 
         # To keep default behavior with "FieldError: Cannot resolve keyword".
@@ -58,29 +127,54 @@ class QueryBuilder(object):
 
         return False
 
-    def get_query_kwargs(self):
+    def get_linguist_object_ids(self, *args, **kwargs):
         """
-        Returns kwargs for filter_or_exclude method and True if this query
-        contains valid translation lookups, otherwise False.
+        Returns object IDs for the given args/kwargs (directly passed
+        to Translation filter).
         """
-        translation_lookups = self.get_translation_lookups(self.kwargs)
-        kwargs = self.get_model_lookups()
+        from .models import Translation
+        return list(set((Translation.objects
+                           .filter(*args, **kwargs)
+                           .values_list('object_id', flat=True))))
 
-        # Fetch related translations based on lookup fields
-        if translation_lookups:
-            from .models import Translation
+    def get_args(self):
+        """
+        Returns positional arguments for related model query.
+        """
+        if not self.args:
+            return self.args
 
-            self.has_lookups = True
+        # Make a copy
+        args = list(self.args)
 
-            qs = Translation.objects.all()
-            for lookup in translation_lookups:
-                qs = qs.filter(**lookup)
-            # Only retrives object IDs
-            ids = list(set(qs.values_list('object_id', flat=True)))
+        # Remove linguist fields.
+        for arg in args:
+            if not isinstance(arg, Q):
+                continue
+            for k, v in arg.children:
+                if self.is_linguist_lookup(k):
+                    # Because we iterate over children
+                    try:
+                        args.pop(args.index(arg))
+                    except ValueError:
+                        pass
 
-            # Then select in if ids is not empty
-            if ids:
-                kwargs['id__in'] = ids
+        # Add linguist object IDs.
+        ids = self.get_linguist_object_ids(*self.get_linguist_args())
+        if ids:
+            args.append(Q(**{'id__in': ids}))
+
+        return args
+
+    def get_kwargs(self):
+        """
+        Returns keyword arguments for related model query.
+        """
+        kwargs = self.get_concrete_lookups()
+
+        ids = self.get_linguist_object_ids(**self.get_linguist_kwargs(self.kwargs))
+        if ids:
+            kwargs['id__in'] = ids
 
         return kwargs
 
@@ -93,16 +187,21 @@ class QuerySetMixin(object):
     def _filter_or_exclude(self, negate, *args, **kwargs):
         """
         Overrides default behavior to handle linguist fields.
-        Q complex queries are not yet supported.
         """
-        builder = QueryBuilder(self.model, args, kwargs)
-        new_kwargs = builder.get_query_kwargs()
+        query = Query(self.model, args, kwargs)
 
-        # No translations found? Empty queryset.
-        if builder.has_lookups and not new_kwargs:
+        query_args = query.get_args()
+        query_kwargs = query.get_kwargs()
+
+        has_kwargs = query.has_linguist_kwargs and not query_kwargs
+        has_args = query.has_linguist_args and not query_args
+
+        # No translations but we looked for translations?
+        # Returns empty queryset.
+        if has_kwargs or has_args:
             return self._clone().none()
 
-        return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **new_kwargs)
+        return super(QuerySetMixin, self)._filter_or_exclude(negate, *query_args, **query_kwargs)
 
     def with_translations(self, **kwargs):
         """

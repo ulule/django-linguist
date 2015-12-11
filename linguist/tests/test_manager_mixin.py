@@ -308,6 +308,7 @@ class ManagerMixinTest(BaseTestCase):
 
     def test_lookup(self):
         from django.core.exceptions import FieldError
+        from django.db.models import Q
 
         languages = ('en', 'fr', 'it', 'de', 'pt')
 
@@ -338,3 +339,12 @@ class ManagerMixinTest(BaseTestCase):
         # Exclude
         self.assertEqual((FooModel.objects.exclude(title_en="Title in en")
                                           .exclude(title_it="Title in it").count()), 3)
+
+        # Q queries
+        self.assertEqual(FooModel.objects.filter((Q(title_en="Subtitle in en") | Q(title_en="Title in en"))).count(), 1)
+        self.assertEqual(FooModel.objects.filter((Q(title_en="Subtitle in en") | Q(title_en="Name in en"))).count(), 0)
+        self.assertEqual(FooModel.objects.filter(Q(title_en__contains="foo")).count(), 0)
+        self.assertEqual(FooModel.objects.filter(Q(title_en__contains="in")).count(), 1)
+        self.assertEqual(FooModel.objects.filter(Q(title="foo") | Q(title__contains="in")).count(), 1)
+        self.assertEqual(FooModel.objects.filter(Q(title="foo") & Q(title__contains="in")).count(), 0)
+        self.assertEqual(FooModel.objects.filter(Q(title_en__contains="in")).count(), 1)
