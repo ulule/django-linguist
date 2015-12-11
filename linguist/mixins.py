@@ -5,6 +5,7 @@ import copy
 import itertools
 import six
 
+from django.db import transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
 
@@ -55,7 +56,30 @@ class Query(object):
         return (list(self.model._linguist.fields) +
                 list(utils.get_language_fields(self.model._linguist.fields)))
 
-    def get_concrete_lookups(self):
+
+    @cached_property
+    def cleaned_args(self):
+        """
+        Returns positional arguments for related model query.
+        """
+        if not self.args:
+            return self.args
+
+        args = list(self.args)
+        for arg in args:
+            if isinstance(arg, Q):
+                for k, v in arg.children:
+                    if not self.is_linguist_lookup(k):
+                        continue
+                    try:
+                        args.pop(args.index(arg))
+                    except ValueError:
+                        pass
+
+        return args
+
+    @cached_property
+    def cleaned_kwargs(self):
         """
         Returns concrete field lookups.
         """
@@ -68,7 +92,8 @@ class Query(object):
 
         return lookups
 
-    def get_linguist_args(self):
+    @property
+    def linguist_args(self):
         """
         Returns linguist args from model args.
         """
@@ -82,8 +107,7 @@ class Query(object):
             for k, v in arg.children:
                 if self.is_linguist_lookup(k):
                     children.append(Q(**utils.get_translation_lookup(self.identifier, k, v)))
-                    if not self.has_linguist_args:
-                        self.has_linguist_args = True
+                    self.has_linguist_args = True
 
             q = copy.deepcopy(arg)
             q.children = children
@@ -91,18 +115,15 @@ class Query(object):
 
         return args
 
-    def get_linguist_kwargs(self, lookups):
+    @property
+    def linguist_kwargs(self):
         """
         Returns linguist lookup kwargs (related to Translation model).
         """
-        if isinstance(lookups, dict):
-            lookups = [(k, v) for k, v in six.iteritems(lookups)]
-
         lks = []
-        for k, v in lookups:
+        for k, v in six.iteritems(self.kwargs):
             if self.is_linguist_lookup(k):
-                lks.append(utils.get_translation_lookup(
-                    self.model._linguist.identifier, k, v))
+                lks.append(utils.get_translation_lookup(self.identifier, k, v))
 
         kwargs = {}
         for lk in lks:
@@ -127,57 +148,6 @@ class Query(object):
 
         return False
 
-    def get_linguist_object_ids(self, *args, **kwargs):
-        """
-        Returns object IDs for the given args/kwargs (directly passed
-        to Translation filter).
-        """
-        from .models import Translation
-        return list(set((Translation.objects
-                           .filter(*args, **kwargs)
-                           .values_list('object_id', flat=True))))
-
-    def get_args(self):
-        """
-        Returns positional arguments for related model query.
-        """
-        if not self.args:
-            return self.args
-
-        # Make a copy
-        args = list(self.args)
-
-        # Remove linguist fields.
-        for arg in args:
-            if not isinstance(arg, Q):
-                continue
-            for k, v in arg.children:
-                if self.is_linguist_lookup(k):
-                    # Because we iterate over children
-                    try:
-                        args.pop(args.index(arg))
-                    except ValueError:
-                        pass
-
-        # Add linguist object IDs.
-        ids = self.get_linguist_object_ids(*self.get_linguist_args())
-        if ids:
-            args.append(Q(**{'id__in': ids}))
-
-        return args
-
-    def get_kwargs(self):
-        """
-        Returns keyword arguments for related model query.
-        """
-        kwargs = self.get_concrete_lookups()
-
-        ids = self.get_linguist_object_ids(**self.get_linguist_kwargs(self.kwargs))
-        if ids:
-            kwargs['id__in'] = ids
-
-        return kwargs
-
 
 class QuerySetMixin(object):
     """
@@ -188,20 +158,29 @@ class QuerySetMixin(object):
         """
         Overrides default behavior to handle linguist fields.
         """
-        query = Query(self.model, args, kwargs)
+        from .models import Translation
 
-        query_args = query.get_args()
-        query_kwargs = query.get_kwargs()
+        q = Query(self.model, args, kwargs)
 
-        has_kwargs = query.has_linguist_kwargs and not query_kwargs
-        has_args = query.has_linguist_args and not query_args
+        new_args = q.cleaned_args
+        new_kwargs = q.cleaned_kwargs
+
+        ids = (Translation.objects
+                          .filter(*q.linguist_args, **q.linguist_kwargs)
+                          .values_list('object_id', flat=True))
+
+        if ids:
+            new_kwargs['id__in'] = ids
+
+        has_kwargs = q.has_linguist_kwargs and not (new_kwargs or new_args)
+        has_args = q.has_linguist_args and not (new_args or new_kwargs)
 
         # No translations but we looked for translations?
         # Returns empty queryset.
         if has_kwargs or has_args:
             return self._clone().none()
 
-        return super(QuerySetMixin, self)._filter_or_exclude(negate, *query_args, **query_kwargs)
+        return super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
 
     def with_translations(self, **kwargs):
         """
