@@ -48,9 +48,7 @@ class QuerySetMixin(object):
         if has_kwargs or has_args:
             return self._clone().none()
 
-        qs = super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
-
-        return qs
+        return super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
 
     @cached_property
     def concrete_field_names(self):
