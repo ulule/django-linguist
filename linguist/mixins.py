@@ -32,12 +32,11 @@ class QuerySetMixin(object):
         has_linguist_args = self.has_linguist_args(args)
         has_linguist_kwargs = self.has_linguist_kwargs(kwargs)
 
-        ids = (Translation.objects
-                          .filter(*translation_args, **translation_kwargs)
-                          .values_list('object_id', flat=True))
-
-        if ids:
-            new_kwargs['id__in'] = ids
+        if translation_args or translation_kwargs:
+            ids = list(set(Translation.objects.filter(*translation_args, **translation_kwargs)
+                                              .values_list('object_id', flat=True)))
+            if ids:
+                new_kwargs['id__in'] = ids
 
         has_kwargs = has_linguist_kwargs and not (new_kwargs or new_args)
         has_args = has_linguist_args and not (new_args or new_kwargs)
@@ -47,7 +46,10 @@ class QuerySetMixin(object):
         if has_kwargs or has_args:
             return self._clone().none()
 
-        return super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
+        qs = super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
+
+
+        return qs
 
     @cached_property
     def concrete_field_names(self):
