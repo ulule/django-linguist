@@ -316,7 +316,12 @@ class ManagerMixinTest(BaseTestCase):
             m = FooModel()
             m.activate_language(language)
             m.title = 'Title in %s' % language
+
+            if language == 'fr':
+                m.is_published = False
+
             m.save()
+
 
         # Exact
         self.assertEqual(FooModel.objects.filter(title_en="Title in en").count(), 1)
@@ -348,3 +353,5 @@ class ManagerMixinTest(BaseTestCase):
         self.assertEqual(FooModel.objects.filter(Q(title="foo") | Q(title__contains="in")).count(), 1)
         self.assertEqual(FooModel.objects.filter(Q(title="foo") & Q(title__contains="in")).count(), 0)
         self.assertEqual(FooModel.objects.filter(Q(title_en__contains="in")).count(), 1)
+        self.assertEqual(FooModel.objects.filter(Q(is_published=False) & (Q(title_fr__contains='bonjour') | Q(title_fr__contains="title"))).count(), 1)
+        self.assertEqual(FooModel.objects.filter(Q(is_published=True) & (Q(title_fr__contains='bonjour') | Q(title_fr__contains="title"))).count(), 0)

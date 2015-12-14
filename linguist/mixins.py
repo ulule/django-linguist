@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
-from contextlib import contextmanager
+import collections
 import copy
 import itertools
 import six
+
+from collections import defaultdict
+from contextlib import contextmanager
 
 from django.db import transaction
 from django.db.models import Q
@@ -48,7 +50,6 @@ class QuerySetMixin(object):
 
         qs = super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
 
-
         return qs
 
     @cached_property
@@ -67,39 +68,36 @@ class QuerySetMixin(object):
                 list(utils.get_language_fields(self.model._linguist.fields)))
 
     def has_linguist_kwargs(self, kwargs):
+        """
+        Parses the given kwargs and returns True if they contain
+        linguist lookups.
+        """
         for k in kwargs:
             if self.is_linguist_lookup(k):
                 return True
         return False
 
     def has_linguist_args(self, args):
+        """
+        Parses the given args and returns True if they contain
+        linguist lookups.
+        """
+        linguist_args = []
         for arg in args:
-            if isinstance(arg, Q):
-                for k, v in arg.children:
-                    if self.is_linguist_lookup(k):
-                        return True
-        return False
+            condition = self._get_linguist_condition(arg)
+            if condition:
+                linguist_args.append(condition)
+        return bool(linguist_args)
 
     def get_translation_args(self, args):
         """
         Returns linguist args from model args.
         """
         translation_args = []
-
         for arg in args:
-            if not isinstance(arg, Q):
-                continue
-
-            children = []
-            for k, v in arg.children:
-                if self.is_linguist_lookup(k):
-                    children.append(Q(**utils.get_translation_lookup(
-                        self.model._linguist.identifier, k, v)))
-
-            q = copy.deepcopy(arg)
-            q.children = children
-            translation_args.append(q)
-
+            condition = self._get_linguist_condition(arg, transform=True)
+            if condition:
+                translation_args.append(condition)
         return translation_args
 
     def get_translation_kwargs(self, kwargs):
@@ -132,6 +130,43 @@ class QuerySetMixin(object):
 
         return False
 
+    def _get_linguist_condition(self, condition, reverse=False, transform=False):
+        """
+        Parses Q tree and returns linguist lookups or model lookups
+        if reverse is True.
+        """
+        if isinstance(condition, Q):
+            children = []
+            for child in condition.children:
+                parsed = self._get_linguist_condition(
+                    condition=child,
+                    reverse=reverse,
+                    transform=transform)
+
+                if parsed is not None:
+                    children.append(parsed)
+
+            new_condition = copy.deepcopy(condition)
+            new_condition.children = children
+
+            return new_condition
+
+        # We are dealing with a lookup ('field', 'value').
+        lookup, value = condition
+        is_linguist = self.is_linguist_lookup(lookup)
+
+        if transform and is_linguist:
+            return Q(**utils.get_translation_lookup(
+                self.model._linguist.identifier,
+                lookup,
+                value))
+
+        if reverse and not is_linguist:
+            return condition
+
+        if not reverse and is_linguist:
+            return condition
+
     def get_cleaned_args(self, args):
         """
         Returns positional arguments for related model query.
@@ -139,16 +174,11 @@ class QuerySetMixin(object):
         if not args:
             return args
 
-        cleaned_args = list(args)
-
-        for arg in cleaned_args:
-            if isinstance(arg, Q):
-                for k, v in arg.children:
-                    if self.is_linguist_lookup(k):
-                        try:
-                            cleaned_args.pop(cleaned_args.index(arg))
-                        except ValueError:
-                            pass
+        cleaned_args = []
+        for arg in args:
+            condition = self._get_linguist_condition(arg, True)
+            if condition:
+                cleaned_args.append(condition)
 
         return cleaned_args
 

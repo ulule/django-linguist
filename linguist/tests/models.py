@@ -50,7 +50,8 @@ class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
     excerpt = models.TextField(null=True, blank=True)
     body = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    is_published = models.BooleanField(default=True)
+    
     objects = FooManager()
 
     class Meta:
