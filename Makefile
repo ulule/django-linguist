@@ -3,20 +3,19 @@ devenv:
 	. .venv/bin/activate && pip install -r requirements/development.txt
 
 clean:
-	rm -rvf .venv .tox .coverage build django-linguist* *.egg-info
+	@(rm -rvf .venv .tox .coverage build django-linguist* *.egg-info)
 
 pep8:
-	flake8 linguist --ignore=E501,E127,E128,E124
+	@(flake8 linguist --ignore=E501,E127,E128,E124)
 
 test:
-	coverage run --branch --source=linguist manage.py test linguist
-	coverage report --omit=linguist/test*
+	@(py.test --cov-report term --cov-config .coveragerc --cov=linguist --color=yes linguist/tests/ -k 'not concurrency')
 
 serve:
-	ENV=example python manage.py migrate && python manage.py runserver
+	@(ENV=example python manage.py migrate && python manage.py runserver)
 
 delpyc:
-	find . -name '*.pyc' -delete
+	@(find . -name '*.pyc' -delete)
 
 release:
-	python setup.py sdist register upload -s
+	@(python setup.py sdist register upload -s)

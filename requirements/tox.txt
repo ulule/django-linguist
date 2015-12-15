@@ -1,3 +1,2 @@
-coverage==3.6
-exam
-six
+-r base.txt
+-r test.txt

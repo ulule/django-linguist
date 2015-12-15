@@ -1,0 +1,4 @@
+[run]
+omit =
+    linguist/tests/*
+    linguist/migrations/*
