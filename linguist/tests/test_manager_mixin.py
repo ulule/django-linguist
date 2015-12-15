@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.core.exceptions import FieldError
+from django.db.models import Q
 from django.utils import translation
 
 from ..models import Translation
@@ -307,23 +309,19 @@ class ManagerMixinTest(BaseTestCase):
                     string = '%s' % obj.title  # noqa
 
     def test_lookup(self):
-        from django.core.exceptions import FieldError
-        from django.db.models import Q
-
         languages = ('en', 'fr', 'it', 'de', 'pt')
 
+        m = FooModel()
         for language in languages:
-            m = FooModel()
             m.activate_language(language)
             m.title = 'Title in %s' % language
-
             if language == 'fr':
-                m.is_published = False
-
+                m.is_published = True
             m.save()
 
+        self.assertEqual(FooModel.objects.count(), 1)
 
-        # Exact
+        # # Exact
         self.assertEqual(FooModel.objects.filter(title_en="Title in en").count(), 1)
         self.assertEqual(FooModel.objects.filter(title_fr='Different value').count(), 0)
         self.assertEqual(FooModel.objects.filter(title_it='Title in it').count(), 1)
@@ -342,8 +340,7 @@ class ManagerMixinTest(BaseTestCase):
         self.assertEqual(FooModel.objects.filter(title="Title in fr").count(), 0)
 
         # Exclude
-        self.assertEqual((FooModel.objects.exclude(title_en="Title in en")
-                                          .exclude(title_it="Title in it").count()), 3)
+        self.assertEqual(FooModel.objects.exclude(title_en="Title in en").count(), 0)
 
         # Q queries
         self.assertEqual(FooModel.objects.filter((Q(title_en="Subtitle in en") | Q(title_en="Title in en"))).count(), 1)
@@ -353,5 +350,5 @@ class ManagerMixinTest(BaseTestCase):
         self.assertEqual(FooModel.objects.filter(Q(title="foo") | Q(title__contains="in")).count(), 1)
         self.assertEqual(FooModel.objects.filter(Q(title="foo") & Q(title__contains="in")).count(), 0)
         self.assertEqual(FooModel.objects.filter(Q(title_en__contains="in")).count(), 1)
-        self.assertEqual(FooModel.objects.filter(Q(is_published=False) & (Q(title_fr__contains='bonjour') | Q(title_fr__contains="title"))).count(), 1)
-        self.assertEqual(FooModel.objects.filter(Q(is_published=True) & (Q(title_fr__contains='bonjour') | Q(title_fr__contains="title"))).count(), 0)
+        self.assertEqual(FooModel.objects.filter(Q(is_published=True) & (Q(title_fr__contains='bonjour') | Q(title_fr__contains="Title"))).count(), 1)
+        self.assertEqual(FooModel.objects.filter(Q(is_published=False) & (Q(title_fr__contains='bonjour') | Q(title_fr__contains="Title"))).count(), 0)
