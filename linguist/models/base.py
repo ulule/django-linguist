@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.db import models, IntegrityError, transaction
+from django.db import (
+    IntegrityError,
+    models,
+    transaction,
+)
+
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
