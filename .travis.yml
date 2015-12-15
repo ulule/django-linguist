@@ -1,4 +1,5 @@
 language: python
+services: postgresql
 env:
     - TOXENV=py26-django16
     - TOXENV=py27-django16
