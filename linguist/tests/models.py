@@ -10,6 +10,12 @@ import six
 
 # Managers
 # ------------------------------------------------------------------------------
+class SlugManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Slug model.
+    """
+    pass
+
 
 class FooManager(LinguistManagerMixin, models.Manager):
     """
@@ -42,6 +48,19 @@ class DeciderManager(LinguistManagerMixin, models.Manager):
 # Models
 # ------------------------------------------------------------------------------
 
+class SlugModel(six.with_metaclass(LinguistMeta, models.Model)):
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
+
+    objects = SlugManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'slug',
+            'fields': ('title',)
+        }
+
+
 class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
     """
     A foo.
@@ -50,8 +69,8 @@ class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
     excerpt = models.TextField(null=True, blank=True)
     body = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    is_published = models.BooleanField(default=True)
-    
+    is_published = models.BooleanField(default=False)
+
     objects = FooManager()
 
     class Meta:
