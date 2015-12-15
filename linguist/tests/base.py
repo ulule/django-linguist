@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 
 from exam.cases import Exam
 from exam.decorators import fixture, before, after
@@ -10,7 +10,7 @@ from . import settings
 from .models import FooModel
 
 
-class BaseTestCase(Exam, TestCase):
+class Fixtures(Exam):
     """
     Base test class mixin.
     """
@@ -44,3 +44,11 @@ class BaseTestCase(Exam, TestCase):
     @after
     def clear_cache(self):
         self.instance.clear_translations_cache()
+
+
+class BaseTransactionTestCase(Fixtures, TransactionTestCase):
+    pass
+
+
+class BaseTestCase(Fixtures, TestCase):
+    pass
