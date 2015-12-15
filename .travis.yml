@@ -1,5 +1,7 @@
 language: python
 services: postgresql
+before_script:
+  - psql -c "CREATE DATABASE django_linguist;" -U postgres
 env:
     - TOXENV=py26-django16
     - TOXENV=py27-django16
