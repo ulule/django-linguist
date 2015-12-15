@@ -20,7 +20,6 @@ CLASS_PATH_ERROR = 'django-linguist is unable to interpret settings value for %s
                    '(\'path.to.models.Class\', \'app_label\').'
 
 
-
 def get_language_name(code):
     languages = dict((lang_code, lang_name) for lang_code, lang_name in settings.SUPPORTED_LANGUAGES)
     return languages.get(code)
