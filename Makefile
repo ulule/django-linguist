@@ -9,7 +9,7 @@ pep8:
 	@(flake8 linguist --ignore=E501,E127,E128,E124)
 
 test:
-	@(py.test --cov-report term --cov-config .coveragerc --cov=linguist --color=yes linguist/tests/ -k 'not concurrency')
+	@(py.test -s --cov-report term --cov-config .coveragerc --cov=linguist --color=yes linguist/tests/ -k 'not concurrency')
 
 serve:
 	@(ENV=example python manage.py migrate && python manage.py runserver)
