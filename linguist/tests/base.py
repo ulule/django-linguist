@@ -15,6 +15,15 @@ class Fixtures(Exam):
     Base test class mixin.
     """
 
+    @fixture
+    def translated_instance(self):
+        m = FooModel()
+        for language in self.languages:
+            m.activate_language(language)
+            m.title = language
+            m.save()
+        return m
+
     @property
     def languages(self):
         return [language[0] for language in settings.LANGUAGES]
