@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+import six
+
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from linguist.models.base import Translation
 from linguist.metaclasses import ModelMeta as LinguistMeta
 from linguist.mixins import ManagerMixin as LinguistManagerMixin
-
-import six
-
 
 # Managers
 # ------------------------------------------------------------------------------
@@ -47,7 +49,6 @@ class DeciderManager(LinguistManagerMixin, models.Manager):
 
 # Models
 # ------------------------------------------------------------------------------
-
 class SlugModel(six.with_metaclass(LinguistMeta, models.Model)):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)

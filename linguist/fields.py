@@ -333,6 +333,12 @@ class TranslationField(object):
         """
         return None
 
+    def clone(self):
+        from django.utils.module_loading import import_string
+        name, path, args, kwargs = self.deconstruct()
+        cls = import_string(path)
+        return cls(*args, **kwargs)
+
     def deconstruct(self):
         name, path, args, kwargs = self.translated_field.deconstruct()
         if self.null is True:

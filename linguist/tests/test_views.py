@@ -21,7 +21,7 @@ class ViewTest(BaseTestCase):
     def _check_language(self, response):
         lang = translation.get_language()
         self.assertEqual(response.status_code, 200)
-        dct = json.loads(response.content)
+        dct = json.loads(response.content.decode('utf-8') )
         self.assertEqual(dct['title'], lang)
 
     def test_translation_activate(self):

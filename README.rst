@@ -332,9 +332,6 @@ Development
     # Don't already have virtualenv?
     $ sudo pip install virtualenv
 
-    # Don't have Bower? Install Node.js for your OS then...
-    $ sudo npm install -g bower
-
     # Clone and install dependencies
     $ git clone https://github.com/ulule/django-linguist.git
     $ cd django-linguist
@@ -356,7 +353,5 @@ Development
 Compatibility
 -------------
 
-- Python 2.6: Django 1.6
-- python 2.7: Django 1.6, 1.7, 1.8
-- Python 3.3: Django 1.6, 1.7, 1.8
-- Python 3.4: Django 1.6, 1.7, 1.8
+- python 2.7: Django 1.8, 1.9
+- Python 3.4: Django 1.8, 1.9
