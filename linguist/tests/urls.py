@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
+import json
+
 from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.core import serializers
 from django.forms.models import model_to_dict
-from django.http import JsonResponse
+from django.http import HttpResponse
+
 from .models import FooModel
 
 
 def home(request):
     obj = FooModel.objects.first()
-    return JsonResponse({'title': obj.title})
+    return HttpResponse(json.dumps({'title': obj.title}), content_type="application/json")
 
 
 urlpatterns = patterns('',
