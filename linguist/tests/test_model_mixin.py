@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.utils import translation
+
 from .. import settings
 from ..models import Translation
 
@@ -286,3 +288,18 @@ class ModelMixinTest(BaseTestCase):
 
         self.assertEqual(Translation.objects.count(), 0)
         self.assertEqual(CustomTranslationModel.objects.count(), 1)
+
+    def test_no_translation_default_language(self):
+        # This is the case of:
+        # * "default_language" is not defined in linguist meta
+        # * No translation is available for the current supported language
+        # So we always try to display default language or empty value
+        m = FooModel(title_en='hello', title_fr='bonjour')
+        m.save()
+
+        saved_lang = translation.get_language()
+        translation.activate('it')
+
+        self.assertEqual(m.title, 'hello')
+
+        translation.activate(saved_lang)

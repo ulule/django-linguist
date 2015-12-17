@@ -42,7 +42,12 @@ def default_value_getter(field):
     """
     def default_value_func_getter(self):
         localized_field = utils.build_localized_field_name(field, self._linguist.active_language)
-        return getattr(self, localized_field)
+        value = getattr(self, localized_field)
+        if value:
+            return value
+
+        default_field = utils.build_localized_field_name(field, self._linguist.default_language)
+        return getattr(self, default_field)
 
     return default_value_func_getter
 
