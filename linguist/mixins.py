@@ -236,9 +236,7 @@ class QuerySetMixin(object):
             grouped_translations[obj.object_id].append(obj)
 
         for instance in self:
-
             instance.clear_translations_cache()
-
             for translation in grouped_translations[instance.pk]:
                 instance._linguist.set_cache(instance=instance, translation=translation)
 
@@ -272,10 +270,26 @@ class ManagerMixin(object):
         """
         Proxy for ``QuerySetMixin.activate_language()`` method.
         """
-        self.get_queryset().active_language(language)
+        self.get_queryset().activate_language(language)
 
 
 class ModelMixin(object):
+
+    def prefetch_translations(self):
+        if not self.pk:
+            return
+
+        from .models import Translation
+
+        decider = self._meta.linguist.get('decider', Translation)
+        identifier = self._meta.linguist.get('identifier', None)
+
+        if identifier is None:
+            raise Exception('You must define Linguist "identifier" meta option')
+
+        translations = decider.objects.filter(identifier=identifier, object_id=self.pk)
+        for translation in translations:
+            self._linguist.set_cache(instance=self, translation=translation)
 
     @property
     def linguist_identifier(self):
