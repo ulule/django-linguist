@@ -12,6 +12,20 @@ from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
 # Managers
 # ------------------------------------------------------------------------------
+class AuthorManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Author model.
+    """
+    pass
+
+
+class ArticleManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Article model.
+    """
+    pass
+
+
 class SlugManager(LinguistManagerMixin, models.Manager):
     """
     Manager of Slug model.
@@ -49,6 +63,33 @@ class DeciderManager(LinguistManagerMixin, models.Manager):
 
 # Models
 # ------------------------------------------------------------------------------
+class Author(six.with_metaclass(LinguistMeta, models.Model)):
+    name = models.CharField(max_length=255)
+    bio = models.TextField(blank=True)
+
+    objects = AuthorManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'author',
+            'fields': ('bio',)
+        }
+
+
+class Article(six.with_metaclass(LinguistMeta, models.Model)):
+    title = models.CharField(max_length=255)
+    content = models.TextField(blank=True)
+    author = models.ForeignKey(Author)
+
+    objects = ArticleManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'article',
+            'fields': ('title', 'content')
+        }
+
+
 class SlugModel(six.with_metaclass(LinguistMeta, models.Model)):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)

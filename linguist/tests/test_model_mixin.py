@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.utils import translation
 
+from exam import before
 from .. import settings
 from ..models import Translation
 
@@ -19,6 +20,10 @@ class ModelMixinTest(BaseTestCase):
     """
     Tests Linguist mixin.
     """
+
+    @before
+    def before(self):
+        translation.activate('en')
 
     def test_linguist_identifier(self):
         self.assertTrue(hasattr(self.instance, 'linguist_identifier'))
@@ -200,31 +205,29 @@ class ModelMixinTest(BaseTestCase):
 
     def test_default_language_descriptor(self):
         m = DefaultLanguageFieldModel()
-
         self.assertEqual(m.lang, 'fr')
         self.assertEqual(m.default_language, 'fr')
 
-        m.title = 'Bonjour'
-
-        m.activate_language('en')
-        m.title = 'hello'
+        m.title_fr = 'Bonjour'
+        m.title_en = 'Hello'
         m.save()
-
         self.assertEqual(m.cached_translations_count, 2)
+
+        translation.activate('it')
+        self.assertEqual(m.title, 'Bonjour')
 
     def test_default_language_descriptor_with_callable(self):
         m = DefaultLanguageFieldModelWithCallable()
-
         self.assertEqual(m.lang, 'fr')
         self.assertEqual(m.default_language, 'fr')
 
-        m.title = 'Bonjour'
-
-        m.activate_language('en')
-        m.title = 'hello'
+        m.title_fr = 'Bonjour'
+        m.title_en = 'Hello'
         m.save()
-
         self.assertEqual(m.cached_translations_count, 2)
+
+        translation.activate('it')
+        self.assertEqual(m.title, 'Bonjour')
 
     def test_default_language_descriptor_with_multiple_languages(self):
         m = DefaultLanguageFieldModel(title='hello',     # title_en
@@ -247,20 +250,6 @@ class ModelMixinTest(BaseTestCase):
         m.save()
 
         self.assertEqual(Translation.objects.count(), 2)
-
-        # Let's reset
-        Translation.objects.all().delete()
-
-        # Now, let's set title_fr which is the default language, title should
-        # be title_fr, so we should have only one translation but "hello" should
-        # NOT override "bonjour".
-        m = DefaultLanguageFieldModel(title='hello',  # title_en
-                                      title_fr='bonjour',
-                                      lang='fr')
-
-        m.save()
-
-        self.assertEqual(Translation.objects.count(), 1)
 
     def test_language_fields(self):
         # default language
@@ -303,3 +292,10 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(m.title, 'hello')
 
         translation.activate(saved_lang)
+
+    def test_prefetch_translations(self):
+        article = self.articles[0]
+        article.prefetch_translations()
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)

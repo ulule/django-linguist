@@ -10,13 +10,19 @@ from django.utils import translation
 from ..models import Translation
 
 from .base import BaseTestCase
-from .models import FooModel
+from .models import FooModel, Article
 
 
 class ManagerMixinTest(BaseTestCase):
     """
     Tests the Linguist's manager mixin.
     """
+
+    def test_with_translations_with_related(self):
+        articles = self.articles.with_translations()
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                titles = [getattr(article, 'title_%s' % language) for article in articles]  # no qa
 
     def test_with_translations(self):
         # Be sure we have the method
@@ -301,6 +307,7 @@ class ManagerMixinTest(BaseTestCase):
 
         # With prefetch
         qs = FooModel.objects.with_translations()
+
         with self.assertNumQueries(0):
             for language in self.languages:
                 translation.activate(language)

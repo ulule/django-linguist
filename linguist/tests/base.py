@@ -7,13 +7,35 @@ from exam.decorators import fixture, before, after
 from ..models import Translation
 
 from . import settings
-from .models import FooModel
+from .models import (
+    Author,
+    Article,
+    FooModel,
+)
 
 
 class Fixtures(Exam):
     """
     Base test class mixin.
     """
+
+    @fixture
+    def author(self):
+        return Author.objects.create(
+            name='John Doe',
+            bio_en='I am John Doe',
+            bio_fr='Je suis John Doe')
+
+    @fixture
+    def articles(self):
+        for i in range(10):
+            article = Article.objects.create(
+                author=self.author,
+                title_en='%d in EN' % i,
+                content_en='%d in EN' % i,
+                title_fr='%d in FR' % i,
+                content_fr='%s FR' % i)
+        return Article.objects.all()
 
     @fixture
     def translated_instance(self):
