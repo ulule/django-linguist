@@ -46,7 +46,7 @@ def default_value_getter(field):
         if value:
             return value
 
-        default_field = utils.build_localized_field_name(field, self._linguist.default_language)
+        default_field = utils.build_localized_field_name(field, self.default_language)
         return getattr(self, default_field)
 
     return default_value_func_getter
