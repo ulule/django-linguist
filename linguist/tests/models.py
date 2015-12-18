@@ -71,6 +71,7 @@ class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
     body = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_published = models.BooleanField(default=False)
+    position = models.PositiveIntegerField(null=True, blank=True)
 
     objects = FooManager()
 

@@ -133,16 +133,16 @@ class QuerySetMixin(object):
         Parses Q tree and returns linguist lookups or model lookups
         if reverse is True.
         """
+        # We deal with a node
         if isinstance(condition, Q):
             children = []
             for child in condition.children:
-                parsed = self._get_linguist_condition(
-                    condition=child,
-                    reverse=reverse,
-                    transform=transform)
-
+                parsed = self._get_linguist_condition(condition=child,
+                                                      reverse=reverse,
+                                                      transform=transform)
                 if parsed is not None:
-                    children.append(parsed)
+                    if (isinstance(parsed, Q) and parsed.children) or isinstance(parsed, tuple):
+                        children.append(parsed)
 
             new_condition = copy.deepcopy(condition)
             new_condition.children = children
@@ -154,15 +154,11 @@ class QuerySetMixin(object):
         is_linguist = self.is_linguist_lookup(lookup)
 
         if transform and is_linguist:
-            return Q(**utils.get_translation_lookup(
-                self.model._linguist.identifier,
-                lookup,
-                value))
+            return Q(**utils.get_translation_lookup(self.model._linguist.identifier,
+                                                    lookup,
+                                                    value))
 
-        if reverse and not is_linguist:
-            return condition
-
-        if not reverse and is_linguist:
+        if (reverse and not is_linguist) or (not reverse and is_linguist):
             return condition
 
     def get_cleaned_args(self, args):
