@@ -275,7 +275,7 @@ class ManagerMixin(object):
 
 class ModelMixin(object):
 
-    def prefetch_translations(self):
+    def prefetch_translations(self, related=True):
         if not self.pk:
             return
 
@@ -290,6 +290,12 @@ class ModelMixin(object):
         translations = decider.objects.filter(identifier=identifier, object_id=self.pk)
         for translation in translations:
             self._linguist.set_cache(instance=self, translation=translation)
+
+        if related:
+            for field, model in self._meta.get_concrete_fields_with_model():
+                value = getattr(self, field.name)
+                if hasattr(value, 'prefetch_translations'):
+                    value.prefetch_translations()
 
     @property
     def linguist_identifier(self):

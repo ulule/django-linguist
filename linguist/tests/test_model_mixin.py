@@ -295,7 +295,16 @@ class ModelMixinTest(BaseTestCase):
 
     def test_prefetch_translations(self):
         article = self.articles[0]
-        article.prefetch_translations()
+        article.prefetch_translations(related=True)
         with self.assertNumQueries(0):
             for language in ('fr', 'en'):
                 title = getattr(article, 'title_%s' % language)
+                author_bio = getattr(article.author, 'bio_%s' % language)
+
+        article.clear_translations_cache()
+        article.author.clear_translations_cache()
+        article.prefetch_translations(related=False)
+        with self.assertNumQueries(2):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+                author_bio = getattr(article.author, 'bio_%s' % language)

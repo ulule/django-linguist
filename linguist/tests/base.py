@@ -8,6 +8,7 @@ from ..models import Translation
 
 from . import settings
 from .models import (
+    Tag,
     Author,
     Article,
     FooModel,
@@ -27,15 +28,24 @@ class Fixtures(Exam):
             bio_fr='Je suis John Doe')
 
     @fixture
+    def tag(self):
+        return Tag.objects.create(name_fr='tag fr', name_en= 'tag en')
+
+    @fixture
     def articles(self):
         for i in range(10):
             article = Article.objects.create(
                 author=self.author,
+                slug='article-%d' % i,
                 title_en='%d in EN' % i,
                 content_en='%d in EN' % i,
                 title_fr='%d in FR' % i,
                 content_fr='%s FR' % i)
-        return Article.objects.all()
+
+            article.tags.add(self.tag)
+            article.save()
+
+        return Article.objects.all().select_related('author')
 
     @fixture
     def translated_instance(self):

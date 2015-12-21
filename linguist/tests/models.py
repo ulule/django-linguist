@@ -12,6 +12,13 @@ from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
 # Managers
 # ------------------------------------------------------------------------------
+class TagManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Tag model.
+    """
+    pass
+
+
 class AuthorManager(LinguistManagerMixin, models.Manager):
     """
     Manager of Author model.
@@ -63,6 +70,18 @@ class DeciderManager(LinguistManagerMixin, models.Manager):
 
 # Models
 # ------------------------------------------------------------------------------
+class Tag(six.with_metaclass(LinguistMeta, models.Model)):
+    name = models.CharField(max_length=255)
+
+    objects = TagManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'tag',
+            'fields': ('name',)
+        }
+
+
 class Author(six.with_metaclass(LinguistMeta, models.Model)):
     name = models.CharField(max_length=255)
     bio = models.TextField(blank=True)
@@ -78,8 +97,10 @@ class Author(six.with_metaclass(LinguistMeta, models.Model)):
 
 class Article(six.with_metaclass(LinguistMeta, models.Model)):
     title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
     content = models.TextField(blank=True)
     author = models.ForeignKey(Author)
+    tags = models.ManyToManyField(Tag)
 
     objects = ArticleManager()
 
