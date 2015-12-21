@@ -292,10 +292,11 @@ class ModelMixin(object):
             self._linguist.set_cache(instance=self, translation=translation)
 
         if related:
-            for field, model in self._meta.get_concrete_fields_with_model():
-                value = getattr(self, field.name)
-                if hasattr(value, 'prefetch_translations'):
-                    value.prefetch_translations()
+            for f in self._meta.get_fields():
+                if f.is_relation:
+                    value = getattr(self, f.name, None)
+                    if hasattr(value, 'prefetch_translations'):
+                        value.prefetch_translations()
 
     @property
     def linguist_identifier(self):
