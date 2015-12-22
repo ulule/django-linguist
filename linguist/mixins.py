@@ -303,7 +303,7 @@ class ManagerMixin(object):
 
 class ModelMixin(object):
 
-    def prefetch_translations(self, related=True):
+    def prefetch_translations(self, *args):
         if not self.pk:
             return
 
@@ -319,12 +319,13 @@ class ModelMixin(object):
         for translation in translations:
             self._linguist.set_cache(instance=self, translation=translation)
 
-        if related:
-            for f in self._meta.get_fields():
-                if f.is_relation:
-                    value = getattr(self, f.name, None)
-                    if hasattr(value, 'prefetch_translations'):
-                        value.prefetch_translations()
+        if args:
+            fields = [arg for arg in args if arg in self._meta.get_all_field_names()]
+            for field in fields:
+                f = self._meta.get_field(field)
+                value = getattr(self, f.name, None)
+                if issubclass(value.__class__, ModelMixin):
+                    value.prefetch_translations()
 
     @property
     def linguist_identifier(self):

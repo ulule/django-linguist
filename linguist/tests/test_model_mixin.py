@@ -9,7 +9,8 @@ from ..models import Translation
 
 from .base import BaseTestCase
 
-from .models import (FooModel,
+from .models import (Article,
+                     FooModel,
                      DefaultLanguageFieldModel,
                      DefaultLanguageFieldModelWithCallable,
                      CustomTranslationModel,
@@ -295,16 +296,22 @@ class ModelMixinTest(BaseTestCase):
 
     def test_prefetch_translations(self):
         article = self.articles[0]
-        article.prefetch_translations(related=True)
+
+        # No related
+        with self.assertNumQueries(1):
+            article.prefetch_translations()
         with self.assertNumQueries(0):
             for language in ('fr', 'en'):
                 title = getattr(article, 'title_%s' % language)
-                author_bio = getattr(article.author, 'bio_%s' % language)
 
+        # Clean
         article.clear_translations_cache()
         article.author.clear_translations_cache()
-        article.prefetch_translations(related=False)
+
+        # ForeignKey
         with self.assertNumQueries(2):
+            article.prefetch_translations('author')
+        with self.assertNumQueries(0):
             for language in ('fr', 'en'):
                 title = getattr(article, 'title_%s' % language)
                 author_bio = getattr(article.author, 'bio_%s' % language)
