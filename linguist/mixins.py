@@ -7,6 +7,7 @@ import six
 from collections import defaultdict
 from contextlib import contextmanager
 
+import django
 from django.db import transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -18,6 +19,10 @@ class QuerySetMixin(object):
     """
     Linguist QuerySet Mixin.
     """
+
+    def __init__(self, *args, **kwargs):
+        self._linguist_cache = {}
+        super(QuerySetMixin, self).__init__(*args, **kwargs)
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         """
@@ -49,6 +54,45 @@ class QuerySetMixin(object):
             return self._clone().none()
 
         return super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
+
+    def _update_linguist_cache(self):
+        hidden_attrs = ['_linguist_translations', '_linguist_cache']
+        fields = self.model._linguist.fields
+        attrs = hidden_attrs + list(self.model._linguist.fields)
+
+        for obj in self:
+            for k, v in six.iteritems(obj.__dict__):
+                if k in hidden_attrs:
+                    if obj.pk not in self._linguist_cache:
+                        self._linguist_cache[obj.pk] = {}
+                    self._linguist_cache[obj.pk][k] = v
+                if isinstance(v, dict):
+                    for k, v in six.iteritems(v):
+                        if k in fields:
+                            self._linguist_cache[obj.pk][k] = v
+
+    def _restore_linguist_cache(self):
+        if self._linguist_cache:
+            for obj in self:
+                if obj.pk in self._linguist_cache:
+                    obj.__dict__.update(self._linguist_cache[obj.pk])
+
+    def _clone(self, klass=None, setup=False, **kwargs):
+        # Update the current qs cache
+        self._update_linguist_cache()
+        kwargs.update({'_linguist_cache': self._linguist_cache})
+
+        # Fix Django 1.9
+        if django.VERSION < (1, 9):
+            kwargs.update({'klass': klass, 'setup': setup})
+
+        # Clone qs with updated cached
+        clone = super(QuerySetMixin, self)._clone(**kwargs)
+
+        # Restore cache on objects.
+        clone._restore_linguist_cache()
+
+        return clone
 
     @cached_property
     def concrete_field_names(self):

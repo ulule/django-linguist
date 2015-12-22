@@ -18,6 +18,30 @@ class ManagerMixinTest(BaseTestCase):
     Tests the Linguist's manager mixin.
     """
 
+    def test_with_translations_get(self):
+        articles = self.articles
+
+        with self.assertNumQueries(3):
+            qs = Article.objects.filter(slug='article-1').with_translations()
+
+        article_qs = qs[0]
+        article_get = qs.get()
+
+        attrs = article_qs._linguist.fields + ['_linguist_translations', '_linguist_cache']
+
+        # To be sure our tests are okay on num queries because
+        # we only deal with fr/en.
+        translation.activate('en')
+
+        with self.assertNumQueries(0):
+            for instance in [article_qs, article_get]:
+                for attr in attrs:
+                    self.assertTrue(hasattr(instance, attr))
+
+                for attr in article_qs._linguist.fields:
+                    for lang in ('fr', 'en'):
+                        value = getattr(instance, '%s_%s' % (attr, lang))
+
     def test_with_translations_with_related(self):
         articles = self.articles.with_translations()
         with self.assertNumQueries(0):
