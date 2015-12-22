@@ -21,7 +21,8 @@ class QuerySetMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self._linguist_cache = {}
+        self._prefetched_translations_cache = kwargs.pop('_prefetched_translations_cache', [])
+        self._prefetch_translations_done = kwargs.pop('_prefetch_translations_done', False)
         super(QuerySetMixin, self).__init__(*args, **kwargs)
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
@@ -55,44 +56,27 @@ class QuerySetMixin(object):
 
         return super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
 
-    def _update_linguist_cache(self):
-        hidden_attrs = ['_linguist_translations', '_linguist_cache']
-        fields = self.model._linguist.fields
-        attrs = hidden_attrs + list(self.model._linguist.fields)
-
-        for obj in self:
-            for k, v in six.iteritems(obj.__dict__):
-                if k in hidden_attrs:
-                    if obj.pk not in self._linguist_cache:
-                        self._linguist_cache[obj.pk] = {}
-                    self._linguist_cache[obj.pk][k] = v
-                if isinstance(v, dict):
-                    for k, v in six.iteritems(v):
-                        if k in fields:
-                            self._linguist_cache[obj.pk][k] = v
-
-    def _restore_linguist_cache(self):
-        if self._linguist_cache:
-            for obj in self:
-                if obj.pk in self._linguist_cache:
-                    obj.__dict__.update(self._linguist_cache[obj.pk])
-
     def _clone(self, klass=None, setup=False, **kwargs):
-        # Update the current qs cache
-        self._update_linguist_cache()
-        kwargs.update({'_linguist_cache': self._linguist_cache})
+        kwargs.update({
+            '_prefetched_translations_cache': self._prefetched_translations_cache,
+            '_prefetch_translations_done': self._prefetch_translations_done,
+        })
 
-        # Fix Django 1.9
         if django.VERSION < (1, 9):
-            kwargs.update({'klass': klass, 'setup': setup})
+            kwargs.update({
+                'klass': klass,
+                'setup': setup,
+            })
 
-        # Clone qs with updated cached
-        clone = super(QuerySetMixin, self)._clone(**kwargs)
+        return super(QuerySetMixin, self)._clone(**kwargs)
 
-        # Restore cache on objects.
-        clone._restore_linguist_cache()
-
-        return clone
+    def iterator(self):
+        for obj in super(QuerySetMixin, self).iterator():
+            obj.clear_translations_cache()
+            if obj.pk in self._prefetched_translations_cache:
+                for translation in self._prefetched_translations_cache[obj.pk]:
+                    obj._linguist.set_cache(instance=obj, translation=translation)
+            yield obj
 
     @cached_property
     def concrete_field_names(self):
@@ -243,6 +227,9 @@ class QuerySetMixin(object):
         * ``languages``: ``language`` values for SELECT IN
         * ``chunks_length``: fetches IDs by chunk
         """
+        if self._prefetch_translations_done:
+            return self._clone()
+
         from .models import Translation
 
         decider = self.model._meta.linguist.get('decider', Translation)
@@ -275,16 +262,13 @@ class QuerySetMixin(object):
             translations = decider.objects.filter(**lookup)
 
         grouped_translations = defaultdict(list)
-
         for obj in translations:
             grouped_translations[obj.object_id].append(obj)
 
-        for instance in self:
-            instance.clear_translations_cache()
-            for translation in grouped_translations[instance.pk]:
-                instance._linguist.set_cache(instance=instance, translation=translation)
+        self._prefetched_translations_cache = grouped_translations
+        self._prefetch_translations_done = True
 
-        return self
+        return self._clone()
 
     def activate_language(self, language):
         """

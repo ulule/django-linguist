@@ -18,36 +18,7 @@ class ManagerMixinTest(BaseTestCase):
     Tests the Linguist's manager mixin.
     """
 
-    def test_with_translations_get(self):
-        articles = self.articles
-
-        with self.assertNumQueries(3):
-            qs = Article.objects.filter(slug='article-1').with_translations()
-
-        article_qs = qs[0]
-        article_get = qs.get()
-
-        attrs = article_qs._linguist.fields + ['_linguist_translations', '_linguist_cache']
-
-        # To be sure our tests are okay on num queries because
-        # we only deal with fr/en.
-        translation.activate('en')
-
-        with self.assertNumQueries(0):
-            for instance in [article_qs, article_get]:
-                for attr in attrs:
-                    self.assertTrue(hasattr(instance, attr))
-
-                for attr in article_qs._linguist.fields:
-                    for lang in ('fr', 'en'):
-                        value = getattr(instance, '%s_%s' % (attr, lang))
-
-    def test_with_translations_with_related(self):
-        articles = self.articles.with_translations()
-        with self.assertNumQueries(0):
-            for language in ('fr', 'en'):
-                titles = [getattr(article, 'title_%s' % language) for article in articles]  # no qa
-
+    # def test_with_translations_with_related(self):
     def test_with_translations(self):
         # Be sure we have the method
         self.assertTrue(hasattr(FooModel.objects, 'with_translations'))
@@ -99,6 +70,36 @@ class ManagerMixinTest(BaseTestCase):
         # Database should be not hit
         with self.assertNumQueries(0):
             self.assertEqual(instance.cached_translations_count, 2)
+
+        articles = self.articles
+
+        # Now translations are cached, no db hit expected.
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                values = [getattr(article, 'title_%s' % language) for article in articles]
+                self.assertEqual(len(values), 10)
+
+        # 1 - article
+        # 2 - translations
+        with self.assertNumQueries(2):
+            qs = Article.objects.filter(slug='article-1').with_translations()
+
+        # Test get() and qs[0]
+        article_qs = qs[0]
+        article_get = qs.get()
+        attrs = article_qs._linguist.fields + ['_linguist_translations', '_linguist_cache']
+
+        # To be sure our tests are okay on num queries because
+        # we only deal with fr/en.
+        translation.activate('en')
+        with self.assertNumQueries(0):
+            for instance in [article_qs, article_get]:
+                for attr in attrs:
+                    self.assertTrue(hasattr(instance, attr))
+
+                for attr in article_qs._linguist.fields:
+                    for lang in ('fr', 'en'):
+                        value = getattr(instance, '%s_%s' % (attr, lang))
 
     def test_with_translations_args(self):
         # Create English content
@@ -330,7 +331,7 @@ class ManagerMixinTest(BaseTestCase):
                     string = '%s' % obj.title  # noqa
 
         # With prefetch
-        qs = FooModel.objects.with_translations()
+        qs = list(FooModel.objects.with_translations())
 
         with self.assertNumQueries(0):
             for language in self.languages:

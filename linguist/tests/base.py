@@ -33,6 +33,7 @@ class Fixtures(Exam):
 
     @fixture
     def articles(self):
+        articles = []
         for i in range(10):
             article = Article.objects.create(
                 author=self.author,
@@ -41,11 +42,10 @@ class Fixtures(Exam):
                 content_en='%d in EN' % i,
                 title_fr='%d in FR' % i,
                 content_fr='%s FR' % i)
-
             article.tags.add(self.tag)
             article.save()
-
-        return Article.objects.all().select_related('author')
+            articles.append(article)
+        return articles
 
     @fixture
     def translated_instance(self):
@@ -79,7 +79,6 @@ class Fixtures(Exam):
     @before
     def setup_models(self):
         self.instance = FooModel()
-
         self.instance.clear_translations_cache()
 
     @after
