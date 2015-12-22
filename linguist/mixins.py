@@ -228,7 +228,7 @@ class QuerySetMixin(object):
         * ``chunks_length``: fetches IDs by chunk
         """
         if self._prefetch_translations_done:
-            return self._clone()
+            return self
 
         from .models import Translation
 
