@@ -227,7 +227,10 @@ class QuerySetMixin(object):
         * ``languages``: ``language`` values for SELECT IN
         * ``chunks_length``: fetches IDs by chunk
         """
-        if self._prefetch_translations_done:
+
+        force = kwargs.pop('force', False)
+
+        if self._prefetch_translations_done and force is False:
             return self
 
         from .models import Translation
