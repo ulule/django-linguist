@@ -69,7 +69,7 @@ class ManagerMixinTest(BaseTestCase):
 
         # Database should be not hit
         with self.assertNumQueries(0):
-            self.assertEqual(instance.cached_translations_count, 2)
+            self.assertEqual(instance.cached_translations_count, 18)
 
         articles = self.articles
 
@@ -144,7 +144,7 @@ class ManagerMixinTest(BaseTestCase):
         self.instance = instances[0]
 
         # Cache has been cleared and we got now the two titles
-        self.assertEqual(self.instance.cached_translations_count, 2)
+        self.assertEqual(self.instance.cached_translations_count, 18)
 
         # Verify dict
         with self.assertNumQueries(0):
@@ -165,7 +165,7 @@ class ManagerMixinTest(BaseTestCase):
         self.instance = instances[0]
 
         # Cached has been cleared. We should have title/body for each language
-        self.assertEqual(self.instance.cached_translations_count, 4)
+        self.assertEqual(self.instance.cached_translations_count, 18)
 
         # Verify dict
         self.assertTrue(self.instance._linguist.translations['title']['fr'])
@@ -187,7 +187,7 @@ class ManagerMixinTest(BaseTestCase):
         self.instance = instances[0]
 
         # Cache has been cleared. We should have title/excerpt for English only.
-        self.assertEqual(self.instance.cached_translations_count, 2)
+        self.assertEqual(self.instance.cached_translations_count, 18)
 
         # Verify dict
         self.assertTrue(self.instance._linguist.translations['title']['en'])
@@ -207,7 +207,7 @@ class ManagerMixinTest(BaseTestCase):
         self.instance = instances[0]
 
         # Cache has been cleared. We should have title/excerpt/body for French only
-        self.assertEqual(self.instance.cached_translations_count, 3)
+        self.assertEqual(self.instance.cached_translations_count, 18)
 
         # Verify dict
         self.assertTrue(self.instance._linguist.translations['title']['fr'])
@@ -224,7 +224,7 @@ class ManagerMixinTest(BaseTestCase):
         self.instance = instances[0]
 
         # Cache has been cleared. We should have titles for French and English
-        self.assertEqual(self.instance.cached_translations_count, 2)
+        self.assertEqual(self.instance.cached_translations_count, 18)
 
         # Verify dict
         self.assertTrue(self.instance._linguist.translations['title']['fr'])

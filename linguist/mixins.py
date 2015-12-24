@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.utils.functional import cached_property
 
 from . import utils
+from .cache import CachedTranslation
 
 
 class QuerySetMixin(object):
@@ -76,6 +77,7 @@ class QuerySetMixin(object):
             if obj.pk in self._prefetched_translations_cache:
                 for translation in self._prefetched_translations_cache[obj.pk]:
                     obj._linguist.set_cache(instance=obj, translation=translation)
+                create_empty_translations(obj)
             yield obj
 
     @cached_property
@@ -319,6 +321,8 @@ class ModelMixin(object):
         for translation in translations:
             self._linguist.set_cache(instance=self, translation=translation)
 
+        create_empty_translations(self)
+
         if args:
             fields = [arg for arg in args if arg in self._meta.get_all_field_names()]
             for field in fields:
@@ -415,3 +419,16 @@ class ModelMixin(object):
         super(ModelMixin, self).save(*args, **kwargs)
 
         self._linguist.decider.objects.save_translations([self, ])
+
+
+def create_empty_translations(obj):
+    for field in obj._linguist.fields:
+        if field in obj._linguist.translations:
+            languages = obj._linguist.translations[field]
+            missing_languages = list(set(obj._linguist.supported_languages) - set(languages.keys()))
+            for language in missing_languages:
+                obj._linguist.translations[field][language] = CachedTranslation()
+        else:
+            obj._linguist.translations[field] = {}
+            for language in obj._linguist.supported_languages:
+                obj._linguist.translations[field][language] = CachedTranslation()
