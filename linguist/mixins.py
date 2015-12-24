@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import collections
 import copy
 import itertools
 import six
@@ -8,7 +7,6 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 import django
-from django.db import transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
 
@@ -74,6 +72,7 @@ class QuerySetMixin(object):
     def iterator(self):
         for obj in super(QuerySetMixin, self).iterator():
             obj.clear_translations_cache()
+
             if obj.pk in self._prefetched_translations_cache:
                 for translation in self._prefetched_translations_cache[obj.pk]:
                     obj._linguist.set_cache(instance=obj, translation=translation)
@@ -229,7 +228,10 @@ class QuerySetMixin(object):
         * ``languages``: ``language`` values for SELECT IN
         * ``chunks_length``: fetches IDs by chunk
         """
-        if self._prefetch_translations_done:
+
+        force = kwargs.pop('force', False)
+
+        if self._prefetch_translations_done and force is False:
             return self
 
         from .models import Translation
