@@ -365,3 +365,15 @@ class ModelMixinTest(BaseTestCase):
         with self.assertNumQueries(1):
             for language in ('fr', 'en'):
                 title = getattr(article, 'title_%s' % language)
+
+        #
+        # Be sure prefetch_translations(languages='en') is interpreted as
+        # prefetch_translations(languages=['en'])
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(fields=['title'], languages='en', populate_missing=False)
+
+        with self.assertNumQueries(1):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
