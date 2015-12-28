@@ -12,6 +12,7 @@ from django.utils.functional import cached_property
 
 from . import utils
 from .cache import CachedTranslation
+from .helpers import prefetch_translations
 
 
 class QuerySetMixin(object):
@@ -277,44 +278,7 @@ class ModelMixin(object):
         if not self.pk:
             return
 
-        from .models import Translation
-
-        # Options
-        only_fields = kwargs.get('fields', None)
-        only_languages = kwargs.get('languages', None)
-        populate_missing = kwargs.get('populate_missing', None)
-
-        decider = self._meta.linguist.get('decider', Translation)
-        identifier = self._meta.linguist.get('identifier', None)
-
-        if identifier is None:
-            raise Exception('You must define Linguist "identifier" meta option')
-
-        lookups = {
-            'identifier': identifier,
-            'object_id': self.pk,
-        }
-
-        # 'fields' option: filter by field names
-        if only_fields is not None:
-            for field_name in only_fields:
-                lookups['field_name'] = field_name
-
-        # 'languages' option: filter by language
-        if only_languages is not None:
-            if not isinstance(only_languages, (tuple, list)):
-                only_languages = [only_languages]
-            for language in only_languages:
-                lookups['language'] = language
-
-        translations = decider.objects.filter(**lookups)
-        for translation in translations:
-            self._linguist.set_cache(instance=self, translation=translation)
-
-        # 'populate_missing' option
-        populate = populate_missing if populate_missing is not None else True
-        if populate:
-            self.populate_missing_translations()
+        prefetch_translations([self], **kwargs)
 
         if args:
             fields = [arg for arg in args if arg in self._meta.get_all_field_names()]

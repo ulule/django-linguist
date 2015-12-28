@@ -320,13 +320,13 @@ class ModelMixinTest(BaseTestCase):
         article = self.articles[0]
 
         #
-        # prefetch_translations(fields=['title'])
+        # prefetch_translations(field_names=['title'])
         #
 
         article.clear_translations_cache()
 
         with self.assertNumQueries(1):
-            article.prefetch_translations(fields=['title'])
+            article.prefetch_translations(field_names=['title'])
 
         with self.assertNumQueries(0):
             for language in ('fr', 'en'):
@@ -337,13 +337,13 @@ class ModelMixinTest(BaseTestCase):
                 self.assertEqual(getattr(article, 'content_%s' % language), '')
 
         #
-        # prefetch_translations(skip_populate=True)
+        # prefetch_translations(populate_missing=True)
         #
 
         article.clear_translations_cache()
 
         with self.assertNumQueries(1):
-            article.prefetch_translations(fields=['title'], populate_missing=False)
+            article.prefetch_translations(field_names=['title'], populate_missing=False)
 
         with self.assertNumQueries(0):
             for language in ('fr', 'en'):
@@ -360,7 +360,7 @@ class ModelMixinTest(BaseTestCase):
         article.clear_translations_cache()
 
         with self.assertNumQueries(1):
-            article.prefetch_translations(fields=['title'], languages=['fr'], populate_missing=False)
+            article.prefetch_translations(field_names=['title'], languages=['fr'], populate_missing=False)
 
         with self.assertNumQueries(1):
             for language in ('fr', 'en'):
@@ -372,7 +372,7 @@ class ModelMixinTest(BaseTestCase):
         article.clear_translations_cache()
 
         with self.assertNumQueries(1):
-            article.prefetch_translations(fields=['title'], languages='en', populate_missing=False)
+            article.prefetch_translations(field_names=['title'], languages='en', populate_missing=False)
 
         with self.assertNumQueries(1):
             for language in ('fr', 'en'):
