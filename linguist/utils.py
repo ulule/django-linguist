@@ -247,6 +247,11 @@ def get_grouped_translations(instances, **kwargs):
     Takes instances and returns grouped translations ready to
     be set in cache.
     """
+    grouped_translations = collections.defaultdict(list)
+
+    if not instances:
+        return grouped_translations
+
     if not isinstance(instances, collections.Iterable):
         instances = [instances]
 
@@ -293,7 +298,6 @@ def get_grouped_translations(instances, **kwargs):
         lookup['object_id__in'] = instances_ids
         translations = decider.objects.filter(**lookup)
 
-    grouped_translations = collections.defaultdict(list)
     for translation in translations:
         grouped_translations[translation.object_id].append(translation)
 
