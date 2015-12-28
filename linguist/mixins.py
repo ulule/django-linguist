@@ -235,42 +235,7 @@ class QuerySetMixin(object):
         if self._prefetch_translations_done and force is False:
             return self
 
-        from .models import Translation
-
-        decider = self.model._meta.linguist.get('decider', Translation)
-        identifier = self.model._meta.linguist.get('identifier', None)
-        chunks_length = kwargs.get('chunks_length', None)
-
-        if identifier is None:
-            raise Exception('You must define Linguist "identifier" meta option')
-
-        lookup = dict(identifier=identifier)
-
-        for kwarg in ('field_names', 'languages'):
-            value = kwargs.get(kwarg, None)
-            if value is not None:
-                if not isinstance(value, (list, tuple)):
-                    value = [value]
-                lookup['%s__in' % kwarg[:-1]] = value
-
-        if chunks_length is not None:
-            translations_qs = []
-
-            for ids in utils.chunks(self.values_list('id', flat=True), chunks_length):
-                ids_lookup = copy.copy(lookup)
-                ids_lookup['object_id__in'] = ids
-                translations_qs.append(decider.objects.filter(**ids_lookup))
-
-            translations = itertools.chain.from_iterable(translations_qs)
-        else:
-            lookup['object_id__in'] = [obj.pk for obj in self]
-            translations = decider.objects.filter(**lookup)
-
-        grouped_translations = defaultdict(list)
-        for obj in translations:
-            grouped_translations[obj.object_id].append(obj)
-
-        self._prefetched_translations_cache = grouped_translations
+        self._prefetched_translations_cache = utils.get_grouped_translations(self, **kwargs)
         self._prefetch_translations_done = True
 
         return self._clone()

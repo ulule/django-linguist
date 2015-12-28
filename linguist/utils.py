@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 
 try:
     # py27 / py3 only
@@ -6,6 +7,7 @@ try:
 except ImportError:
     from django.utils.importlib import import_module
 
+from django.db.models import QuerySet
 from django.core import exceptions
 from django.utils import six
 from django.utils.encoding import force_text
@@ -238,3 +240,61 @@ def get_field_name_from_lookup(lookup):
     Returns field name from query lookup.
     """
     return lookup.split('__')[0]
+
+
+def get_grouped_translations(instances, **kwargs):
+    """
+    Takes instances and returns grouped translations ready to
+    be set in cache.
+    """
+    if not isinstance(instances, collections.Iterable):
+        instances = [instances]
+
+    if isinstance(instances, QuerySet):
+        model = instances.model
+    else:
+        model = instances[0]._meta.model
+
+    instances_ids = []
+
+    for instance in instances:
+        instances_ids.append(instance.pk)
+
+        if instance._meta.model != model:
+            raise Exception("You cannot use different model instances, only one authorized.")
+
+    from .models import Translation
+    from .mixins import ModelMixin
+
+    decider = model._meta.linguist.get('decider', Translation)
+    identifier = model._meta.linguist.get('identifier', None)
+    chunks_length = kwargs.get('chunks_length', None)
+    populate_missing = kwargs.get('populate_missing', True)
+
+    if identifier is None:
+        raise Exception('You must define Linguist "identifier" meta option')
+
+    lookup = dict(identifier=identifier)
+    for kwarg in ('field_names', 'languages'):
+        value = kwargs.get(kwarg, None)
+        if value is not None:
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+            lookup['%s__in' % kwarg[:-1]] = value
+
+    if chunks_length is not None:
+        translations_qs = []
+        for ids in utils.chunks(instances_ids, chunks_length):
+            ids_lookup = copy.copy(lookup)
+            ids_lookup['object_id__in'] = ids
+            translations_qs.append(decider.objects.filter(**ids_lookup))
+        translations = itertools.chain.from_iterable(translations_qs)
+    else:
+        lookup['object_id__in'] = instances_ids
+        translations = decider.objects.filter(**lookup)
+
+    grouped_translations = collections.defaultdict(list)
+    for translation in translations:
+        grouped_translations[translation.object_id].append(translation)
+
+    return grouped_translations
