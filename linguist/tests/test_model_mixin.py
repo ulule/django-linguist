@@ -315,3 +315,53 @@ class ModelMixinTest(BaseTestCase):
             for language in ('fr', 'en'):
                 title = getattr(article, 'title_%s' % language)
                 author_bio = getattr(article.author, 'bio_%s' % language)
+
+    def test_prefetch_translations_parameters(self):
+        article = self.articles[0]
+
+        #
+        # prefetch_translations(fields=['title'])
+        #
+
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(fields=['title'])
+
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                self.assertEqual(getattr(article, 'content_%s' % language), '')
+
+        #
+        # prefetch_translations(skip_populate=True)
+        #
+
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(fields=['title'], populate_missing=False)
+
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+
+        with self.assertNumQueries(2):
+            for language in ('fr', 'en'):
+                self.assertNotEqual(getattr(article, 'content_%s' % language), '')
+
+        #
+        # prefetch_translations(languages=['en'])
+        #
+
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(fields=['title'], languages=['fr'], populate_missing=False)
+
+        with self.assertNumQueries(1):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
