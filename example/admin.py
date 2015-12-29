@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from linguist.admin import ModelTranslationAdmin
+from linguist.admin import TranslatableModelAdmin
 
 from .models import (
     Post,
@@ -11,15 +11,15 @@ from .models import (
 )
 
 
-class PostAdmin(ModelTranslationAdmin):
+class PostAdmin(TranslatableModelAdmin):
     list_display = ('title', 'body', 'languages_column', 'created_at')
 
 
-class CategoryAdmin(ModelTranslationAdmin):
+class CategoryAdmin(TranslatableModelAdmin):
     list_display = ('name', 'languages_column', 'created_at')
 
 
-class BookmarkAdmin(ModelTranslationAdmin):
+class BookmarkAdmin(TranslatableModelAdmin):
     list_display = ('title', 'url', 'description', 'languages_column', 'created_at')
 
 

@@ -2,20 +2,41 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
+from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import ugettext_lazy as _
 
 from .models import Translation as LinguistTranslationModel
 
 __all__ = [
-    'ModelTranslationAdminMixin',
-    'ModelTranslationAdmin',
+    'TranslatableModelChangeListMixin',
+    'TranslatableModelChangeList',
+    'TranslatableModelAdminMixin',
+    'TranslatableModelAdmin',
 ]
 
 
-class ModelTranslationAdminMixin(object):
+class TranslatableModelChangeListMixin(object):
+    def get_results(self, request):
+        super(TranslatableModelChangeListMixin, self).get_results(request)
+        self.result_list = self.result_list.with_translations()
+
+
+class TranslatableModelChangeList(TranslatableModelChangeListMixin, ChangeList):
+    pass
+
+
+class TranslatableModelAdminMixin(object):
     """
     Admin class mixin for translatable models.
     """
+
+    def get_object(self, *args, **kwargs):
+        obj = super(TranslatableModelAdminMixin, self).get_object(*args, **kwargs)
+        obj.prefetch_translations()
+        return obj
+
+    def get_changelist(self, request, **kwargs):
+        return TranslatableModelChangeList
 
     def get_available_languages(self, obj):
         """
@@ -34,7 +55,7 @@ class ModelTranslationAdminMixin(object):
     languages_column.short_description = _('Languages')
 
 
-class ModelTranslationAdmin(ModelTranslationAdminMixin, admin.ModelAdmin):
+class TranslatableModelAdmin(TranslatableModelAdminMixin, admin.ModelAdmin):
     """
     Admin class for translatable models.
     """

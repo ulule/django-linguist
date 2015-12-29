@@ -204,18 +204,17 @@ This example will show you the light:
 django.contrib.admin
 ~~~~~~~~~~~~~~~~~~~~
 
-Simply use ``linguist.admin.ModelTranslationAdmin`` class:
+Simply use ``linguist.admin.TranslatableModelAdmin`` class:
 
 .. code-block:: python
 
     from django.contrib import admin
-    from linguist.admin import ModelTranslationAdmin
+    from linguist.admin import TranslatableModelAdmin
     from .models import Post
 
 
-    class PostAdmin(ModelTranslationAdmin):
+    class PostAdmin(TranslatableModelAdmin):
         list_display = ('title', 'body', 'created_at')
-
 
     admin.site.register(Post, PostAdmin)
 
@@ -226,13 +225,12 @@ Bonus! You can display instance's languages in ``list_display`` via the
 .. code-block:: python
 
     from django.contrib import admin
-    from linguist.admin import ModelTranslationAdmin
+    from linguist.admin import TranslatableModelAdmin
     from .models import Post
 
 
-    class PostAdmin(ModelTranslationAdmin):
+    class PostAdmin(TranslatableModelAdmin):
         list_display = ('title', 'body', 'languages_column', 'created_at')
-
 
     admin.site.register(Post, PostAdmin)
 
