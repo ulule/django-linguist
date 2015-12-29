@@ -5,6 +5,8 @@ from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import ugettext_lazy as _
 
+from .helpers import prefetch_translations
+
 from .models import Translation as LinguistTranslationModel
 
 __all__ = [
@@ -18,7 +20,7 @@ __all__ = [
 class TranslatableModelChangeListMixin(object):
     def get_results(self, request):
         super(TranslatableModelChangeListMixin, self).get_results(request)
-        self.result_list = self.result_list.with_translations()
+        prefetch_translations(self.result_list)
 
 
 class TranslatableModelChangeList(TranslatableModelChangeListMixin, ChangeList):
