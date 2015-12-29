@@ -15,6 +15,11 @@ def prefetch_translations(instances, **kwargs):
     populate_missing = kwargs.get('populate_missing', True)
     grouped_translations = utils.get_grouped_translations(instances, **kwargs)
 
+    # In the case of no translations objects
+    if not grouped_translations and populate_missing:
+        for instance in instances:
+            instance.populate_missing_translations()
+
     for instance in instances:
         if issubclass(instance.__class__, ModelMixin) and instance.pk in grouped_translations:
             for translation in grouped_translations[instance.pk]:

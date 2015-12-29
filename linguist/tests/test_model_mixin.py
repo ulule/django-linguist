@@ -316,6 +316,12 @@ class ModelMixinTest(BaseTestCase):
                 title = getattr(article, 'title_%s' % language)
                 author_bio = getattr(article.author, 'bio_%s' % language)
 
+    def test_prefetch_translations_with_no_translations(self):
+        m = FooModel()
+        m.save()
+        m.prefetch_translations()
+        self.assertEqual(m.cached_translations_count, 18)
+
     def test_prefetch_translations_parameters(self):
         article = self.articles[0]
 
