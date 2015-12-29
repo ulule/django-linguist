@@ -12,6 +12,9 @@ def prefetch_translations(instances, **kwargs):
     """
     from .mixins import ModelMixin
 
+    if not isinstance(instances, collections.Iterable):
+        instances = [instances]
+
     populate_missing = kwargs.get('populate_missing', True)
     grouped_translations = utils.get_grouped_translations(instances, **kwargs)
 
