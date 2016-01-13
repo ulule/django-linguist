@@ -139,6 +139,7 @@ class Translation(models.Model):
 
         index_together = [
             ['identifier', 'object_id'],
+            ['identifier', 'object_id', 'field_name'],
         ]
 
     def __str__(self):
