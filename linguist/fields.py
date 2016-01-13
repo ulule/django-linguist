@@ -147,6 +147,12 @@ class Linguist(object):
 
         try:
             cached_obj = instance._linguist_translations[field_name][language]
+            if not cached_obj.field_name:
+                cached_obj.field_name = field_name
+            if not cached_obj.language:
+                cached_obj.language = language
+            if not cached_obj.identifier:
+                cached_obj.identifier = self.instance.linguist_identifier
         except KeyError:
             cached_obj = None
 

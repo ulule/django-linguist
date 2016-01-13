@@ -62,10 +62,11 @@ class TranslationManager(models.Manager):
             translations = []
 
             for obj in instance._linguist.translation_instances:
-                obj.object_id = instance.pk
-                translations.append(obj)
+                if obj.field_name:
+                    obj.object_id = instance.pk
+                    translations.append(obj)
 
-            to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new]
+            to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new and obj.field_value]
             to_update = [obj for obj in translations if obj.has_changed and not obj.is_new]
 
             created = True
