@@ -69,6 +69,7 @@ class LinguistTranslationModelAdmin(admin.ModelAdmin):
     Linguist Translation admin options.
     """
     list_display = ('identifier', 'object_id', 'language', 'field_name', 'field_value')
+    list_filter = ('identifier', 'language')
 
 
 admin.site.register(LinguistTranslationModel, LinguistTranslationModelAdmin)
