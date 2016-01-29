@@ -1,15 +1,12 @@
 language: python
+services: postgresql
+before_script:
+  - psql -c "CREATE DATABASE django_linguist;" -U postgres
 env:
-    - TOXENV=py26-django16
-    - TOXENV=py27-django16
-    - TOXENV=py33-django16
-    - TOXENV=py34-django16
-    - TOXENV=py27-django17
-    - TOXENV=py33-django17
-    - TOXENV=py34-django17
     - TOXENV=py27-django18
-    - TOXENV=py33-django18
+    - TOXENV=py27-django19
     - TOXENV=py34-django18
+    - TOXENV=py34-django19
 install:
     - travis_retry pip install tox
 script:

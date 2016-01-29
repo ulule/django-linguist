@@ -4,12 +4,11 @@ import django
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': '',
-        'USER': '',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'django_linguist',
+        'USER': 'postgres',
         'PASSWORD': '',
         'HOST': '',
-        'PORT': '',
     }
 }
 
@@ -18,6 +17,7 @@ DEBUG = True
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
 
 SECRET_KEY = 'blabla'
 
-ROOT_URLCONF = 'linguist.urls'
+ROOT_URLCONF = 'linguist.tests.urls'
 
 LOGGING = {
     'version': 1,

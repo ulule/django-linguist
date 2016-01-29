@@ -1,8 +1,8 @@
+-r base.txt
+-r test.txt
+
 Django
 Sphinx
-coverage==3.6
 flake8
 django-debug-toolbar
-exam
-six
 tox

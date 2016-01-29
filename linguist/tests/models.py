@@ -1,15 +1,44 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+import six
+
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from linguist.models.base import Translation
 from linguist.metaclasses import ModelMeta as LinguistMeta
 from linguist.mixins import ManagerMixin as LinguistManagerMixin
 
-import six
-
-
 # Managers
 # ------------------------------------------------------------------------------
+class TagManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Tag model.
+    """
+    pass
+
+
+class AuthorManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Author model.
+    """
+    pass
+
+
+class ArticleManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Article model.
+    """
+    pass
+
+
+class SlugManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of Slug model.
+    """
+    pass
+
 
 class FooManager(LinguistManagerMixin, models.Manager):
     """
@@ -41,6 +70,59 @@ class DeciderManager(LinguistManagerMixin, models.Manager):
 
 # Models
 # ------------------------------------------------------------------------------
+class Tag(six.with_metaclass(LinguistMeta, models.Model)):
+    name = models.CharField(max_length=255)
+
+    objects = TagManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'tag',
+            'fields': ('name',)
+        }
+
+
+class Author(six.with_metaclass(LinguistMeta, models.Model)):
+    name = models.CharField(max_length=255)
+    bio = models.TextField(blank=True)
+
+    objects = AuthorManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'author',
+            'fields': ('bio',)
+        }
+
+
+class Article(six.with_metaclass(LinguistMeta, models.Model)):
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
+    content = models.TextField(blank=True)
+    author = models.ForeignKey(Author)
+    tags = models.ManyToManyField(Tag)
+
+    objects = ArticleManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'article',
+            'fields': ('title', 'content')
+        }
+
+
+class SlugModel(six.with_metaclass(LinguistMeta, models.Model)):
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
+
+    objects = SlugManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'slug',
+            'fields': ('title',)
+        }
+
 
 class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
     """
@@ -50,6 +132,8 @@ class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
     excerpt = models.TextField(null=True, blank=True)
     body = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_published = models.BooleanField(default=False)
+    position = models.PositiveIntegerField(null=True, blank=True)
 
     objects = FooManager()
 

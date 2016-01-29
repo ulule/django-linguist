@@ -58,28 +58,18 @@ class Linguist(object):
     def active_language(self):
         """
         Returns active language.
-
-        Priorities:
-
-        1. current instance language (if user uses activate_language() method)
-        2. default language field (if user defines default language at instance level)
-        3. current site language (translation.get_language())
-        4. Model._meta.linguist['default_language']
-        5. settings.LANGUAGE_CODE
-
         """
+        # Current instance language (if user uses activate_language() method)
         if self._language is not None:
             return self._language
 
-        if self.default_language_field is not None:
-            return self.instance.default_language
+        # Current site language (translation.get_language())
+        current = utils.get_language()
+        if current in self.supported_languages:
+            return current
 
-        current_language = utils.get_language()
-
-        if current_language in self.supported_languages:
-            return current_language
-
-        return self.instance.default_language
+        # Default language descriptor
+        return self.default_language
 
     @property
     def language(self):
@@ -157,6 +147,12 @@ class Linguist(object):
 
         try:
             cached_obj = instance._linguist_translations[field_name][language]
+            if not cached_obj.field_name:
+                cached_obj.field_name = field_name
+            if not cached_obj.language:
+                cached_obj.language = language
+            if not cached_obj.identifier:
+                cached_obj.identifier = self.instance.linguist_identifier
         except KeyError:
             cached_obj = None
 
@@ -183,12 +179,15 @@ class Linguist(object):
 
         return cached_obj
 
-    def set_cache(self, instance=None, translation=None,
-                  language=None, field_name=None,
-                  field_value=None):
+    def set_cache(self, instance=None, translation=None, language=None, field_name=None, field_value=None):
         """
         Add a new translation into the cache.
         """
+        if instance is not None and translation is not None:
+            cached_obj = CachedTranslation.from_object(translation)
+            instance._linguist_translations[translation.field_name][translation.language] = cached_obj
+            return cached_obj
+
         if instance is None:
             instance = self.instance
 
@@ -213,15 +212,19 @@ class DefaultLanguageDescriptor(object):
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
 
-        if instance._linguist.default_language_field is None:
+        # Meta default_language_field explicitly defined.
+        if instance._linguist.default_language_field is not None:
+            default_language = getattr(instance, instance._linguist.default_language_field)
+            if callable(default_language):
+                return default_language()
+            return default_language
+
+        # Meta default_language
+        if instance._linguist.default_language is not None:
             return instance._linguist.default_language
 
-        default_language = getattr(instance, instance._linguist.default_language_field)
-
-        if callable(default_language):
-            return default_language()
-
-        return default_language
+        # Settings default
+        return settings.DEFAULT_LANGUAGE
 
 
 class CacheDescriptor(object):
@@ -332,6 +335,12 @@ class TranslationField(object):
         will skip this field when creating tables in PostgreSQL.
         """
         return None
+
+    def clone(self):
+        from django.utils.module_loading import import_string
+        name, path, args, kwargs = self.deconstruct()
+        cls = import_string(path)
+        return cls(*args, **kwargs)
 
     def deconstruct(self):
         name, path, args, kwargs = self.translated_field.deconstruct()

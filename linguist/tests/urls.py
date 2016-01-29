@@ -3,11 +3,13 @@ from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.http import JsonResponse
-from django.utils import translation
+
+from .models import FooModel
 
 
 def home(request):
-    return JsonResponse({"message": "hello"})
+    obj = FooModel.objects.first()
+    return JsonResponse({'title': obj.title})
 
 
 urlpatterns = patterns('',

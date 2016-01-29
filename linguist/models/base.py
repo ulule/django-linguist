@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.db import models, IntegrityError, transaction
+from django.db import (
+    IntegrityError,
+    models,
+    transaction,
+)
+
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
@@ -57,10 +62,11 @@ class TranslationManager(models.Manager):
             translations = []
 
             for obj in instance._linguist.translation_instances:
-                obj.object_id = instance.pk
-                translations.append(obj)
+                if obj.field_name:
+                    obj.object_id = instance.pk
+                    translations.append(obj)
 
-            to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new]
+            to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new and obj.field_value]
             to_update = [obj for obj in translations if obj.has_changed and not obj.is_new]
 
             created = True
@@ -134,6 +140,7 @@ class Translation(models.Model):
 
         index_together = [
             ['identifier', 'object_id'],
+            ['identifier', 'object_id', 'field_name'],
         ]
 
     def __str__(self):

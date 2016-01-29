@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.utils import translation
+
+from exam import before
 from .. import settings
 from ..models import Translation
 
 from .base import BaseTestCase
 
-from .models import (FooModel,
+from .models import (Article,
+                     FooModel,
                      DefaultLanguageFieldModel,
                      DefaultLanguageFieldModelWithCallable,
                      CustomTranslationModel,
@@ -17,6 +21,10 @@ class ModelMixinTest(BaseTestCase):
     """
     Tests Linguist mixin.
     """
+
+    @before
+    def before(self):
+        translation.activate('en')
 
     def test_linguist_identifier(self):
         self.assertTrue(hasattr(self.instance, 'linguist_identifier'))
@@ -198,31 +206,29 @@ class ModelMixinTest(BaseTestCase):
 
     def test_default_language_descriptor(self):
         m = DefaultLanguageFieldModel()
-
         self.assertEqual(m.lang, 'fr')
         self.assertEqual(m.default_language, 'fr')
 
-        m.title = 'Bonjour'
-
-        m.activate_language('en')
-        m.title = 'hello'
+        m.title_fr = 'Bonjour'
+        m.title_en = 'Hello'
         m.save()
-
         self.assertEqual(m.cached_translations_count, 2)
+
+        translation.activate('it')
+        self.assertEqual(m.title, 'Bonjour')
 
     def test_default_language_descriptor_with_callable(self):
         m = DefaultLanguageFieldModelWithCallable()
-
         self.assertEqual(m.lang, 'fr')
         self.assertEqual(m.default_language, 'fr')
 
-        m.title = 'Bonjour'
-
-        m.activate_language('en')
-        m.title = 'hello'
+        m.title_fr = 'Bonjour'
+        m.title_en = 'Hello'
         m.save()
-
         self.assertEqual(m.cached_translations_count, 2)
+
+        translation.activate('it')
+        self.assertEqual(m.title, 'Bonjour')
 
     def test_default_language_descriptor_with_multiple_languages(self):
         m = DefaultLanguageFieldModel(title='hello',     # title_en
@@ -245,20 +251,6 @@ class ModelMixinTest(BaseTestCase):
         m.save()
 
         self.assertEqual(Translation.objects.count(), 2)
-
-        # Let's reset
-        Translation.objects.all().delete()
-
-        # Now, let's set title_fr which is the default language, title should
-        # be title_fr, so we should have only one translation but "hello" should
-        # NOT override "bonjour".
-        m = DefaultLanguageFieldModel(title='hello',  # title_en
-                                      title_fr='bonjour',
-                                      lang='fr')
-
-        m.save()
-
-        self.assertEqual(Translation.objects.count(), 1)
 
     def test_language_fields(self):
         # default language
@@ -286,3 +278,108 @@ class ModelMixinTest(BaseTestCase):
 
         self.assertEqual(Translation.objects.count(), 0)
         self.assertEqual(CustomTranslationModel.objects.count(), 1)
+
+    def test_no_translation_default_language(self):
+        # This is the case of:
+        # * "default_language" is not defined in linguist meta
+        # * No translation is available for the current supported language
+        # So we always try to display default language or empty value
+        m = FooModel(title_en='hello', title_fr='bonjour')
+        m.save()
+
+        saved_lang = translation.get_language()
+        translation.activate('it')
+
+        self.assertEqual(m.title, 'hello')
+
+        translation.activate(saved_lang)
+
+    def test_prefetch_translations(self):
+        article = self.articles[0]
+
+        # No related
+        with self.assertNumQueries(1):
+            article.prefetch_translations()
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+
+        # Clean
+        article.clear_translations_cache()
+        article.author.clear_translations_cache()
+
+        # ForeignKey
+        with self.assertNumQueries(2):
+            article.prefetch_translations('author')
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+                author_bio = getattr(article.author, 'bio_%s' % language)
+
+    def test_prefetch_translations_with_no_translations(self):
+        m = FooModel()
+        m.save()
+        m.prefetch_translations()
+        self.assertEqual(m.cached_translations_count, 18)
+
+    def test_prefetch_translations_parameters(self):
+        article = self.articles[0]
+
+        #
+        # prefetch_translations(field_names=['title'])
+        #
+
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(field_names=['title'])
+
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                self.assertEqual(getattr(article, 'content_%s' % language), '')
+
+        #
+        # prefetch_translations(populate_missing=True)
+        #
+
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(field_names=['title'], populate_missing=False)
+
+        with self.assertNumQueries(0):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+
+        with self.assertNumQueries(2):
+            for language in ('fr', 'en'):
+                self.assertNotEqual(getattr(article, 'content_%s' % language), '')
+
+        #
+        # prefetch_translations(languages=['en'])
+        #
+
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(field_names=['title'], languages=['fr'], populate_missing=False)
+
+        with self.assertNumQueries(1):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)
+
+        #
+        # Be sure prefetch_translations(languages='en') is interpreted as
+        # prefetch_translations(languages=['en'])
+        article.clear_translations_cache()
+
+        with self.assertNumQueries(1):
+            article.prefetch_translations(field_names=['title'], languages='en', populate_missing=False)
+
+        with self.assertNumQueries(1):
+            for language in ('fr', 'en'):
+                title = getattr(article, 'title_%s' % language)

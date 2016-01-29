@@ -204,18 +204,17 @@ This example will show you the light:
 django.contrib.admin
 ~~~~~~~~~~~~~~~~~~~~
 
-Simply use ``linguist.admin.ModelTranslationAdmin`` class:
+Simply use ``linguist.admin.TranslatableModelAdmin`` class:
 
 .. code-block:: python
 
     from django.contrib import admin
-    from linguist.admin import ModelTranslationAdmin
+    from linguist.admin import TranslatableModelAdmin
     from .models import Post
 
 
-    class PostAdmin(ModelTranslationAdmin):
+    class PostAdmin(TranslatableModelAdmin):
         list_display = ('title', 'body', 'created_at')
-
 
     admin.site.register(Post, PostAdmin)
 
@@ -226,13 +225,12 @@ Bonus! You can display instance's languages in ``list_display`` via the
 .. code-block:: python
 
     from django.contrib import admin
-    from linguist.admin import ModelTranslationAdmin
+    from linguist.admin import TranslatableModelAdmin
     from .models import Post
 
 
-    class PostAdmin(ModelTranslationAdmin):
+    class PostAdmin(TranslatableModelAdmin):
         list_display = ('title', 'body', 'languages_column', 'created_at')
-
 
     admin.site.register(Post, PostAdmin)
 
@@ -313,13 +311,76 @@ The ``ModelMixin`` enhance your model with the following properties and methods:
     # Sweet! Save translations!
     >>> post.save()
 
-To improve performances, you should prefetch translations:
+Preloading
+----------
+
+To improve performances, you can preload/prefetch translations.
+
+For a queryset (your queryset must inherit from Linguist manager/queryset):
 
 .. code-block:: python
 
     >>> Post.objects.with_translations()
 
+For a list of objects (all your objects must inherit from Linguist model):
+
+.. code-block:: python
+
+    >>> from linguist.helpers import prefetch_translations
+    >>> posts = list(Post.objects.all())
+    >>> prefetch_translations(posts)
+
+For an instance (it must inherit from Linguist model):
+
+.. code-block:: python
+
+    >>> post = Post.objects.first()
+    >>> post.prefetch_translations()
+
 All translations will be cached in instances. Database won't be hit anymore.
+
+This preloading system takes three parameters:
+
+* ``field_names``: list of translatable field names to filter on
+* ``languages``: list of languages to filter on
+* ``populate_missing``: boolean if you want to populate cache for missing translations (defaults to ``True``)
+* ``chunks_length``: chunk limit for SELECT IN ids for translations
+
+For example, we only want to prefetch post titles in English without populating missing
+translations with an empty string:
+
+.. code-block:: python
+
+    >>> Post.objects.with_translations(field_names=['title'], languages=['en'], populate_missing=False)
+
+It works the same for:
+
+* QuerySet ``with_translations()``
+* Helper ``prefetch_translations()``
+* Instance method ``prefetch_translations()``
+
+**What does "populating missing translations" mean?**
+
+Simple. By default, when you prefetch translations, instances cache will be populated
+with empty strings for all supported languages (see  ``settings``). For example, if
+you have ``en``, ``fr`` and ``it`` as supported languages and only have English
+translations, if you try to access other languages, an empty string will be returned
+without any database hit:
+
+.. code-block:: python
+
+    >>> Post.objects.with_translations()
+    >>> post.title_fr # no database hit here because
+    ''
+
+Now, if you explicitly set ``populate_missing`` to ``False``, if a translation
+is not found, it will be fetched from database.
+
+.. code-block:: python
+
+    >>> Post.objects.with_translations(populate_missing=False)
+    >>> post.title_fr # database hit here
+    ''
 
 Development
 -----------
@@ -331,9 +392,6 @@ Development
 
     # Don't already have virtualenv?
     $ sudo pip install virtualenv
-
-    # Don't have Bower? Install Node.js for your OS then...
-    $ sudo npm install -g bower
 
     # Clone and install dependencies
     $ git clone https://github.com/ulule/django-linguist.git
@@ -356,7 +414,5 @@ Development
 Compatibility
 -------------
 
-- Python 2.6: Django 1.6
-- python 2.7: Django 1.6, 1.7, 1.8
-- Python 3.3: Django 1.6, 1.7, 1.8
-- Python 3.4: Django 1.6, 1.7, 1.8
+- python 2.7: Django 1.8, 1.9
+- Python 3.4: Django 1.8, 1.9
