@@ -72,6 +72,10 @@ class QuerySetMixin(object):
 
     def iterator(self):
         for obj in super(QuerySetMixin, self).iterator():
+            if obj and not isinstance(obj, self.model):
+                yield obj
+                continue
+
             obj.clear_translations_cache()
 
             if obj.pk in self._prefetched_translations_cache:
