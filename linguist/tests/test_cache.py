@@ -11,16 +11,15 @@ class CachedTranslationTest(BaseTestCase):
     Tests CachedTranslation class.
     """
     def test_attributes(self):
-        fields = Translation._meta.get_all_field_names()
-        fields.remove('id')
+        fields = [f for f in Translation._meta.get_fields() if f.name != 'id']
 
         obj = CachedTranslation()
 
         self.assertTrue(obj.is_new)
 
         for attr in fields:
-            self.assertTrue(hasattr(obj, attr))
-            self.assertIsNone(getattr(obj, attr))
+            self.assertTrue(hasattr(obj, attr.name))
+            self.assertIsNone(getattr(obj, attr.name))
 
         for attr in ('instance', 'translation'):
             self.assertIsNone(getattr(obj, attr))

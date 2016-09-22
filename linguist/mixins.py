@@ -90,7 +90,23 @@ class QuerySetMixin(object):
         """
         Returns model concrete field names.
         """
-        return [f[0].name for f in self.model._meta.get_concrete_fields_with_model()]
+        return [f[0].name for f in self._get_concrete_fields_with_model()]
+
+    def _get_concrete_fields_with_model(self):
+        """For compatibility with Django<=1.10. Replace old
+        `_meta.get_concrete_fields_with_model`.
+        https://docs.djangoproject.com/en/1.10/ref/models/meta/
+
+        """
+        return [
+            (f, f.model if f.model != self.model else None)
+            for f in self.model._meta.get_fields()
+                if f.concrete and (
+                    not f.is_relation
+                    or f.one_to_one
+                    or (f.many_to_one and f.related_model)
+            )
+        ]
 
     @cached_property
     def linguist_field_names(self):
@@ -285,10 +301,9 @@ class ModelMixin(object):
         prefetch_translations([self], **kwargs)
 
         if args:
-            fields = [arg for arg in args if arg in self._meta.get_all_field_names()]
+            fields = [ f for f in self._meta.get_fields(include_hidden=True) if f.name in args]
             for field in fields:
-                f = self._meta.get_field(field)
-                value = getattr(self, f.name, None)
+                value = getattr(self, field.name, None)
                 if issubclass(value.__class__, ModelMixin):
                     value.prefetch_translations()
 
