@@ -9,10 +9,10 @@ pep8:
 	@(flake8 linguist --ignore=E501,E127,E128,E124)
 
 test:
-	@(py.test -s --cov-report term --cov-config .coveragerc --cov=linguist --color=yes linguist/tests/ -k 'not concurrency')
+	@(honcho run py.test -s --cov-report term --cov-config .coveragerc --cov=linguist --color=yes linguist/tests/ -k 'not concurrency')
 
 serve:
-	@(ENV=example python manage.py migrate && python manage.py runserver)
+	@(honcho run python manage.py migrate && honcho run python manage.py runserver)
 
 delpyc:
 	@(find . -name '*.pyc' -delete)
