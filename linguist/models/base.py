@@ -125,6 +125,11 @@ class Translation(models.Model):
         null=True,
         help_text=_('The translated content for the field.'))
 
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        null=True,
+        blank=True)
+
     objects = TranslationManager()
 
     class Meta:
