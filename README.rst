@@ -401,6 +401,9 @@ Development
     # Enable virtual environment.
     $ source .venv/bin/activate
 
+    # Copy the environment file
+    $ cp linguist/tests/.env-template .env
+
     # Launch tests
     $ make test
 

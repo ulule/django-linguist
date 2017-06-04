@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
 import django
 
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'django_linguist',
-        'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': '',
-    }
+    'default': dj_database_url.config(),
 }
 
 SITE_ID = 1
