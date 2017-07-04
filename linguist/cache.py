@@ -39,6 +39,7 @@ class CachedTranslation(object):
 
         self.is_new = True
         self.has_changed = False
+        self.deleted = False
 
         if self.instance is not None:
             self.identifier = self.instance.linguist_identifier

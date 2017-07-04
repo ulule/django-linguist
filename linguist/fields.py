@@ -201,6 +201,9 @@ class Linguist(object):
             cached_obj.has_changed = True
             cached_obj.field_value = field_value
 
+        if field_value is None and cached_obj.field_value:
+            cached_obj.deleted = True
+
         return cached_obj
 
 
@@ -284,7 +287,7 @@ class TranslationDescriptor(object):
     def __set__(self, instance, value):
         instance_only(instance)
 
-        if value:
+        if value is not None:
             instance._linguist.set_cache(instance=instance,
                                          language=self.language,
                                          field_name=self.translated_field.name,
