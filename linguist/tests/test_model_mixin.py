@@ -185,6 +185,30 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(instance.title_en, 'Plop')
         self.assertEqual(instance.title_fr, 'Salut')
 
+
+    def test_instance_cache_empty_value(self):
+        self.instance.activate_language('en')
+        self.instance.title = 'Hello'
+        self.instance.activate_language('fr')
+        self.instance.title = 'Bonjour'
+        self.instance.save()
+
+        with self.assertNumQueries(1):
+            self.instance.save()
+
+        instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        instance.title_en = 'Hi'
+        instance.title_fr = ''
+
+        with self.assertNumQueries(3):
+            instance.save()
+
+        self.assertEqual(instance.title, 'Hi')
+        self.assertEqual(instance.title_en, 'Hi')
+        self.assertEqual(instance.title_fr, '')
+
+
     def test_override_language(self):
         self.assertTrue(hasattr(self.instance, 'override_language'))
         self.instance.activate_language('fr')
