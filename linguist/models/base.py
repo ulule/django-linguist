@@ -68,6 +68,7 @@ class TranslationManager(models.Manager):
 
             to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new and obj.field_value]
             to_update = [obj for obj in translations if obj.has_changed and not obj.is_new]
+            to_delete = [obj for obj in translations if obj.deleted]
 
             created = True
 
@@ -88,6 +89,11 @@ class TranslationManager(models.Manager):
                 for cached, obj in to_create:
                     cached.is_new = False
                     cached.has_changed = False
+
+            if to_delete:
+                for obj in to_delete:
+                    self.filter(**obj.lookup).delete()
+                    obj.has_changed = False
 
 
 @python_2_unicode_compatible

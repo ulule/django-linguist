@@ -185,6 +185,104 @@ class ModelMixinTest(BaseTestCase):
         self.assertEqual(instance.title_en, 'Plop')
         self.assertEqual(instance.title_fr, 'Salut')
 
+
+    def test_instance_cache_empty_value(self):
+        self.instance.activate_language('en')
+        self.instance.title = 'Hello'
+        self.instance.activate_language('fr')
+        self.instance.title = 'Bonjour'
+        self.instance.save()
+
+        with self.assertNumQueries(1):
+            self.instance.save()
+
+        instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        instance.title_en = 'Hi'
+        instance.activate_language('fr')
+        instance.title_fr = 'Bonjour'
+
+        instance2 = FooModel()
+        instance2.activate_language('en')
+        instance2.title = 'Nice day'
+        instance2.activate_language('fr')
+        instance2.title = 'Belle journee'
+        instance2.save()
+
+        self.assertEqual(instance2.title_fr, 'Belle journee')
+        self.assertEqual(instance2.title_en, 'Nice day')
+
+        instance2 = FooModel.objects.get(pk=instance2.pk)
+        instance2.activate_language('fr')
+        instance2.title = ''
+
+        with self.assertNumQueries(2):
+            instance.save()
+
+        with self.assertNumQueries(2):
+            instance2.save()
+
+        instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        self.assertEqual(instance.title, 'Hi')
+        self.assertEqual(instance.title_en, 'Hi')
+        self.assertEqual(instance.title_fr, 'Bonjour')
+
+        instance2 = FooModel.objects.get(pk=instance2.pk)
+        instance2.activate_language('en')
+        self.assertEqual(instance2.title, 'Nice day')
+        self.assertEqual(instance2.title_en, 'Nice day')
+        self.assertEqual(instance2.title_fr, '')
+
+
+    def test_instance_delete_value(self):
+        self.instance.activate_language('en')
+        self.instance.title = 'Hello'
+        self.instance.activate_language('fr')
+        self.instance.title = 'Bonjour'
+        self.instance.save()
+
+        with self.assertNumQueries(1):
+            self.instance.save()
+
+        instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        instance.title_en = 'Hi'
+
+        instance2 = FooModel()
+        instance2.activate_language('en')
+        instance2.title = 'Nice day'
+        instance2.activate_language('fr')
+        instance2.title = 'Belle journee'
+        instance2.save()
+
+        self.assertEqual(instance2.title_fr, 'Belle journee')
+        self.assertEqual(instance2.title_en, 'Nice day')
+
+        instance2 = FooModel.objects.get(pk=instance2.pk)
+        instance2.activate_language('fr')
+        instance2.title = None
+
+        with self.assertNumQueries(2):
+            instance.save()
+
+        with self.assertNumQueries(4):
+            instance2.save()
+
+        instance = FooModel.objects.get(pk=self.instance.pk)
+        instance.activate_language('en')
+        self.assertEqual(instance.title, 'Hi')
+        self.assertEqual(instance.title_en, 'Hi')
+        self.assertEqual(instance.title_fr, 'Bonjour')
+
+        instance2 = FooModel.objects.get(pk=instance2.pk)
+        instance2.activate_language('en')
+        self.assertEqual(instance2.title, 'Nice day')
+        self.assertEqual(instance2.title_en, 'Nice day')
+        self.assertEqual(instance2.title_fr, '')
+
+        self.assertEqual(Translation.objects.filter(object_id=instance2.pk, language='fr', field_name='title').count(), 0)
+
     def test_override_language(self):
         self.assertTrue(hasattr(self.instance, 'override_language'))
         self.instance.activate_language('fr')
