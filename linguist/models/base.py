@@ -64,6 +64,11 @@ class TranslationManager(models.Manager):
             for obj in instance._linguist.translation_instances:
                 if obj.field_name:
                     obj.object_id = instance.pk
+                    if (obj.is_new and obj.field_value) or (obj.has_changed and not obj.is_new):
+                        field = instance.get_field_object(obj.field_name, obj.language)
+                        if hasattr(field, 'pre_save') and callable(field.pre_save):
+                            obj.field_value = field.pre_save(instance, True)
+
                     translations.append(obj)
 
             to_create = [(obj, self.model(**obj.attrs)) for obj in translations if obj.is_new and obj.field_value]

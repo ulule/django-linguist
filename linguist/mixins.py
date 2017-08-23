@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import copy
-import itertools
 import six
 
-from collections import defaultdict
 from contextlib import contextmanager
 
 import django
@@ -301,7 +299,7 @@ class ModelMixin(object):
         prefetch_translations([self], **kwargs)
 
         if args:
-            fields = [ f for f in self._meta.get_fields(include_hidden=True) if f.name in args]
+            fields = [f for f in self._meta.get_fields(include_hidden=True) if f.name in args]
             for field in fields:
                 value = getattr(self, field.name, None)
                 if issubclass(value.__class__, ModelMixin):
@@ -407,3 +405,6 @@ class ModelMixin(object):
         super(ModelMixin, self).save(*args, **kwargs)
 
         self._linguist.decider.objects.save_translations([self, ])
+
+    def get_field_object(self, field_name, language):
+        return self.__class__.__dict__[utils.build_localized_field_name(field_name, language)].field

@@ -7,14 +7,17 @@ from django.utils import six
 
 from . import settings
 from . import utils
+from .fields import TranslationDescriptor, files
 
 
 LANGUAGE_CODE, LANGUAGE_NAME = 0, 1
 
-SUPPORTED_FIELDS = (
-    models.fields.CharField,
-    models.fields.TextField,
-)
+SUPPORTED_FIELDS = {
+    models.fields.CharField: {'descriptor_class': TranslationDescriptor},
+    models.FileField: {'descriptor_class': files.FileTranslationDescriptor},
+    models.ImageField: {'descriptor_class': files.ImageFileTranslationDescriptor},
+    models.fields.TextField: {'descriptor_class': TranslationDescriptor},
+}
 
 
 def validate_meta(meta):
@@ -65,6 +68,16 @@ def default_value_setter(field):
     return default_value_func_setter
 
 
+def get_translation_class_kwargs(klass):
+    for base_klass in klass.__mro__:
+        try:
+            return SUPPORTED_FIELDS[base_klass] or {}
+        except KeyError:
+            pass
+
+    return {}
+
+
 def field_factory(base_class):
     """
     Takes a field base class and wrap it with ``TranslationField`` class.
@@ -86,13 +99,15 @@ def create_translation_field(translated_field, language):
     """
     cls_name = translated_field.__class__.__name__
 
-    if not isinstance(translated_field, SUPPORTED_FIELDS):
+    if not isinstance(translated_field, tuple(SUPPORTED_FIELDS.keys())):
         raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
 
     translation_class = field_factory(translated_field.__class__)
+    kwargs = get_translation_class_kwargs(translated_field.__class__)
 
     return translation_class(translated_field=translated_field,
-                             language=language)
+                             language=language,
+                             **kwargs)
 
 
 class ModelMeta(models.base.ModelBase):
