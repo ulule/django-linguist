@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 from django.utils import translation
 
 from exam import before
+
 from .. import settings
+from ..fields import TranslationField
 from ..models import Translation
 
 from .base import BaseTestCase
@@ -481,3 +483,11 @@ class ModelMixinTest(BaseTestCase):
         with self.assertNumQueries(1):
             for language in ('fr', 'en'):
                 title = getattr(article, 'title_%s' % language)
+
+    def test_get_field_object(self):
+        field = self.translated_instance.get_field_object('title', 'en')
+        assert TranslationField in field.__class__.__mro__
+
+        # If the method is called with a field that's unknown to linguist, it is a programming error and it should raise
+        self.assertRaises(KeyError, self.translated_instance.get_field_object, 'title', 'lu')
+        self.assertRaises(KeyError, self.translated_instance.get_field_object, 'description', 'en')

@@ -40,6 +40,13 @@ class SlugManager(LinguistManagerMixin, models.Manager):
     pass
 
 
+class FileManager(LinguistManagerMixin, models.Manager):
+    """
+    Manager of File model.
+    """
+    pass
+
+
 class FooManager(LinguistManagerMixin, models.Manager):
     """
     Manager of Foo model.
@@ -121,6 +128,19 @@ class SlugModel(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {
             'identifier': 'slug',
             'fields': ('title',)
+        }
+
+
+class FileModel(six.with_metaclass(LinguistMeta, models.Model)):
+    file = models.FileField(null=True, blank=True, upload_to='files')
+    image = models.ImageField(null=True, blank=True, upload_to='images')
+
+    objects = FileManager()
+
+    class Meta:
+        linguist = {
+            'identifier': 'file',
+            'fields': ('file', 'image')
         }
 
 

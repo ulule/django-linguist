@@ -1,6 +1,6 @@
 import six
 from django.core.files.base import File
-from django.db.models.fields.files import FieldFile, ImageFileDescriptor
+from django.db.models.fields.files import FieldFile
 
 from . import TranslationDescriptor
 
@@ -42,13 +42,22 @@ class FileTranslationDescriptor(TranslationDescriptor):
         return result
 
 
-class ImageFileTranslationDescriptor(FileTranslationDescriptor):
-    """
-    Lifted from Django's ImageFileDescriptor
-    """
-    def __set__(self, instance, value):
-        previous_file = super(ImageFileTranslationDescriptor, self).__get__(instance, instance_type=instance.__class__)
-        super(ImageFileTranslationDescriptor, self).__set__(instance, value)
+# TODO: Needs a better implementation
+# In order to support storing image dimensions in linguist,
+# we would have to allow for a width and a height field for every language
+# (the simpler option would be storing 'metadata' for each field,
+# but the rewiring of django's internal code will be worse).
 
-        if previous_file is not None:
-            self.field.update_dimension_fields(instance, force=True)
+# For now, an to keep things simple, ImageTranslationFields will use the FileTranslationDescriptor.
+# We can revisit this when the need arises or when we find a solid implementation.
+
+# class ImageFileTranslationDescriptor(FileTranslationDescriptor):
+#     """
+#     Lifted from Django's ImageFileDescriptor
+#     """
+#     def __set__(self, instance, value):
+#         previous_file = super(ImageFileTranslationDescriptor, self).__get__(instance, instance_type=instance.__class__)
+#         super(ImageFileTranslationDescriptor, self).__set__(instance, value)
+#
+#         if previous_file is not None:
+#             self.field.update_dimension_fields(instance, force=True)

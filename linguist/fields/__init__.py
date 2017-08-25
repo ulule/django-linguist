@@ -306,12 +306,12 @@ class TranslationField(object):
     Proxy of original field.
     """
 
-    def __init__(self, translated_field, language, descriptor_class, *args, **kwargs):
+    def __init__(self, translated_field, language, *args, **kwargs):
         self.__dict__.update(translated_field.__dict__)
 
         self.translated_field = translated_field
         self.language = language
-        self.descriptor_class = descriptor_class
+        self.descriptor_class = kwargs.pop('descriptor_class', TranslationDescriptor)
 
         # Suffix field with '_fr', '_en', etc.
         self.attname = utils.build_localized_field_name(self.translated_field.name, language)

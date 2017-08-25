@@ -15,7 +15,7 @@ LANGUAGE_CODE, LANGUAGE_NAME = 0, 1
 SUPPORTED_FIELDS = {
     models.fields.CharField: {'descriptor_class': TranslationDescriptor},
     models.FileField: {'descriptor_class': files.FileTranslationDescriptor},
-    models.ImageField: {'descriptor_class': files.ImageFileTranslationDescriptor},
+    models.ImageField: {'descriptor_class': files.FileTranslationDescriptor},
     models.fields.TextField: {'descriptor_class': TranslationDescriptor},
 }
 
