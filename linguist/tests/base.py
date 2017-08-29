@@ -98,11 +98,12 @@ class BaseTestCase(Fixtures, TestCase):
     pass
 
 
-def get_image_path(name):
-    return os.path.join(settings.BASE_PATH, 'tests', 'fixtures', 'images', name)
+def get_file_path(*path_nodes):
+    return os.path.join(settings.BASE_PATH, 'tests', 'fixtures', *path_nodes)
 
 
-def get_uploaded_file(name):
-    data = open(get_image_path(name), 'rb').read()
+def get_uploaded_file(*path_nodes):
+    data = open(get_file_path(*path_nodes), 'rb').read()
+    name = path_nodes[-1]
     return SimpleUploadedFile(name, data,
                               content_type=mimetypes.guess_type(name)[0])
