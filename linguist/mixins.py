@@ -13,6 +13,28 @@ from .cache import CachedTranslation
 from .helpers import prefetch_translations
 
 
+if django.VERSION >= (1, 11):
+    from django.db.models.query import ModelIterable as BaseModelIterable
+
+    class ModelIterable(BaseModelIterable):
+        model = None
+
+        def __iter__(self):
+            for obj in super(ModelIterable, self).__iter__():
+                if obj and not isinstance(obj, self.queryset.model):
+                    yield obj
+                    continue
+
+                obj.clear_translations_cache()
+
+                if obj.pk in self.queryset._prefetched_translations_cache:
+                    for translation in self.queryset._prefetched_translations_cache[obj.pk]:
+                        obj._linguist.set_cache(instance=obj, translation=translation)
+                        obj.populate_missing_translations()
+
+                yield obj
+
+
 class QuerySetMixin(object):
     """
     Linguist QuerySet Mixin.
@@ -21,7 +43,11 @@ class QuerySetMixin(object):
     def __init__(self, *args, **kwargs):
         self._prefetched_translations_cache = kwargs.pop('_prefetched_translations_cache', [])
         self._prefetch_translations_done = kwargs.pop('_prefetch_translations_done', False)
+
         super(QuerySetMixin, self).__init__(*args, **kwargs)
+
+        if django.VERSION >= (1, 11):
+            self._iterable_class = ModelIterable
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         """
