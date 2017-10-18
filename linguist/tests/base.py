@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import mimetypes
+import os
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, TransactionTestCase
 
 from exam.cases import Exam
@@ -29,7 +33,7 @@ class Fixtures(Exam):
 
     @fixture
     def tag(self):
-        return Tag.objects.create(name_fr='tag fr', name_en= 'tag en')
+        return Tag.objects.create(name_fr='tag fr', name_en='tag en')
 
     @fixture
     def articles(self):
@@ -92,3 +96,14 @@ class BaseTransactionTestCase(Fixtures, TransactionTestCase):
 
 class BaseTestCase(Fixtures, TestCase):
     pass
+
+
+def get_file_path(*path_nodes):
+    return os.path.join(settings.BASE_PATH, 'tests', 'fixtures', *path_nodes)
+
+
+def get_uploaded_file(*path_nodes):
+    data = open(get_file_path(*path_nodes), 'rb').read()
+    name = path_nodes[-1]
+    return SimpleUploadedFile(name, data,
+                              content_type=mimetypes.guess_type(name)[0])

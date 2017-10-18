@@ -8,10 +8,10 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
 from django.utils.functional import cached_property
 
-from . import settings
-from . import utils
-from .cache import CachedTranslation
-from .models import Translation
+from .. import settings
+from .. import utils
+from ..cache import CachedTranslation
+from ..models import Translation
 
 
 def instance_only(instance):
@@ -42,7 +42,7 @@ class Linguist(object):
         """
         Validates arguments.
         """
-        from .mixins import ModelMixin
+        from ..mixins import ModelMixin
 
         for arg in ('instance', 'decider', 'identifier', 'fields', 'default_language'):
             if getattr(self, arg) is None:
@@ -311,6 +311,7 @@ class TranslationField(object):
 
         self.translated_field = translated_field
         self.language = language
+        self.descriptor_class = kwargs.pop('descriptor_class', TranslationDescriptor)
 
         # Suffix field with '_fr', '_en', etc.
         self.attname = utils.build_localized_field_name(self.translated_field.name, language)
@@ -326,7 +327,7 @@ class TranslationField(object):
     def contribute_to_class(self, cls, name):
         self.model = cls
         self.name = name
-        setattr(cls, self.name, TranslationDescriptor(self, self.translated_field, self.language))
+        setattr(cls, self.name, self.descriptor_class(self, self.translated_field, self.language))
         cls._meta.add_field(self)
         cls._meta.virtual_fields.append(self)
 
