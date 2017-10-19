@@ -302,3 +302,12 @@ def get_grouped_translations(instances, **kwargs):
         grouped_translations[translation.object_id].append(translation)
 
     return grouped_translations
+
+
+def set_object_translations_cache(obj, queryset):
+    obj.clear_translations_cache()
+
+    if obj.pk in queryset._prefetched_translations_cache:
+        for translation in queryset._prefetched_translations_cache[obj.pk]:
+            obj._linguist.set_cache(instance=obj, translation=translation)
+            obj.populate_missing_translations()
