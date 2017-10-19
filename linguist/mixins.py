@@ -25,12 +25,7 @@ if django.VERSION >= (1, 11):
                     yield obj
                     continue
 
-                obj.clear_translations_cache()
-
-                if obj.pk in self.queryset._prefetched_translations_cache:
-                    for translation in self.queryset._prefetched_translations_cache[obj.pk]:
-                        obj._linguist.set_cache(instance=obj, translation=translation)
-                        obj.populate_missing_translations()
+                utils.set_object_translations_cache(obj, self.queryset)
 
                 yield obj
 
@@ -100,12 +95,7 @@ class QuerySetMixin(object):
                 yield obj
                 continue
 
-            obj.clear_translations_cache()
-
-            if obj.pk in self._prefetched_translations_cache:
-                for translation in self._prefetched_translations_cache[obj.pk]:
-                    obj._linguist.set_cache(instance=obj, translation=translation)
-                obj.populate_missing_translations()
+            utils.set_object_translations_cache(obj, self)
 
             yield obj
 
