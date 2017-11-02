@@ -63,7 +63,8 @@ class CachedTranslation(object):
         Returns lookup for get() and filter() methods.
         """
         lookup = dict((k, getattr(self, k)) for k in self.fields)
-        lookup.pop('field_value')
+        for field_name in ['field_value', 'updated_at']:
+            lookup.pop(field_name)
         return lookup
 
     @classmethod
