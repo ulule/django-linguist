@@ -412,15 +412,25 @@ class ModelMixin(object):
         yield
         self._linguist.language = previous_language
 
-    def save(self, *args, **kwargs):
+    def _save_table(self, raw=False, cls=None, force_insert=False, force_update=False, using=None, update_fields=None):
         """
-        Overwrites model's ``save`` method to save translations after instance
+        Overwrites model's ``_save_table`` method to save translations after instance
         has been saved (required to retrieve the object ID for ``Translation``
         model).
-        """
-        super(ModelMixin, self).save(*args, **kwargs)
 
+        Preferred over overriding the object's ``save`` method
+        to ensure that `pre_save` and ``post_save`` signals happen
+        respectively before and after the translations have been saved to the database.
+
+        Thus ``pre_save`` signals have access to the ``has_changed`` attribute on translated fields
+        before the translations are saved and the attribute is reset.
+        And `post_save`` signals always have access to the updated translations.
+        """
+        updated = super(ModelMixin, self)._save_table(raw=raw, cls=cls,
+                                                      force_insert=force_insert, force_update=force_update,
+                                                      using=using, update_fields=update_fields)
         self._linguist.decider.objects.save_translations([self, ])
+        return updated
 
     def get_field_object(self, field_name, language):
         return self.__class__.__dict__[utils.build_localized_field_name(field_name, language)].field
