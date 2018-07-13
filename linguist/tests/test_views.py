@@ -2,6 +2,7 @@
 import json
 
 from django.utils import translation
+from django.conf import settings
 
 from exam.decorators import before
 
@@ -21,7 +22,7 @@ class ViewTest(BaseTestCase):
         lang = translation.get_language()
         self.assertEqual(response.status_code, 200)
         dct = json.loads(response.content.decode("utf-8"))
-        self.assertEqual(dct["title"], lang)
+        self.assertEqual(dct["title"], lang or settings.LANGUAGE_CODE)
 
     def test_translation_activate(self):
         for language in self.languages:
