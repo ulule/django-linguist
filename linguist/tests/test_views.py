@@ -6,7 +6,6 @@ from django.utils import translation
 from exam.decorators import before
 
 from .base import BaseTestCase
-from .models import FooModel
 
 
 class ViewTest(BaseTestCase):

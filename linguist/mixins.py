@@ -37,17 +37,20 @@ class QuerySetMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
+        self.init(*args, **kwargs)
+
+        super(QuerySetMixin, self).__init__(*args, **kwargs)
+
+        if django.VERSION >= (1, 11):
+            self._iterable_class = ModelIterable
+
+    def init(self, *args, **kwargs):
         self._prefetched_translations_cache = kwargs.pop(
             "_prefetched_translations_cache", []
         )
         self._prefetch_translations_done = kwargs.pop(
             "_prefetch_translations_done", False
         )
-
-        super(QuerySetMixin, self).__init__(*args, **kwargs)
-
-        if django.VERSION >= (1, 11):
-            self._iterable_class = ModelIterable
 
     def _filter_or_exclude(self, negate, *args, **kwargs):
         """
@@ -88,17 +91,14 @@ class QuerySetMixin(object):
         )
 
     def _clone(self, klass=None, setup=False, **kwargs):
-        kwargs.update(
-            {
-                "_prefetched_translations_cache": self._prefetched_translations_cache,
-                "_prefetch_translations_done": self._prefetch_translations_done,
-            }
-        )
-
         if django.VERSION < (1, 9):
             kwargs.update({"klass": klass, "setup": setup})
 
-        return super(QuerySetMixin, self)._clone(**kwargs)
+        qs = super(QuerySetMixin, self)._clone(**kwargs)
+        qs._prefetched_translations_cache = self._prefetched_translations_cache
+        qs._prefetch_translations_done = self._prefetch_translations_done
+
+        return qs
 
     def iterator(self):
         for obj in super(QuerySetMixin, self).iterator():
