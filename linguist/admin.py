@@ -10,10 +10,10 @@ from .helpers import prefetch_translations
 from .models import Translation as LinguistTranslationModel
 
 __all__ = [
-    'TranslatableModelChangeListMixin',
-    'TranslatableModelChangeList',
-    'TranslatableModelAdminMixin',
-    'TranslatableModelAdmin',
+    "TranslatableModelChangeListMixin",
+    "TranslatableModelChangeList",
+    "TranslatableModelAdminMixin",
+    "TranslatableModelAdmin",
 ]
 
 
@@ -51,16 +51,19 @@ class TranslatableModelAdminMixin(object):
         Adds languages columns.
         """
         languages = self.get_available_languages(obj)
-        return '<span class="available-languages">{0}</span>'.format(' '.join(languages))
+        return '<span class="available-languages">{0}</span>'.format(
+            " ".join(languages)
+        )
 
     languages_column.allow_tags = True
-    languages_column.short_description = _('Languages')
+    languages_column.short_description = _("Languages")
 
 
 class TranslatableModelAdmin(TranslatableModelAdminMixin, admin.ModelAdmin):
     """
     Admin class for translatable models.
     """
+
     pass
 
 
@@ -68,8 +71,9 @@ class LinguistTranslationModelAdmin(admin.ModelAdmin):
     """
     Linguist Translation admin options.
     """
-    list_display = ('identifier', 'object_id', 'language', 'field_name', 'field_value')
-    list_filter = ('identifier', 'language')
+
+    list_display = ("identifier", "object_id", "language", "field_name", "field_value")
+    list_filter = ("identifier", "language")
 
 
 admin.site.register(LinguistTranslationModel, LinguistTranslationModelAdmin)

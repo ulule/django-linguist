@@ -10,8 +10,9 @@ class CachedTranslationTest(BaseTestCase):
     """
     Tests CachedTranslation class.
     """
+
     def test_attributes(self):
-        fields = [f for f in Translation._meta.get_fields() if f.name != 'id']
+        fields = [f for f in Translation._meta.get_fields() if f.name != "id"]
 
         obj = CachedTranslation()
 
@@ -21,16 +22,18 @@ class CachedTranslationTest(BaseTestCase):
             self.assertTrue(hasattr(obj, attr.name))
             self.assertIsNone(getattr(obj, attr.name))
 
-        for attr in ('instance', 'translation'):
+        for attr in ("instance", "translation"):
             self.assertIsNone(getattr(obj, attr))
 
     def test_instance_and_translation(self):
-        self.instance.activate_language('en')
-        self.instance.title = 'Hello'
+        self.instance.activate_language("en")
+        self.instance.title = "Hello"
         self.instance.save()
 
         translation = Translation.objects.first()
-        obj = CachedTranslation(**{'instance': self.instance, 'translation': translation})
+        obj = CachedTranslation(
+            **{"instance": self.instance, "translation": translation}
+        )
 
         self.assertTrue(isinstance(obj.instance, FooModel))
         self.assertTrue(isinstance(obj.translation, Translation))
@@ -41,8 +44,8 @@ class CachedTranslationTest(BaseTestCase):
         self.assertEqual(obj.field_value, translation.field_value)
 
     def test_from_object(self):
-        self.instance.activate_language('en')
-        self.instance.title = 'Hello'
+        self.instance.activate_language("en")
+        self.instance.title = "Hello"
         self.instance.save()
 
         translation = Translation.objects.first()

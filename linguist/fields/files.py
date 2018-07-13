@@ -7,7 +7,9 @@ from . import TranslationDescriptor
 
 class FileTranslationDescriptor(TranslationDescriptor):
     def __get__(self, instance, instance_type=None):
-        file_value = result = super(FileTranslationDescriptor, self).__get__(instance, instance_type=instance_type)
+        file_value = result = super(FileTranslationDescriptor, self).__get__(
+            instance, instance_type=instance_type
+        )
 
         # If this value is a string (instance.file = "path/to/file") or None
         # then we simply wrap it with the appropriate attribute class according
@@ -31,7 +33,7 @@ class FileTranslationDescriptor(TranslationDescriptor):
         # Finally, because of the (some would say boneheaded) way pickle works,
         # the underlying FieldFile might not actually itself have an associated
         # file. So we need to reset the details of the FieldFile in those cases.
-        elif isinstance(file_value, FieldFile) and not hasattr(file_value, 'field'):
+        elif isinstance(file_value, FieldFile) and not hasattr(file_value, "field"):
             result.field = self.field
             result.storage = self.field.storage
 

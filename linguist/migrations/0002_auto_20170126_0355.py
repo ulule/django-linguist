@@ -7,14 +7,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('linguist', '0001_initial'),
-    ]
+    dependencies = [("linguist", "0001_initial")]
 
     operations = [
         migrations.AddField(
-            model_name='translation',
-            name='updated_at',
+            model_name="translation",
+            name="updated_at",
             field=models.DateTimeField(auto_now=True, null=True),
-        ),
+        )
     ]

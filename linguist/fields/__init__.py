@@ -19,18 +19,17 @@ def instance_only(instance):
     Ensures instance is not None for ``__get__`` and ``__set__`` methods.
     """
     if instance is None:
-        raise AttributeError('Can only be accessed via instance')
+        raise AttributeError("Can only be accessed via instance")
 
 
 class Linguist(object):
-
     def __init__(self, *args, **kwargs):
-        self.instance = kwargs.get('instance', None)
-        self.identifier = kwargs.get('identifier', None)
-        self.default_language = kwargs.get('default_language', None)
-        self.default_language_field = kwargs.get('default_language_field', None)
-        self.fields = kwargs.get('fields', None)
-        self.decider = kwargs.get('decider', Translation)
+        self.instance = kwargs.get("instance", None)
+        self.identifier = kwargs.get("identifier", None)
+        self.default_language = kwargs.get("default_language", None)
+        self.default_language_field = kwargs.get("default_language_field", None)
+        self.fields = kwargs.get("fields", None)
+        self.decider = kwargs.get("decider", Translation)
 
         self.validate_args()
 
@@ -44,15 +43,17 @@ class Linguist(object):
         """
         from ..mixins import ModelMixin
 
-        for arg in ('instance', 'decider', 'identifier', 'fields', 'default_language'):
+        for arg in ("instance", "decider", "identifier", "fields", "default_language"):
             if getattr(self, arg) is None:
-                raise AttributeError('%s must not be None' % arg)
+                raise AttributeError("%s must not be None" % arg)
 
         if not isinstance(self.instance, (ModelMixin,)):
             raise ImproperlyConfigured('"instance" argument must be a Linguist model')
 
         if not issubclass(self.decider, (models.Model,)):
-            raise ImproperlyConfigured('"decider" argument must be a valid Django model')
+            raise ImproperlyConfigured(
+                '"decider" argument must be a valid Django model'
+            )
 
     @property
     def active_language(self):
@@ -102,9 +103,11 @@ class Linguist(object):
 
     @property
     def cached_suffixed_fields(self):
-        return ['%s_%s' % (field, lang)
-                for field in self.cached_fields
-                for lang in self.supported_languages]
+        return [
+            "%s_%s" % (field, lang)
+            for field in self.cached_fields
+            for lang in self.supported_languages
+        ]
 
     @property
     def empty_fields(self):
@@ -126,9 +129,11 @@ class Linguist(object):
         """
         Returns translation instances.
         """
-        return [instance
-                for k, v in six.iteritems(self.instance._linguist_translations)
-                for instance in v.values()]
+        return [
+            instance
+            for k, v in six.iteritems(self.instance._linguist_translations)
+            for instance in v.values()
+        ]
 
     @property
     def translations_count(self):
@@ -137,9 +142,14 @@ class Linguist(object):
         """
         return len(self.translation_instances)
 
-    def get_cache(self, instance, translation=None,
-                  language=None, field_name=None,
-                  field_value=None):
+    def get_cache(
+        self,
+        instance,
+        translation=None,
+        language=None,
+        field_name=None,
+        field_value=None,
+    ):
         """
         Returns translation from cache.
         """
@@ -159,10 +169,12 @@ class Linguist(object):
             if not is_new:
                 if translation is None:
                     try:
-                        translation = self.decider.objects.get(identifier=self.instance.linguist_identifier,
-                                                               object_id=self.instance.pk,
-                                                               language=language,
-                                                               field_name=field_name)
+                        translation = self.decider.objects.get(
+                            identifier=self.instance.linguist_identifier,
+                            object_id=self.instance.pk,
+                            language=language,
+                            field_name=field_name,
+                        )
                     except self.decider.DoesNotExist:
                         pass
 
@@ -170,32 +182,47 @@ class Linguist(object):
                 if translation is not None:
                     cached_obj = CachedTranslation.from_object(translation)
                 else:
-                    cached_obj = CachedTranslation(instance=instance,
-                                                   language=language,
-                                                   field_name=field_name,
-                                                   field_value=field_value)
+                    cached_obj = CachedTranslation(
+                        instance=instance,
+                        language=language,
+                        field_name=field_name,
+                        field_value=field_value,
+                    )
 
-            instance._linguist_translations[cached_obj.field_name][cached_obj.language] = cached_obj
+            instance._linguist_translations[cached_obj.field_name][
+                cached_obj.language
+            ] = cached_obj
 
         return cached_obj
 
-    def set_cache(self, instance=None, translation=None, language=None, field_name=None, field_value=None):
+    def set_cache(
+        self,
+        instance=None,
+        translation=None,
+        language=None,
+        field_name=None,
+        field_value=None,
+    ):
         """
         Add a new translation into the cache.
         """
         if instance is not None and translation is not None:
             cached_obj = CachedTranslation.from_object(translation)
-            instance._linguist_translations[translation.field_name][translation.language] = cached_obj
+            instance._linguist_translations[translation.field_name][
+                translation.language
+            ] = cached_obj
             return cached_obj
 
         if instance is None:
             instance = self.instance
 
-        cached_obj = self.get_cache(instance,
-                                    translation=translation,
-                                    field_value=field_value,
-                                    language=language,
-                                    field_name=field_name)
+        cached_obj = self.get_cache(
+            instance,
+            translation=translation,
+            field_value=field_value,
+            language=language,
+            field_name=field_name,
+        )
 
         if field_value is None and cached_obj.field_value:
             cached_obj.deleted = True
@@ -217,7 +244,9 @@ class DefaultLanguageDescriptor(object):
 
         # Meta default_language_field explicitly defined.
         if instance._linguist.default_language_field is not None:
-            default_language = getattr(instance, instance._linguist.default_language_field)
+            default_language = getattr(
+                instance, instance._linguist.default_language_field
+            )
             if callable(default_language):
                 return default_language()
             return default_language
@@ -236,28 +265,30 @@ class CacheDescriptor(object):
     """
 
     def __init__(self, meta):
-        self.identifier = meta.get('identifier', None)
-        self.fields = meta.get('fields', None)
-        self.default_language = meta.get('default_language', settings.DEFAULT_LANGUAGE)
-        self.default_language_field = meta.get('default_language_field', None)
-        self.decider = meta.get('decider', Translation)
+        self.identifier = meta.get("identifier", None)
+        self.fields = meta.get("fields", None)
+        self.default_language = meta.get("default_language", settings.DEFAULT_LANGUAGE)
+        self.default_language_field = meta.get("default_language_field", None)
+        self.decider = meta.get("decider", Translation)
 
     def __get__(self, instance, instance_type=None):
         if instance is None:
             return self
 
         try:
-            return getattr(instance, '_linguist_cache')
+            return getattr(instance, "_linguist_cache")
         except AttributeError:
-            linguist = Linguist(instance=instance,
-                                identifier=self.identifier,
-                                default_language=self.default_language,
-                                default_language_field=self.default_language_field,
-                                fields=self.fields,
-                                decider=self.decider)
+            linguist = Linguist(
+                instance=instance,
+                identifier=self.identifier,
+                default_language=self.default_language,
+                default_language_field=self.default_language_field,
+                fields=self.fields,
+                decider=self.decider,
+            )
 
-            setattr(instance, '_linguist_cache', linguist)
-            setattr(instance, '_linguist_translations', defaultdict(dict))
+            setattr(instance, "_linguist_cache", linguist)
+            setattr(instance, "_linguist_translations", defaultdict(dict))
 
         return instance._linguist_cache
 
@@ -273,24 +304,30 @@ class TranslationDescriptor(object):
         self.language = language
         self.attname = utils.build_localized_field_name(self.field.name, language)
         self.name = self.attname
-        self.verbose_name = utils.build_localized_verbose_name(field.verbose_name, language)
+        self.verbose_name = utils.build_localized_verbose_name(
+            field.verbose_name, language
+        )
         self.column = None
 
     def __get__(self, instance, instance_type=None):
         instance_only(instance)
 
-        obj = instance._linguist.get_cache(instance=instance,
-                                           language=self.language,
-                                           field_name=self.translated_field.name)
-        return obj.field_value or ''
+        obj = instance._linguist.get_cache(
+            instance=instance,
+            language=self.language,
+            field_name=self.translated_field.name,
+        )
+        return obj.field_value or ""
 
     def __set__(self, instance, value):
         instance_only(instance)
 
-        instance._linguist.set_cache(instance=instance,
-                                     language=self.language,
-                                     field_name=self.translated_field.name,
-                                     field_value=value)
+        instance._linguist.set_cache(
+            instance=instance,
+            language=self.language,
+            field_name=self.translated_field.name,
+            field_value=value,
+        )
 
     def db_type(self, connection):
         """
@@ -311,12 +348,16 @@ class TranslationField(object):
 
         self.translated_field = translated_field
         self.language = language
-        self.descriptor_class = kwargs.pop('descriptor_class', TranslationDescriptor)
+        self.descriptor_class = kwargs.pop("descriptor_class", TranslationDescriptor)
 
         # Suffix field with '_fr', '_en', etc.
-        self.attname = utils.build_localized_field_name(self.translated_field.name, language)
+        self.attname = utils.build_localized_field_name(
+            self.translated_field.name, language
+        )
         self.name = self.attname
-        self.verbose_name = utils.build_localized_verbose_name(translated_field.verbose_name, language)
+        self.verbose_name = utils.build_localized_verbose_name(
+            translated_field.verbose_name, language
+        )
 
         # No concrete field Django < 1.8
         self.column = None
@@ -327,9 +368,15 @@ class TranslationField(object):
     def contribute_to_class(self, cls, name):
         self.model = cls
         self.name = name
-        setattr(cls, self.name, self.descriptor_class(self, self.translated_field, self.language))
+        setattr(
+            cls,
+            self.name,
+            self.descriptor_class(self, self.translated_field, self.language),
+        )
         cls._meta.add_field(self)
-        getattr(cls._meta, 'virtual_fields', getattr(cls._meta, 'private_fields', None)).append(self)
+        getattr(
+            cls._meta, "virtual_fields", getattr(cls._meta, "private_fields", None)
+        ).append(self)
 
     def db_type(self, connection):
         """
@@ -341,6 +388,7 @@ class TranslationField(object):
 
     def clone(self):
         from django.utils.module_loading import import_string
+
         name, path, args, kwargs = self.deconstruct()
         cls = import_string(path)
         return cls(*args, **kwargs)
@@ -348,5 +396,5 @@ class TranslationField(object):
     def deconstruct(self):
         name, path, args, kwargs = self.translated_field.deconstruct()
         if self.null is True:
-            kwargs.update({'null': True})
+            kwargs.update({"null": True})
         return six.text_type(self.name), path, args, kwargs

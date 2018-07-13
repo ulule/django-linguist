@@ -6,6 +6,7 @@ from contextlib import contextmanager
 
 import django
 from django.db.models import Q
+from django.db import models
 from django.utils.functional import cached_property
 
 from . import utils
@@ -36,8 +37,12 @@ class QuerySetMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self._prefetched_translations_cache = kwargs.pop('_prefetched_translations_cache', [])
-        self._prefetch_translations_done = kwargs.pop('_prefetch_translations_done', False)
+        self._prefetched_translations_cache = kwargs.pop(
+            "_prefetched_translations_cache", []
+        )
+        self._prefetch_translations_done = kwargs.pop(
+            "_prefetch_translations_done", False
+        )
 
         super(QuerySetMixin, self).__init__(*args, **kwargs)
 
@@ -60,10 +65,15 @@ class QuerySetMixin(object):
         has_linguist_kwargs = self.has_linguist_kwargs(kwargs)
 
         if translation_args or translation_kwargs:
-            ids = list(set(Translation.objects.filter(*translation_args, **translation_kwargs)
-                                              .values_list('object_id', flat=True)))
+            ids = list(
+                set(
+                    Translation.objects.filter(
+                        *translation_args, **translation_kwargs
+                    ).values_list("object_id", flat=True)
+                )
+            )
             if ids:
-                new_kwargs['id__in'] = ids
+                new_kwargs["id__in"] = ids
 
         has_kwargs = has_linguist_kwargs and not (new_kwargs or new_args)
         has_args = has_linguist_args and not (new_args or new_kwargs)
@@ -73,19 +83,20 @@ class QuerySetMixin(object):
         if has_kwargs or has_args:
             return self._clone().none()
 
-        return super(QuerySetMixin, self)._filter_or_exclude(negate, *new_args, **new_kwargs)
+        return super(QuerySetMixin, self)._filter_or_exclude(
+            negate, *new_args, **new_kwargs
+        )
 
     def _clone(self, klass=None, setup=False, **kwargs):
-        kwargs.update({
-            '_prefetched_translations_cache': self._prefetched_translations_cache,
-            '_prefetch_translations_done': self._prefetch_translations_done,
-        })
+        kwargs.update(
+            {
+                "_prefetched_translations_cache": self._prefetched_translations_cache,
+                "_prefetch_translations_done": self._prefetch_translations_done,
+            }
+        )
 
         if django.VERSION < (1, 9):
-            kwargs.update({
-                'klass': klass,
-                'setup': setup,
-            })
+            kwargs.update({"klass": klass, "setup": setup})
 
         return super(QuerySetMixin, self)._clone(**kwargs)
 
@@ -115,10 +126,9 @@ class QuerySetMixin(object):
         return [
             (f, f.model if f.model != self.model else None)
             for f in self.model._meta.get_fields()
-                if f.concrete and (
-                    not f.is_relation
-                    or f.one_to_one
-                    or (f.many_to_one and f.related_model)
+            if f.concrete
+            and (
+                not f.is_relation or f.one_to_one or (f.many_to_one and f.related_model)
             )
         ]
 
@@ -127,8 +137,9 @@ class QuerySetMixin(object):
         """
         Returns linguist field names (example: "title" and "title_fr").
         """
-        return (list(self.model._linguist.fields) +
-                list(utils.get_language_fields(self.model._linguist.fields)))
+        return list(self.model._linguist.fields) + list(
+            utils.get_language_fields(self.model._linguist.fields)
+        )
 
     def has_linguist_kwargs(self, kwargs):
         """
@@ -170,8 +181,9 @@ class QuerySetMixin(object):
         lks = []
         for k, v in six.iteritems(kwargs):
             if self.is_linguist_lookup(k):
-                lks.append(utils.get_translation_lookup(
-                    self.model._linguist.identifier, k, v))
+                lks.append(
+                    utils.get_translation_lookup(self.model._linguist.identifier, k, v)
+                )
 
         translation_kwargs = {}
         for lk in lks:
@@ -188,7 +200,10 @@ class QuerySetMixin(object):
         field = utils.get_field_name_from_lookup(lookup)
 
         # To keep default behavior with "FieldError: Cannot resolve keyword".
-        if (field not in self.concrete_field_names and field in self.linguist_field_names):
+        if (
+            field not in self.concrete_field_names
+            and field in self.linguist_field_names
+        ):
             return True
 
         return False
@@ -202,11 +217,13 @@ class QuerySetMixin(object):
         if isinstance(condition, Q):
             children = []
             for child in condition.children:
-                parsed = self._get_linguist_condition(condition=child,
-                                                      reverse=reverse,
-                                                      transform=transform)
+                parsed = self._get_linguist_condition(
+                    condition=child, reverse=reverse, transform=transform
+                )
                 if parsed is not None:
-                    if (isinstance(parsed, Q) and parsed.children) or isinstance(parsed, tuple):
+                    if (isinstance(parsed, Q) and parsed.children) or isinstance(
+                        parsed, tuple
+                    ):
                         children.append(parsed)
 
             new_condition = copy.deepcopy(condition)
@@ -219,9 +236,11 @@ class QuerySetMixin(object):
         is_linguist = self.is_linguist_lookup(lookup)
 
         if transform and is_linguist:
-            return Q(**utils.get_translation_lookup(self.model._linguist.identifier,
-                                                    lookup,
-                                                    value))
+            return Q(
+                **utils.get_translation_lookup(
+                    self.model._linguist.identifier, lookup, value
+                )
+            )
 
         if (reverse and not is_linguist) or (not reverse and is_linguist):
             return condition
@@ -265,12 +284,14 @@ class QuerySetMixin(object):
         * ``chunks_length``: fetches IDs by chunk
         """
 
-        force = kwargs.pop('force', False)
+        force = kwargs.pop("force", False)
 
         if self._prefetch_translations_done and force is False:
             return self
 
-        self._prefetched_translations_cache = utils.get_grouped_translations(self, **kwargs)
+        self._prefetched_translations_cache = utils.get_grouped_translations(
+            self, **kwargs
+        )
         self._prefetch_translations_done = True
 
         return self._clone()
@@ -283,15 +304,17 @@ class QuerySetMixin(object):
         return self
 
 
+class LinguistQuerySet(QuerySetMixin, models.query.QuerySet):
+    pass
+
+
 class ManagerMixin(object):
     """
     Linguist Manager Mixin.
     """
 
     def get_queryset(self):
-        from django.db import models
-        QuerySet = type('LinguistQuerySet', (QuerySetMixin, models.query.QuerySet), {})
-        return QuerySet(self.model)
+        return LinguistQuerySet(self.model)
 
     def with_translations(self, **kwargs):
         """
@@ -307,7 +330,6 @@ class ManagerMixin(object):
 
 
 class ModelMixin(object):
-
     def prefetch_translations(self, *args, **kwargs):
         if not self.pk:
             return
@@ -315,7 +337,9 @@ class ModelMixin(object):
         prefetch_translations([self], **kwargs)
 
         if args:
-            fields = [f for f in self._meta.get_fields(include_hidden=True) if f.name in args]
+            fields = [
+                f for f in self._meta.get_fields(include_hidden=True) if f.name in args
+            ]
             for field in fields:
                 value = getattr(self, field.name, None)
                 if issubclass(value.__class__, ModelMixin):
@@ -325,7 +349,9 @@ class ModelMixin(object):
         for field in self._linguist.fields:
             if field in self._linguist.translations:
                 languages = self._linguist.translations[field]
-                missing_languages = list(set(self._linguist.supported_languages) - set(languages.keys()))
+                missing_languages = list(
+                    set(self._linguist.supported_languages) - set(languages.keys())
+                )
                 for language in missing_languages:
                     self._linguist.translations[field][language] = CachedTranslation()
             else:
@@ -358,11 +384,14 @@ class ModelMixin(object):
         """
         from .models import Translation
 
-        return (Translation.objects
-                .filter(identifier=self.linguist_identifier, object_id=self.pk)
-                .values_list('language', flat=True)
-                .distinct()
-                .order_by('language'))
+        return (
+            Translation.objects.filter(
+                identifier=self.linguist_identifier, object_id=self.pk
+            )
+            .values_list("language", flat=True)
+            .distinct()
+            .order_by("language")
+        )
 
     @property
     def cached_translations_count(self):
@@ -412,7 +441,15 @@ class ModelMixin(object):
         yield
         self._linguist.language = previous_language
 
-    def _save_table(self, raw=False, cls=None, force_insert=False, force_update=False, using=None, update_fields=None):
+    def _save_table(
+        self,
+        raw=False,
+        cls=None,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
         """
         Overwrites model's ``_save_table`` method to save translations after instance
         has been saved (required to retrieve the object ID for ``Translation``
@@ -426,11 +463,18 @@ class ModelMixin(object):
         before the translations are saved and the attribute is reset.
         And `post_save`` signals always have access to the updated translations.
         """
-        updated = super(ModelMixin, self)._save_table(raw=raw, cls=cls,
-                                                      force_insert=force_insert, force_update=force_update,
-                                                      using=using, update_fields=update_fields)
-        self._linguist.decider.objects.save_translations([self, ])
+        updated = super(ModelMixin, self)._save_table(
+            raw=raw,
+            cls=cls,
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
+        self._linguist.decider.objects.save_translations([self])
         return updated
 
     def get_field_object(self, field_name, language):
-        return self.__class__.__dict__[utils.build_localized_field_name(field_name, language)].field
+        return self.__class__.__dict__[
+            utils.build_localized_field_name(field_name, language)
+        ].field

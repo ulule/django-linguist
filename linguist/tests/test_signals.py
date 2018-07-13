@@ -17,19 +17,19 @@ class PostDeleteSignalTest(BaseTestCase):
     """
 
     def test_post_delete(self):
-        self.instance.activate_language('en')
-        self.instance.title = 'Hello'
+        self.instance.activate_language("en")
+        self.instance.title = "Hello"
         self.instance.save()
 
-        self.instance.activate_language('fr')
-        self.instance.title = 'Bonjour'
+        self.instance.activate_language("fr")
+        self.instance.title = "Bonjour"
         self.instance.save()
 
         self.assertEqual(Translation.objects.count(), 2)
 
         bar_instance = BarModel()
-        bar_instance.activate_language('fr')
-        bar_instance.title = 'Bonjour'
+        bar_instance.activate_language("fr")
+        bar_instance.title = "Bonjour"
         bar_instance.save()
 
         self.assertEqual(Translation.objects.count(), 3)
@@ -50,12 +50,12 @@ class PrePostSaveSignalsTest(BaseTestCase):
     def bar(self):
         bar_instance = BarModel()
 
-        bar_instance.activate_language('en')
-        bar_instance.title = 'Hello'
+        bar_instance.activate_language("en")
+        bar_instance.title = "Hello"
         bar_instance.save()
 
-        bar_instance.activate_language('fr')
-        bar_instance.title = 'Bonjour'
+        bar_instance.activate_language("fr")
+        bar_instance.title = "Bonjour"
         bar_instance.save()
 
         return bar_instance
@@ -73,8 +73,8 @@ class PrePostSaveSignalsTest(BaseTestCase):
 
             self.pre_save_called = True
 
-            field_fr = instance._linguist_translations['title'].get('fr', None)
-            field_en = instance._linguist_translations['title'].get('en', None)
+            field_fr = instance._linguist_translations["title"].get("fr", None)
+            field_en = instance._linguist_translations["title"].get("en", None)
 
             assert field_fr.has_changed
             assert not field_en.has_changed
@@ -106,8 +106,8 @@ class PrePostSaveSignalsTest(BaseTestCase):
         assert self.pre_save_called is False
         assert self.post_save_called is False
 
-        self.bar.activate_language('fr')
-        self.bar.title = 'Bonjour signal'
+        self.bar.activate_language("fr")
+        self.bar.title = "Bonjour signal"
         self.bar.save()
 
         assert self.pre_save_called is True

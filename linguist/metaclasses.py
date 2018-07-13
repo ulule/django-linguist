@@ -13,9 +13,9 @@ from .fields import TranslationDescriptor, files
 LANGUAGE_CODE, LANGUAGE_NAME = 0, 1
 
 SUPPORTED_FIELDS = {
-    models.fields.CharField: {'descriptor_class': TranslationDescriptor},
-    models.FileField: {'descriptor_class': files.FileTranslationDescriptor},
-    models.fields.TextField: {'descriptor_class': TranslationDescriptor},
+    models.fields.CharField: {"descriptor_class": TranslationDescriptor},
+    models.FileField: {"descriptor_class": files.FileTranslationDescriptor},
+    models.fields.TextField: {"descriptor_class": TranslationDescriptor},
 }
 
 
@@ -26,14 +26,16 @@ def validate_meta(meta):
     if not isinstance(meta, (dict,)):
         raise TypeError('Model Meta "linguist" must be a dict')
 
-    required_keys = ('identifier', 'fields')
+    required_keys = ("identifier", "fields")
 
     for key in required_keys:
         if key not in meta:
             raise KeyError('Model Meta "linguist" dict requires %s to be defined', key)
 
-    if not isinstance(meta['fields'], (list, tuple)):
-        raise ImproperlyConfigured("Linguist Meta's fields attribute must be a list or tuple")
+    if not isinstance(meta["fields"], (list, tuple)):
+        raise ImproperlyConfigured(
+            "Linguist Meta's fields attribute must be a list or tuple"
+        )
 
 
 def default_value_getter(field):
@@ -42,8 +44,11 @@ def default_value_getter(field):
     in the current language will be returned. Unless it's set,
     the value in the default language will be returned.
     """
+
     def default_value_func_getter(self):
-        localized_field = utils.build_localized_field_name(field, self._linguist.active_language)
+        localized_field = utils.build_localized_field_name(
+            field, self._linguist.active_language
+        )
         value = getattr(self, localized_field)
         if value:
             return value
@@ -59,8 +64,11 @@ def default_value_setter(field):
     When setting to the name of the field itself, the value
     in the current language will be set.
     """
+
     def default_value_func_setter(self, value):
-        localized_field = utils.build_localized_field_name(field, self._linguist.active_language)
+        localized_field = utils.build_localized_field_name(
+            field, self._linguist.active_language
+        )
 
         setattr(self, localized_field, value)
 
@@ -86,7 +94,7 @@ def field_factory(base_class):
     class TranslationFieldField(TranslationField, base_class):
         pass
 
-    TranslationFieldField.__name__ = 'Translation%s' % base_class.__name__
+    TranslationFieldField.__name__ = "Translation%s" % base_class.__name__
 
     return TranslationFieldField
 
@@ -99,18 +107,17 @@ def create_translation_field(translated_field, language):
     cls_name = translated_field.__class__.__name__
 
     if not isinstance(translated_field, tuple(SUPPORTED_FIELDS.keys())):
-        raise ImproperlyConfigured('%s is not supported by Linguist.' % cls_name)
+        raise ImproperlyConfigured("%s is not supported by Linguist." % cls_name)
 
     translation_class = field_factory(translated_field.__class__)
     kwargs = get_translation_class_kwargs(translated_field.__class__)
 
-    return translation_class(translated_field=translated_field,
-                             language=language,
-                             **kwargs)
+    return translation_class(
+        translated_field=translated_field, language=language, **kwargs
+    )
 
 
 class ModelMeta(models.base.ModelBase):
-
     def __new__(cls, name, bases, attrs):
 
         from .fields import CacheDescriptor, DefaultLanguageDescriptor
@@ -120,22 +127,21 @@ class ModelMeta(models.base.ModelBase):
         meta = None
         default_language = utils.get_fallback_language()
 
-        if 'Meta' not in attrs or not hasattr(attrs['Meta'], 'linguist'):
+        if "Meta" not in attrs or not hasattr(attrs["Meta"], "linguist"):
             return super(ModelMeta, cls).__new__(cls, name, bases, attrs)
 
-        validate_meta(attrs['Meta'].linguist)
-        meta = attrs['Meta'].linguist
-        delattr(attrs['Meta'], 'linguist')
+        validate_meta(attrs["Meta"].linguist)
+        meta = attrs["Meta"].linguist
+        delattr(attrs["Meta"], "linguist")
 
         all_fields = dict(
             (attr_name, attr)
             for attr_name, attr in six.iteritems(attrs)
-            if isinstance(attr, models.fields.Field))
+            if isinstance(attr, models.fields.Field)
+        )
 
         abstract_model_bases = [
-            base
-            for base in bases
-            if hasattr(base, '_meta') and base._meta.abstract
+            base for base in bases if hasattr(base, "_meta") and base._meta.abstract
         ]
 
         for base in abstract_model_bases:
@@ -147,13 +153,14 @@ class ModelMeta(models.base.ModelBase):
 
         original_fields = {}
 
-        for field in meta['fields']:
+        for field in meta["fields"]:
 
             if field not in all_fields:
                 raise ImproperlyConfigured(
                     "There is no field %(field)s in model %(name)s, "
-                    "as specified in Meta's translate attribute" %
-                    dict(field=field, name=name))
+                    "as specified in Meta's translate attribute"
+                    % dict(field=field, name=name)
+                )
 
             original_fields[field] = all_fields[field]
 
@@ -164,7 +171,7 @@ class ModelMeta(models.base.ModelBase):
         # Auto-add Mixins
         #
 
-        bases = (ModelMixin, ) + bases
+        bases = (ModelMixin,) + bases
 
         #
         # Let's create class
@@ -176,16 +183,16 @@ class ModelMeta(models.base.ModelBase):
         # instance._linguist / instance.default_language descriptors
         #
 
-        setattr(new_class, '_linguist', CacheDescriptor(meta=meta))
-        setattr(new_class, 'default_language', DefaultLanguageDescriptor())
+        setattr(new_class, "_linguist", CacheDescriptor(meta=meta))
+        setattr(new_class, "default_language", DefaultLanguageDescriptor())
 
         #
         # Decider
         #
 
-        decider = meta.get('decider', Translation)
+        decider = meta.get("decider", Translation)
 
-        if not hasattr(decider, 'linguist_models'):
+        if not hasattr(decider, "linguist_models"):
             decider.linguist_models = []
 
         decider.linguist_models.append(new_class)
@@ -216,9 +223,13 @@ class ModelMeta(models.base.ModelBase):
 
                 lang_attr.contribute_to_class(new_class, lang_attr_name)
 
-            setattr(new_class,
-                    field_name,
-                    property(default_value_getter(field_name), default_value_setter(field_name)))
+            setattr(
+                new_class,
+                field_name,
+                property(
+                    default_value_getter(field_name), default_value_setter(field_name)
+                ),
+            )
 
         #
         # Linguist Meta

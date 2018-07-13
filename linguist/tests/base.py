@@ -11,12 +11,7 @@ from exam.decorators import fixture, before, after
 from ..models import Translation
 
 from . import settings
-from .models import (
-    Tag,
-    Author,
-    Article,
-    FooModel,
-)
+from .models import Tag, Author, Article, FooModel
 
 
 class Fixtures(Exam):
@@ -27,13 +22,12 @@ class Fixtures(Exam):
     @fixture
     def author(self):
         return Author.objects.create(
-            name='John Doe',
-            bio_en='I am John Doe',
-            bio_fr='Je suis John Doe')
+            name="John Doe", bio_en="I am John Doe", bio_fr="Je suis John Doe"
+        )
 
     @fixture
     def tag(self):
-        return Tag.objects.create(name_fr='tag fr', name_en='tag en')
+        return Tag.objects.create(name_fr="tag fr", name_en="tag en")
 
     @fixture
     def articles(self):
@@ -41,11 +35,12 @@ class Fixtures(Exam):
         for i in range(10):
             article = Article.objects.create(
                 author=self.author,
-                slug='article-%d' % i,
-                title_en='%d in EN' % i,
-                content_en='%d in EN' % i,
-                title_fr='%d in FR' % i,
-                content_fr='%s FR' % i)
+                slug="article-%d" % i,
+                title_en="%d in EN" % i,
+                content_en="%d in EN" % i,
+                title_fr="%d in FR" % i,
+                content_fr="%s FR" % i,
+            )
             article.tags.add(self.tag)
             article.save()
             articles.append(article)
@@ -66,19 +61,23 @@ class Fixtures(Exam):
 
     @fixture
     def translation_en(self):
-        return Translation.objects.create(identifier='foo',
-                                          object_id=self.instance.pk,
-                                          language='en',
-                                          field_name='title',
-                                          field_value='Hello')
+        return Translation.objects.create(
+            identifier="foo",
+            object_id=self.instance.pk,
+            language="en",
+            field_name="title",
+            field_value="Hello",
+        )
 
     @fixture
     def translation_fr(self):
-        return Translation.objects.create(identifier='foo',
-                                          object_id=self.instance.pk,
-                                          language='fr',
-                                          field_name='title',
-                                          field_value='bonjour')
+        return Translation.objects.create(
+            identifier="foo",
+            object_id=self.instance.pk,
+            language="fr",
+            field_name="title",
+            field_value="bonjour",
+        )
 
     @before
     def setup_models(self):
@@ -99,11 +98,10 @@ class BaseTestCase(Fixtures, TestCase):
 
 
 def get_file_path(*path_nodes):
-    return os.path.join(settings.BASE_PATH, 'tests', 'fixtures', *path_nodes)
+    return os.path.join(settings.BASE_PATH, "tests", "fixtures", *path_nodes)
 
 
 def get_uploaded_file(*path_nodes):
-    data = open(get_file_path(*path_nodes), 'rb').read()
+    data = open(get_file_path(*path_nodes), "rb").read()
     name = path_nodes[-1]
-    return SimpleUploadedFile(name, data,
-                              content_type=mimetypes.guess_type(name)[0])
+    return SimpleUploadedFile(name, data, content_type=mimetypes.guess_type(name)[0])
