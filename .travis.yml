@@ -1,8 +1,10 @@
+dist: trusty
+sudo: required
 language: python
+python: 3.6
 services: postgresql
 before_script:
   - psql -c "CREATE DATABASE django_linguist;" -U postgres
-install:
-    - travis_retry pip install tox
-script:
-    - travis_retry tox
+
+install: pip install tox
+script: tox
