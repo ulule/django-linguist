@@ -329,7 +329,7 @@ class TranslationField(object):
         self.name = name
         setattr(cls, self.name, self.descriptor_class(self, self.translated_field, self.language))
         cls._meta.add_field(self)
-        cls._meta.virtual_fields.append(self)
+        getattr(cls._meta, 'virtual_fields', getattr(cls._meta, 'private_fields', None)).append(self)
 
     def db_type(self, connection):
         """
