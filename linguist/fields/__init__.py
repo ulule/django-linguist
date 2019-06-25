@@ -14,14 +14,6 @@ from ..cache import CachedTranslation
 from ..models import Translation
 
 
-def instance_only(instance):
-    """
-    Ensures instance is not None for ``__get__`` and ``__set__`` methods.
-    """
-    if instance is None:
-        raise AttributeError("Can only be accessed via instance")
-
-
 class Linguist(object):
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.get("instance", None)
@@ -240,7 +232,8 @@ class DefaultLanguageDescriptor(object):
     """
 
     def __get__(self, instance, instance_type=None):
-        instance_only(instance)
+        if not instance:
+            return self
 
         # Meta default_language_field explicitly defined.
         if instance._linguist.default_language_field is not None:
@@ -310,7 +303,8 @@ class TranslationDescriptor(object):
         self.column = None
 
     def __get__(self, instance, instance_type=None):
-        instance_only(instance)
+        if not instance:
+            return self
 
         obj = instance._linguist.get_cache(
             instance=instance,
@@ -320,7 +314,8 @@ class TranslationDescriptor(object):
         return obj.field_value or ""
 
     def __set__(self, instance, value):
-        instance_only(instance)
+        if not instance:
+            return self
 
         instance._linguist.set_cache(
             instance=instance,
