@@ -34,7 +34,9 @@ class TranslatableModelAdminMixin(object):
 
     def get_object(self, *args, **kwargs):
         obj = super(TranslatableModelAdminMixin, self).get_object(*args, **kwargs)
-        obj.prefetch_translations()
+        if obj:
+            obj.prefetch_translations()
+
         return obj
 
     def get_changelist(self, request, **kwargs):
