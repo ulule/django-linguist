@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.fields import NOT_PROVIDED
 from django.forms.forms import pretty_name
-from django.utils import six
 
 from . import settings
 from . import utils
@@ -136,7 +134,7 @@ class ModelMeta(models.base.ModelBase):
 
         all_fields = dict(
             (attr_name, attr)
-            for attr_name, attr in six.iteritems(attrs)
+            for attr_name, attr in attrs.items()
             if isinstance(attr, models.fields.Field)
         )
 
@@ -201,8 +199,7 @@ class ModelMeta(models.base.ModelBase):
         # Language fields
         #
 
-        for field_name, field in six.iteritems(original_fields):
-
+        for field_name, field in original_fields.items():
             field.name = field_name
             field.model = new_class
 

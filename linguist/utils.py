@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 import collections
+import copy
+import itertools
 
-try:
-    # py27 / py3 only
-    from importlib import import_module
-except ImportError:
-    from django.utils.importlib import import_module
+from importlib import import_module
 
 from django.db.models import QuerySet
 from django.core import exceptions
-from django.utils import six
 from django.utils.encoding import force_text
 from django.utils.functional import lazy
 from django.utils.translation import get_language as _get_language
@@ -110,15 +107,15 @@ def _build_localized_verbose_name(verbose_name, language):
     return force_text("%s (%s)") % (force_text(verbose_name), language)
 
 
-build_localized_verbose_name = lazy(_build_localized_verbose_name, six.text_type)
+build_localized_verbose_name = lazy(_build_localized_verbose_name, str)
 
 
 def chunks(l, n):
     """
     Yields successive n-sized chunks from l.
     """
-    for i in xrange(0, len(l), n):
-        yield l[i : i + n]
+    for i in range(0, len(l), n):
+        yield l[i: i + n]
 
 
 def load_class(class_path, setting_name=None):
@@ -127,10 +124,10 @@ def load_class(class_path, setting_name=None):
     tuple. The setting_name parameter is only there for pretty error output, and
     therefore is optional.
     """
-    if not isinstance(class_path, six.string_types):
+    if not isinstance(class_path, str):
         try:
             class_path, app_label = class_path
-        except:
+        except Exception:
             if setting_name:
                 raise exceptions.ImproperlyConfigured(
                     CLASS_PATH_ERROR % (setting_name, setting_name)
@@ -192,7 +189,7 @@ def get_model_string(model_name):
     class_path = getattr(settings, setting_name, None)
     if not class_path:
         return "linguist.%s" % model_name
-    elif isinstance(class_path, basestring):
+    elif isinstance(class_path, str):
         parts = class_path.split(".")
         try:
             index = parts.index("models") - 1
@@ -205,7 +202,7 @@ def get_model_string(model_name):
         try:
             class_path, app_label = class_path
             model_name = class_path.split(".")[-1]
-        except:
+        except Exception:
             raise exceptions.ImproperlyConfigured(
                 CLASS_PATH_ERROR % (setting_name, setting_name)
             )
@@ -289,12 +286,10 @@ def get_grouped_translations(instances, **kwargs):
             )
 
     from .models import Translation
-    from .mixins import ModelMixin
 
     decider = model._meta.linguist.get("decider", Translation)
     identifier = model._meta.linguist.get("identifier", None)
     chunks_length = kwargs.get("chunks_length", None)
-    populate_missing = kwargs.get("populate_missing", True)
 
     if identifier is None:
         raise Exception('You must define Linguist "identifier" meta option')
@@ -309,7 +304,7 @@ def get_grouped_translations(instances, **kwargs):
 
     if chunks_length is not None:
         translations_qs = []
-        for ids in utils.chunks(instances_ids, chunks_length):
+        for ids in chunks(instances_ids, chunks_length):
             ids_lookup = copy.copy(lookup)
             ids_lookup["object_id__in"] = ids
             translations_qs.append(decider.objects.filter(**ids_lookup))

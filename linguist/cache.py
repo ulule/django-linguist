@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import cached_property
+
+from functools import lru_cache
 
 
 def _get_translation_field_names():
@@ -15,17 +15,9 @@ def _get_translation_field_names():
     return fields
 
 
-try:
-    from django.utils.lru_cache import lru_cache
-
-    get_translation_field_names = lru_cache()(_get_translation_field_names)
-except ImportError:
-    from django.utils.functional import memoize
-
-    get_translation_field_names = memoize(_get_translation_field_names, {}, 0)
+get_translation_field_names = lru_cache()(_get_translation_field_names)
 
 
-@python_2_unicode_compatible
 class CachedTranslation(object):
     def __init__(self, **kwargs):
         self.fields = get_translation_field_names()

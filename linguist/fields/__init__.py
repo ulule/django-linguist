@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from collections import defaultdict
 
 from django.db import models
 from django.core.exceptions import ImproperlyConfigured
-from django.utils import six
 from django.utils.functional import cached_property
 
 from .. import settings
@@ -79,7 +75,7 @@ class Linguist(object):
     @property
     def cached_languages(self):
         langs = []
-        for k, v in six.iteritems(self.instance._linguist_translations):
+        for k, v in self.instance._linguist_translations.items():
             for lang in v.keys():
                 if lang not in langs:
                     langs.append(lang)
@@ -91,7 +87,7 @@ class Linguist(object):
 
     @property
     def cached_fields(self):
-        return [k for k, v in six.iteritems(self.instance._linguist_translations) if v]
+        return [k for k, v in self.instance._linguist_translations.items() if v]
 
     @property
     def cached_suffixed_fields(self):
@@ -123,7 +119,7 @@ class Linguist(object):
         """
         return [
             instance
-            for k, v in six.iteritems(self.instance._linguist_translations)
+            for k, v in self.instance._linguist_translations.items()
             for instance in v.values()
         ]
 
@@ -392,4 +388,5 @@ class TranslationField(object):
         name, path, args, kwargs = self.translated_field.deconstruct()
         if self.null is True:
             kwargs.update({"null": True})
-        return six.text_type(self.name), path, args, kwargs
+
+        return str(self.name), path, args, kwargs

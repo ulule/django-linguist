@@ -1,4 +1,3 @@
-import six
 from django.core.files.base import File
 from django.db.models.fields.files import FieldFile
 
@@ -18,7 +17,7 @@ class FileTranslationDescriptor(TranslationDescriptor):
         # subclasses might also want to subclass the attribute class]. This
         # object understands how to convert a path to a file, and also how to
         # handle None.
-        if isinstance(file_value, six.string_types) or file_value is None:
+        if isinstance(file_value, str) or file_value is None:
             result = self.field.attr_class(instance, self.field, file_value)
 
         # Other types of files may be assigned as well, but they need to have

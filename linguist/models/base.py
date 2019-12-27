@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 from django.db import IntegrityError, models, transaction
 
-from django.utils.encoding import python_2_unicode_compatible
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .. import settings
 
@@ -103,7 +101,6 @@ class TranslationManager(models.Manager):
                     obj.has_changed = False
 
 
-@python_2_unicode_compatible
 class Translation(models.Model):
     """
     A Translation.
