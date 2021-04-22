@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import copy
-import six
 
 from contextlib import contextmanager
 
@@ -179,7 +178,7 @@ class QuerySetMixin(object):
         Returns linguist lookup kwargs (related to Translation model).
         """
         lks = []
-        for k, v in six.iteritems(kwargs):
+        for k, v in kwargs.items():
             if self.is_linguist_lookup(k):
                 lks.append(
                     utils.get_translation_lookup(self.model._linguist.identifier, k, v)
@@ -187,7 +186,7 @@ class QuerySetMixin(object):
 
         translation_kwargs = {}
         for lk in lks:
-            for k, v in six.iteritems(lk):
+            for k, v in lk.items():
                 if k not in translation_kwargs:
                     translation_kwargs[k] = v
 

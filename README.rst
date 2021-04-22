@@ -66,8 +66,7 @@ Don't worry, it's fairly simple:
 .. code-block:: python
 
     from django.db import models
-    from django.utils.six import with_metaclass
-    from django.utils.translation import ugettext_lazy as _
+    from django.utils.translation import gettext_lazy as _
 
     from linguist.metaclasses import ModelMeta as LinguistMeta
     from linguist.mixins import ManagerMixin as LinguistManagerMixin
@@ -77,7 +76,7 @@ Don't worry, it's fairly simple:
         pass
 
 
-    class Post(with_metaclass(LinguistMeta, models.Model)):
+    class Post(models.Model, meta=LinguistMeta):
         title = models.CharField(max_length=255)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
@@ -118,8 +117,7 @@ Let's take an example:
 .. code-block:: python
 
     from django.db import models
-    from django.utils.six import with_metaclass
-    from django.utils.translation import ugettext_lazy as _
+    from django.utils.translation import gettext_lazy as _
 
     from linguist.metaclasses import ModelMeta as LinguistMeta
     from linguist.mixins import ManagerMixin as LinguistManagerMixin
@@ -129,7 +127,7 @@ Let's take an example:
         pass
 
 
-    class Post(with_metaclass(LinguistMeta, models.Model)):
+    class Post(models.Model, meta=LinguistMeta):
         title = models.CharField(max_length=255)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
@@ -167,8 +165,7 @@ This example will show you the light:
 
 
     from django.db import models
-    from django.utils.six import with_metaclass
-    from django.utils.translation import ugettext_lazy as _
+    from django.utils.translation import gettext_lazy as _
 
     from linguist.metaclasses import ModelMeta as LinguistMeta
     from linguist.mixins import ManagerMixin as LinguistManagerMixin
@@ -185,7 +182,7 @@ This example will show you the light:
         pass
 
 
-    class Post(with_metaclass(LinguistMeta, models.Model)):
+    class Post(models.Model, meta=LinguistMeta):
         title = models.CharField(max_length=255)
         body = models.TextField()
         created_at = models.DateTimeField(auto_now_add=True)
@@ -410,8 +407,3 @@ Development
 .. _django-linguist: https://github.com/ulule/django-linguist
 .. _Django: http://djangoproject.com
 .. _django-parler: https://github.com/edoburu/django-parler
-
-Compatibility
--------------
-
-- Python 3.8: Django 2.2, 3.0

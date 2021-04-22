@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-import six
-
 from django.db import models
 
 from linguist.models.base import Translation
@@ -86,7 +81,7 @@ class DeciderManager(LinguistManagerMixin, models.Manager):
 
 # Models
 # ------------------------------------------------------------------------------
-class Tag(six.with_metaclass(LinguistMeta, models.Model)):
+class Tag(models.Model, metaclass=LinguistMeta):
     name = models.CharField(max_length=255)
 
     objects = TagManager()
@@ -95,7 +90,7 @@ class Tag(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {"identifier": "tag", "fields": ("name",)}
 
 
-class Author(six.with_metaclass(LinguistMeta, models.Model)):
+class Author(models.Model, metaclass=LinguistMeta):
     name = models.CharField(max_length=255)
     bio = models.TextField(blank=True)
 
@@ -105,7 +100,7 @@ class Author(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {"identifier": "author", "fields": ("bio",)}
 
 
-class Article(six.with_metaclass(LinguistMeta, models.Model)):
+class Article(models.Model, metaclass=LinguistMeta):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
     content = models.TextField(blank=True)
@@ -118,7 +113,7 @@ class Article(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {"identifier": "article", "fields": ("title", "content")}
 
 
-class SlugModel(six.with_metaclass(LinguistMeta, models.Model)):
+class SlugModel(models.Model, metaclass=LinguistMeta):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
 
@@ -128,7 +123,7 @@ class SlugModel(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {"identifier": "slug", "fields": ("title",)}
 
 
-class FileModel(six.with_metaclass(LinguistMeta, models.Model)):
+class FileModel(models.Model, metaclass=LinguistMeta):
     file = models.FileField(null=True, blank=True, upload_to="files")
     image = models.ImageField(null=True, blank=True, upload_to="images")
 
@@ -138,7 +133,7 @@ class FileModel(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {"identifier": "file", "fields": ("file", "image")}
 
 
-class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
+class FooModel(models.Model, metaclass=LinguistMeta):
     """
     A foo.
     """
@@ -156,7 +151,7 @@ class FooModel(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {"identifier": "foo", "fields": ("title", "excerpt", "body")}
 
 
-class BarModel(six.with_metaclass(LinguistMeta, models.Model)):
+class BarModel(models.Model, metaclass=LinguistMeta):
     """
     A bar.
     """
@@ -169,7 +164,7 @@ class BarModel(six.with_metaclass(LinguistMeta, models.Model)):
         linguist = {"identifier": "bar", "fields": ("title",)}
 
 
-class DefaultLanguageFieldModel(six.with_metaclass(LinguistMeta, models.Model)):
+class DefaultLanguageFieldModel(models.Model, metaclass=LinguistMeta):
     """
     A bar.
     """
@@ -187,9 +182,7 @@ class DefaultLanguageFieldModel(six.with_metaclass(LinguistMeta, models.Model)):
         }
 
 
-class DefaultLanguageFieldModelWithCallable(
-    six.with_metaclass(LinguistMeta, models.Model)
-):
+class DefaultLanguageFieldModelWithCallable(models.Model, metaclass=LinguistMeta):
     """
     A bar.
     """
@@ -216,7 +209,7 @@ class CustomTranslationModel(Translation):
         abstract = False
 
 
-class DeciderModel(six.with_metaclass(LinguistMeta, models.Model)):
+class DeciderModel(models.Model, metaclass=LinguistMeta):
     """
     Example of a model using decider feature.
     """
