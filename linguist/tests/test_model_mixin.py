@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from django.utils import translation
 
 from exam import before
@@ -12,7 +9,6 @@ from ..models import Translation
 from .base import BaseTestCase
 
 from .models import (
-    Article,
     FooModel,
     DefaultLanguageFieldModel,
     DefaultLanguageFieldModelWithCallable,
@@ -309,7 +305,7 @@ class ModelMixinTest(BaseTestCase):
             o.activate_language("fr")
             o.title = "title %d" % i
             o.save()
-            self.assertEquals(o.cached_translations_count, 2)
+            self.assertEqual(o.cached_translations_count, 2)
 
     def test_default_language_descriptor(self):
         m = DefaultLanguageFieldModel()
@@ -406,7 +402,7 @@ class ModelMixinTest(BaseTestCase):
             article.prefetch_translations()
         with self.assertNumQueries(0):
             for language in ("fr", "en"):
-                title = getattr(article, "title_%s" % language)
+                getattr(article, "title_%s" % language)
 
         # Clean
         article.clear_translations_cache()
@@ -417,8 +413,8 @@ class ModelMixinTest(BaseTestCase):
             article.prefetch_translations("author")
         with self.assertNumQueries(0):
             for language in ("fr", "en"):
-                title = getattr(article, "title_%s" % language)
-                author_bio = getattr(article.author, "bio_%s" % language)
+                getattr(article, "title_%s" % language)
+                getattr(article.author, "bio_%s" % language)
 
     def test_prefetch_translations_with_no_translations(self):
         m = FooModel()
@@ -440,7 +436,7 @@ class ModelMixinTest(BaseTestCase):
 
         with self.assertNumQueries(0):
             for language in ("fr", "en"):
-                title = getattr(article, "title_%s" % language)
+                getattr(article, "title_%s" % language)
 
         with self.assertNumQueries(0):
             for language in ("fr", "en"):
@@ -457,7 +453,7 @@ class ModelMixinTest(BaseTestCase):
 
         with self.assertNumQueries(0):
             for language in ("fr", "en"):
-                title = getattr(article, "title_%s" % language)
+                getattr(article, "title_%s" % language)
 
         with self.assertNumQueries(2):
             for language in ("fr", "en"):
@@ -476,7 +472,7 @@ class ModelMixinTest(BaseTestCase):
 
         with self.assertNumQueries(1):
             for language in ("fr", "en"):
-                title = getattr(article, "title_%s" % language)
+                getattr(article, "title_%s" % language)
 
         #
         # Be sure prefetch_translations(languages='en') is interpreted as
@@ -490,7 +486,7 @@ class ModelMixinTest(BaseTestCase):
 
         with self.assertNumQueries(1):
             for language in ("fr", "en"):
-                title = getattr(article, "title_%s" % language)
+                getattr(article, "title_%s" % language)
 
     def test_get_field_object(self):
         field = self.translated_instance.get_field_object("title", "en")

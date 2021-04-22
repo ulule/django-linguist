@@ -1,7 +1,7 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.fields import NOT_PROVIDED
-from django.forms.forms import pretty_name
+from django.forms.utils import pretty_name
 
 from . import settings
 from . import utils

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import collections
-import itertools
 
 from . import utils
+
+collections_abc = getattr(collections, 'abc', collections)
 
 
 def prefetch_translations(instances, **kwargs):
@@ -12,7 +13,7 @@ def prefetch_translations(instances, **kwargs):
     """
     from .mixins import ModelMixin
 
-    if not isinstance(instances, collections.Iterable):
+    if not isinstance(instances, collections_abc.Iterable):
         instances = [instances]
 
     populate_missing = kwargs.get("populate_missing", True)

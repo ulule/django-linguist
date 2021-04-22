@@ -52,7 +52,7 @@ class QuerySetMixin(object):
             "_prefetch_translations_done", False
         )
 
-    def _filter_or_exclude(self, negate, *args, **kwargs):
+    def _filter_or_exclude(self, negate, args, kwargs):
         """
         Overrides default behavior to handle linguist fields.
         """
@@ -87,7 +87,7 @@ class QuerySetMixin(object):
             return self._clone().none()
 
         return super(QuerySetMixin, self)._filter_or_exclude(
-            negate, *new_args, **new_kwargs
+            negate, new_args, new_kwargs
         )
 
     def _clone(self, klass=None, setup=False, **kwargs):

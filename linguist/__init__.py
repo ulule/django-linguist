@@ -3,6 +3,4 @@ version = (0, 5, 0)
 
 __version__ = ".".join(map(str, version))
 
-default_app_config = "linguist.apps.LinguistConfig"
-
-__all__ = ["default_app_config", "version"]
+__all__ = ["version"]

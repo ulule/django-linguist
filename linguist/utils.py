@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import collections
 import copy
 import itertools
+import collections
 
 from importlib import import_module
 
@@ -14,7 +14,13 @@ from django.utils.translation import get_language as _get_language
 from . import settings
 
 
-CLASS_PATH_ERROR = "django-linguist is unable to interpret settings value for %s. " "%s should be in the form of a tupple: " "('path.to.models.Class', 'app_label')."
+collections_abc = getattr(collections, 'abc', collections)
+
+CLASS_PATH_ERROR = (
+    "django-linguist is unable to interpret settings value for %s. "
+    "%s should be in the form of a tupple: "
+    "('path.to.models.Class', 'app_label')."
+)
 
 
 def get_language_name(code):
@@ -115,7 +121,7 @@ def chunks(l, n):
     Yields successive n-sized chunks from l.
     """
     for i in range(0, len(l), n):
-        yield l[i: i + n]
+        yield l[i : i + n]
 
 
 def load_class(class_path, setting_name=None):
@@ -267,7 +273,7 @@ def get_grouped_translations(instances, **kwargs):
     if not instances:
         return grouped_translations
 
-    if not isinstance(instances, collections.Iterable):
+    if not isinstance(instances, collections_abc.Iterable):
         instances = [instances]
 
     if isinstance(instances, QuerySet):
