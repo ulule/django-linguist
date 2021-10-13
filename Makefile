@@ -18,4 +18,6 @@ delpyc:
 	@(find . -name '*.pyc' -delete)
 
 release:
-	@(python setup.py sdist register upload -s)
+	@(rm -rf dist/*)
+	@(python setup.py sdist)
+	@(twine upload dist/*)
