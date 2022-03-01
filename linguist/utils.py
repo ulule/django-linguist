@@ -7,14 +7,14 @@ from importlib import import_module
 
 from django.db.models import QuerySet
 from django.core import exceptions
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.functional import lazy
 from django.utils.translation import get_language as _get_language
 
 from . import settings
 
 
-collections_abc = getattr(collections, 'abc', collections)
+collections_abc = getattr(collections, "abc", collections)
 
 CLASS_PATH_ERROR = (
     "django-linguist is unable to interpret settings value for %s. "
@@ -110,7 +110,7 @@ def _build_localized_verbose_name(verbose_name, language):
     """
     Build localized verbose name from ``verbose_name`` and ``language``.
     """
-    return force_text("%s (%s)") % (force_text(verbose_name), language)
+    return force_str("%s (%s)") % (force_str(verbose_name), language)
 
 
 build_localized_verbose_name = lazy(_build_localized_verbose_name, str)
