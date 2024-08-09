@@ -3,7 +3,7 @@ import collections
 
 from . import utils
 
-collections_abc = getattr(collections, 'abc', collections)
+collections_abc = getattr(collections, "abc", collections)
 
 
 def prefetch_translations(instances, **kwargs):

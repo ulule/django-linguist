@@ -152,11 +152,15 @@ class Translation(models.Model):
         verbose_name = _("translation")
         verbose_name_plural = _("translations")
 
-        unique_together = (("identifier", "object_id", "language", "field_name"),)
-
-        index_together = [
-            ["identifier", "object_id"],
-            ["identifier", "object_id", "field_name"],
+        constraints = [
+            models.UniqueConstraint(
+                fields=["identifier", "object_id", "language", "field_name"],
+                name="linguist_translation_identifier_c469829d_uniq",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["identifier", "object_id"]),
+            models.Index(fields=["identifier", "object_id", "field_name"]),
         ]
 
     def __str__(self):
